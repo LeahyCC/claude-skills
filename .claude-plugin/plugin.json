@@ -38,6 +38,26 @@
         ],
         "bashPatterns": ["lighthouse", "next build", "next experimental-analyze", "ANALYZE=true", "web-vitals"]
       }
+    },
+    {
+      "name": "seo",
+      "path": "skills/seo",
+      "description": "SEO and GEO with production Next.js code — metadata, sitemaps, robots.txt, JSON-LD structured data, OG images, llms.txt, AI crawler management",
+      "categories": ["seo", "web-development", "nextjs"],
+      "triggers": {
+        "filePatterns": [
+          "src/app/**/layout.tsx",
+          "src/app/**/page.tsx",
+          "app/**/layout.tsx",
+          "app/**/page.tsx",
+          "src/app/sitemap.ts",
+          "src/app/robots.ts",
+          "src/app/opengraph-image.tsx",
+          "app/sitemap.ts",
+          "app/robots.ts"
+        ],
+        "bashPatterns": ["lighthouse", "next build", "next-sitemap"]
+      }
     }
   ]
 }

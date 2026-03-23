@@ -24,6 +24,9 @@ npx skills add LeahyCC/claude-skills@wcag-accessibility
 
 # React Performance — measurement-first optimization
 npx skills add LeahyCC/claude-skills@react-performance
+
+# SEO — search + AI engine optimization with production code
+npx skills add LeahyCC/claude-skills@seo
 ```
 
 That's it. No Python runtime. No shell scripts. No npm packages to install. Pure markdown — works in any Claude Code environment.
@@ -36,6 +39,7 @@ That's it. No Python runtime. No shell scripts. No npm packages to install. Pure
 |-------|-------------|----------|-----------------|
 | [wcag-accessibility](./skills/wcag-accessibility/) | WCAG 2.2 Level AA compliance for web apps | **50/50** success criteria | [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/) |
 | [react-performance](./skills/react-performance/) | Measurement-first React optimization | **8** resource files | [React docs](https://react.dev) + [Web Vitals](https://web.dev/articles/vitals) |
+| [seo](./skills/seo/) | SEO + GEO with production Next.js code | **6** resource files | [Google SEO Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) + [llmstxt.org](https://llmstxt.org/) |
 
 > More skills coming — see [Roadmap](#roadmap). Each one will meet the same standard: complete coverage, verified against the official spec, production code examples.
 
@@ -223,17 +227,44 @@ A measurement-first React performance skill. Unlike other React performance skil
 
 ---
 
+## Featured: seo
+
+The first SEO skill that generates production code instead of just auditing. Covers traditional SEO (Google) and GEO (AI search engines like ChatGPT, Perplexity, and Google AI Overviews).
+
+### What makes it different
+
+| Other SEO skills | seo |
+|---|---|
+| Audit checklists and recommendations | **Production `generateMetadata`, `sitemap.ts`, `robots.ts`, JSON-LD code** |
+| No framework awareness | **Next.js App Router metadata API, file-based conventions** |
+| SEO myths repeated as fact | **Google's actual guidance — debunks meta keywords, E-E-A-T as ranking factor, content length** |
+| Traditional SEO only | **GEO: llms.txt generation, AI crawler management, citation-optimized content** |
+| References FID (outdated) | **INP (replaced FID in March 2024)** |
+
+### Coverage
+
+| Resource | Topics |
+|----------|--------|
+| [Metadata](./skills/seo/resources/metadata.md) | Static/dynamic metadata, title templates, canonical URLs, noindex |
+| [Crawlability](./skills/seo/resources/crawlability.md) | robots.ts with AI crawlers, dynamic sitemaps, i18n, internal linking |
+| [Structured Data](./skills/seo/resources/structured-data.md) | JSON-LD: Organization, Product, Article, BreadcrumbList, LocalBusiness |
+| [OG Images](./skills/seo/resources/og-images.md) | Dynamic OG images via ImageResponse, custom fonts |
+| [GEO](./skills/seo/resources/geo.md) | llms.txt, AI crawler control, content structure for citations |
+| [Performance](./skills/seo/resources/performance.md) | LCP/INP/CLS fixes for SEO ranking, web-vitals monitoring |
+
+---
+
 ## What's Different
 
 This repo exists because most skills are surface-level. Here's what we do differently:
 
-**Every claim is verifiable.** Our WCAG skill maps every success criterion to its resource file — audit us in 60 seconds. Our React skill cites React docs for every recommendation. No inflated numbers.
+**Every claim is verifiable.** Our WCAG skill maps every success criterion to its resource file — audit us in 60 seconds. Our React skill cites React docs for every recommendation. Our SEO skill cites Google's official documentation. No inflated numbers.
 
 **Zero runtime dependencies.** Pure markdown files. No Python scripts, no npm packages, no shell installers. Install in one command, works everywhere Claude Code runs.
 
 **Production code examples.** Real React, Next.js, and Tailwind CSS patterns — not pseudocode. Every resource file includes FAIL and PASS examples side by side with the exact `className` and props you'd use.
 
-**Verified against official sources.** WCAG skill verified against [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/). React skill verified against [react.dev](https://react.dev) and [Web Vitals spec](https://web.dev/articles/vitals). We note what's outdated, experimental, or removed.
+**Verified against official sources.** WCAG verified against [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/). React verified against [react.dev](https://react.dev). SEO verified against [Google's official guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide). We note what's outdated, experimental, or removed.
 
 ---
 
@@ -246,10 +277,14 @@ claude-skills/
 │   │   ├── SKILL.md
 │   │   ├── README.md
 │   │   └── resources/               # 11 deep-dive reference files
-│   └── react-performance/           # Measurement-first React optimization
+│   ├── react-performance/           # Measurement-first React optimization
+│   │   ├── SKILL.md
+│   │   ├── README.md
+│   │   └── resources/               # 8 deep-dive reference files
+│   └── seo/                         # SEO + GEO with production code
 │       ├── SKILL.md
 │       ├── README.md
-│       └── resources/               # 8 deep-dive reference files
+│       └── resources/               # 6 deep-dive reference files
 ├── .claude-plugin/
 │   ├── plugin.json                    # Marketplace discovery
 │   └── marketplace.json               # Skill registry metadata
@@ -268,6 +303,7 @@ We're building a collection of skills where each one is the definitive reference
 |-------|--------|-------------|
 | wcag-accessibility | **Shipped** | W3C WCAG 2.2 |
 | react-performance | **Shipped** | React docs, Web Vitals |
+| seo | **Shipped** | Google SEO Guide, llmstxt.org |
 | api-security | Planned | OWASP Top 10 (2025) |
 | typescript-strict | Planned | TypeScript handbook |
 | nextjs-app-router | Planned | Next.js docs |
