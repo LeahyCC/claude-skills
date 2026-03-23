@@ -10,13 +10,21 @@ npx skills add LeahyCC/claude-skills@wcag-accessibility
 
 ## What It Covers
 
+Covers **all 50 WCAG 2.2 Level A + AA success criteria** across 11 resource files:
+
 - **Color Contrast** — WCAG ratios, Tailwind opacity pitfalls, dark mode
 - **Keyboard Navigation** — Focus management, tab order, skip links, WAI-ARIA patterns
 - **Semantic HTML & ARIA** — Landmarks, headings, roles, live regions
 - **Forms & Inputs** — Labels, error handling, validation, touch targets
 - **Images & Media** — Alt text, SVG, video captions, audio transcripts
 - **Motion & Animation** — prefers-reduced-motion, flash thresholds, auto-play
+- **Page Structure** — Language, titles, reflow, zoom, text spacing, DOM order, orientation
+- **Links & Navigation** — Link purpose, use of color, predictable behavior, consistent help
+- **Pointer & Touch** — Drag alternatives, pointer cancellation, gestures, target size
+- **Timing & Authentication** — Session timeouts, accessible auth, CAPTCHAs, redundant entry
 - **Testing & Auditing** — axe-core, jest-axe, Playwright, Lighthouse, screen reader testing
+
+Includes all **6 new WCAG 2.2 criteria**: Focus Not Obscured, Dragging Movements, Target Size, Consistent Help, Redundant Entry, and Accessible Authentication.
 
 ## When It Triggers
 
