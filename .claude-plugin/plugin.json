@@ -1,0 +1,26 @@
+{
+  "name": "claude-skills",
+  "version": "1.0.0",
+  "description": "Production-grade Claude Code skills verified against official specifications. Zero dependencies, production code examples, complete domain coverage.",
+  "author": "LeahyCC",
+  "license": "MIT",
+  "skills": [
+    {
+      "name": "wcag-accessibility",
+      "path": "skills/wcag-accessibility",
+      "description": "WCAG 2.2 Level AA compliance — all 50 success criteria with production React/Next.js/Tailwind code examples",
+      "categories": ["accessibility", "web-development", "compliance"],
+      "triggers": {
+        "filePatterns": [
+          "src/components/**/*.tsx",
+          "src/components/**/*.jsx",
+          "src/app/**/*.tsx",
+          "app/**/*.tsx",
+          "components/**/*.tsx",
+          "pages/**/*.tsx"
+        ],
+        "bashPatterns": ["lighthouse", "axe", "pa11y"]
+      }
+    }
+  ]
+}

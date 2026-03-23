@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "skills": [
+    {
+      "name": "wcag-accessibility",
+      "display_name": "WCAG 2.2 Accessibility",
+      "description": "Complete WCAG 2.2 Level AA compliance guidance — all 50 success criteria covered across 11 resource files with production code examples",
+      "version": "1.0.0",
+      "categories": ["accessibility", "web-development", "compliance", "quality"],
+      "criteria_covered": 50,
+      "criteria_total": 50,
+      "resource_files": 11,
+      "dependencies": "none",
+      "verified_against": "W3C WCAG 2.2 Recommendation (October 2023)",
+      "install": "npx skills add LeahyCC/claude-skills@wcag-accessibility"
+    }
+  ]
+}
