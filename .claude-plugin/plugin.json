@@ -21,6 +21,23 @@
         ],
         "bashPatterns": ["lighthouse", "axe", "pa11y"]
       }
+    },
+    {
+      "name": "react-performance",
+      "path": "skills/react-performance",
+      "description": "Measurement-first React performance optimization — Core Web Vitals, rendering, bundle size, React Compiler, Server Components",
+      "categories": ["performance", "react", "web-development"],
+      "triggers": {
+        "filePatterns": [
+          "src/components/**/*.tsx",
+          "src/components/**/*.jsx",
+          "src/app/**/*.tsx",
+          "app/**/*.tsx",
+          "components/**/*.tsx",
+          "pages/**/*.tsx"
+        ],
+        "bashPatterns": ["lighthouse", "next build", "next experimental-analyze", "ANALYZE=true", "web-vitals"]
+      }
     }
   ]
 }

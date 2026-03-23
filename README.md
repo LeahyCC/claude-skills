@@ -19,7 +19,11 @@
 ## Install
 
 ```bash
+# Accessibility — WCAG 2.2 AA compliance (50/50 criteria)
 npx skills add LeahyCC/claude-skills@wcag-accessibility
+
+# React Performance — measurement-first optimization
+npx skills add LeahyCC/claude-skills@react-performance
 ```
 
 That's it. No Python runtime. No shell scripts. No npm packages to install. Pure markdown — works in any Claude Code environment.
@@ -31,6 +35,7 @@ That's it. No Python runtime. No shell scripts. No npm packages to install. Pure
 | Skill | What It Does | Coverage | Verified Against |
 |-------|-------------|----------|-----------------|
 | [wcag-accessibility](./skills/wcag-accessibility/) | WCAG 2.2 Level AA compliance for web apps | **50/50** success criteria | [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/) |
+| [react-performance](./skills/react-performance/) | Measurement-first React optimization | **8** resource files | [React docs](https://react.dev) + [Web Vitals](https://web.dev/articles/vitals) |
 
 > More skills coming — see [Roadmap](#roadmap). Each one will meet the same standard: complete coverage, verified against the official spec, production code examples.
 
@@ -187,17 +192,48 @@ Plus: Hover/Focus Content (1.4.13) and Status Messages (4.1.3) covered in the ma
 
 ---
 
+## Featured: react-performance
+
+A measurement-first React performance skill. Unlike other React performance skills that say "use React.memo everywhere," this skill teaches you to **find problems before fixing them** and is **React Compiler-aware** — it won't suggest manual memoization when the compiler handles it.
+
+### What makes it different
+
+| Other React skills | react-performance |
+|---|---|
+| "Use React.memo everywhere" | "Measure first — is it actually slow?" |
+| No React Compiler awareness | Knows when the compiler handles it |
+| No profiling guidance | Starts with DevTools Profiler workflow |
+| Generic JS micro-optimizations | React-specific patterns with Web Vitals |
+| Next.js-only | Core patterns + Next.js extensions |
+
+### Coverage
+
+8 resource files covering the full optimization stack:
+
+| Resource | Topics |
+|----------|--------|
+| [Profiling](./skills/react-performance/resources/profiling.md) | DevTools Profiler, Chrome Performance, web-vitals, bundle analysis |
+| [Rendering](./skills/react-performance/resources/rendering.md) | State colocation, children pattern, useTransition, useDeferredValue, memo |
+| [Bundle](./skills/react-performance/resources/bundle.md) | Code splitting, tree shaking, dynamic imports, Server Components |
+| [Web Vitals](./skills/react-performance/resources/web-vitals.md) | LCP, INP, CLS — React-specific causes and fixes |
+| [Server Components](./skills/react-performance/resources/server-components.md) | Server vs Client decision, composition, streaming, parallel fetching |
+| [Data & Lists](./skills/react-performance/resources/data-and-lists.md) | Virtualization, pagination, infinite scroll, Web Workers |
+| [Assets](./skills/react-performance/resources/assets.md) | next/image, next/font, Script loading, preloading |
+| [React Compiler](./skills/react-performance/resources/react-compiler.md) | Setup, what it replaces, Rules of React, migration |
+
+---
+
 ## What's Different
 
-This repo exists because most accessibility skills are surface-level. Here's what we do differently:
+This repo exists because most skills are surface-level. Here's what we do differently:
 
-**Every claim is verifiable.** The criteria mapping table above links every WCAG success criterion to the resource file that covers it. If we say 50/50, you can audit that in 60 seconds.
+**Every claim is verifiable.** Our WCAG skill maps every success criterion to its resource file — audit us in 60 seconds. Our React skill cites React docs for every recommendation. No inflated numbers.
 
 **Zero runtime dependencies.** Pure markdown files. No Python scripts, no npm packages, no shell installers. Install in one command, works everywhere Claude Code runs.
 
 **Production code examples.** Real React, Next.js, and Tailwind CSS patterns — not pseudocode. Every resource file includes FAIL and PASS examples side by side with the exact `className` and props you'd use.
 
-**Verified against the source.** Content is verified against the [W3C WCAG 2.2 Recommendation](https://www.w3.org/TR/WCAG22/) (October 2023), including all 6 criteria added in 2.2. We note where 4.1.1 Parsing was removed, because accuracy matters.
+**Verified against official sources.** WCAG skill verified against [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/). React skill verified against [react.dev](https://react.dev) and [Web Vitals spec](https://web.dev/articles/vitals). We note what's outdated, experimental, or removed.
 
 ---
 
@@ -206,21 +242,14 @@ This repo exists because most accessibility skills are surface-level. Here's wha
 ```
 claude-skills/
 ├── skills/
-│   └── wcag-accessibility/           # WCAG 2.2 AA — 50/50 criteria
-│       ├── SKILL.md                   # Main skill (auto-triggers on .tsx/.jsx)
-│       ├── README.md                  # Skill-specific docs
-│       └── resources/                 # 11 deep-dive reference files
-│           ├── color-contrast.md
-│           ├── keyboard-navigation.md
-│           ├── semantic-html.md
-│           ├── forms-and-inputs.md
-│           ├── images-and-media.md
-│           ├── motion-and-animation.md
-│           ├── page-structure.md
-│           ├── links-and-navigation.md
-│           ├── pointer-and-touch.md
-│           ├── timing-and-authentication.md
-│           └── testing-and-auditing.md
+│   ├── wcag-accessibility/           # WCAG 2.2 AA — 50/50 criteria
+│   │   ├── SKILL.md
+│   │   ├── README.md
+│   │   └── resources/               # 11 deep-dive reference files
+│   └── react-performance/           # Measurement-first React optimization
+│       ├── SKILL.md
+│       ├── README.md
+│       └── resources/               # 8 deep-dive reference files
 ├── .claude-plugin/
 │   ├── plugin.json                    # Marketplace discovery
 │   └── marketplace.json               # Skill registry metadata
@@ -238,7 +267,7 @@ We're building a collection of skills where each one is the definitive reference
 | Skill | Status | Spec Source |
 |-------|--------|-------------|
 | wcag-accessibility | **Shipped** | W3C WCAG 2.2 |
-| react-performance | Planned | React docs, Web Vitals |
+| react-performance | **Shipped** | React docs, Web Vitals |
 | api-security | Planned | OWASP Top 10 (2025) |
 | typescript-strict | Planned | TypeScript handbook |
 | nextjs-app-router | Planned | Next.js docs |
