@@ -24,6 +24,17 @@
       "dependencies": "none",
       "verified_against": "React docs (react.dev), Web Vitals specification (web.dev)",
       "install": "npx skills add LeahyCC/claude-skills@react-performance"
+    },
+    {
+      "name": "seo",
+      "display_name": "SEO & GEO",
+      "description": "Production-ready SEO and GEO for Next.js — metadata, sitemaps, structured data, OG images, llms.txt, AI crawler management, and Google's actual guidance (not myths)",
+      "version": "1.0.0",
+      "categories": ["seo", "web-development", "nextjs", "marketing"],
+      "resource_files": 6,
+      "dependencies": "none",
+      "verified_against": "Google SEO Starter Guide, Google Structured Data docs, Next.js Metadata API, Web Vitals spec, llmstxt.org",
+      "install": "npx skills add LeahyCC/claude-skills@seo"
     }
   ]
 }
