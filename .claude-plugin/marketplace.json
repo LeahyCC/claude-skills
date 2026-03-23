@@ -13,6 +13,17 @@
       "dependencies": "none",
       "verified_against": "W3C WCAG 2.2 Recommendation (October 2023)",
       "install": "npx skills add LeahyCC/claude-skills@wcag-accessibility"
+    },
+    {
+      "name": "react-performance",
+      "display_name": "React Performance",
+      "description": "Measurement-first React performance optimization — profiling, Core Web Vitals, rendering, bundle size, React Compiler, Server Components, virtualization",
+      "version": "1.0.0",
+      "categories": ["performance", "react", "web-development", "optimization"],
+      "resource_files": 8,
+      "dependencies": "none",
+      "verified_against": "React docs (react.dev), Web Vitals specification (web.dev)",
+      "install": "npx skills add LeahyCC/claude-skills@react-performance"
     }
   ]
 }
