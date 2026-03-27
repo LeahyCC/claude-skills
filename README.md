@@ -27,6 +27,9 @@ npx skills add LeahyCC/claude-skills@react-performance
 
 # SEO — search + AI engine optimization with production code
 npx skills add LeahyCC/claude-skills@seo
+
+# UX Copy — UI text patterns for buttons, errors, empty states, and more
+npx skills add LeahyCC/claude-skills@ux-copy
 ```
 
 That's it. No Python runtime. No shell scripts. No npm packages to install. Pure markdown — works in any Claude Code environment.
@@ -40,6 +43,7 @@ That's it. No Python runtime. No shell scripts. No npm packages to install. Pure
 | [wcag-accessibility](./skills/wcag-accessibility/) | WCAG 2.2 Level AA compliance for web apps | **50/50** success criteria | [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/) |
 | [react-performance](./skills/react-performance/) | Measurement-first React optimization | **8** resource files | [React docs](https://react.dev) + [Web Vitals](https://web.dev/articles/vitals) |
 | [seo](./skills/seo/) | SEO + GEO with production Next.js code | **6** resource files | [Google SEO Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) + [llmstxt.org](https://llmstxt.org/) |
+| [ux-copy](./skills/ux-copy/) | UI text — buttons, errors, empty states, tone, auditing | **8** resource files | [NN/g](https://www.nngroup.com/topic/writing-web/) + [GOV.UK](https://www.gov.uk/guidance/content-design) + [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/writing) + 3 more |
 
 > More skills coming — see [Roadmap](#roadmap). Each one will meet the same standard: complete coverage, verified against the official spec, production code examples.
 
@@ -281,10 +285,14 @@ claude-skills/
 │   │   ├── SKILL.md
 │   │   ├── README.md
 │   │   └── resources/               # 8 deep-dive reference files
-│   └── seo/                         # SEO + GEO with production code
+│   ├── seo/                         # SEO + GEO with production code
+│   │   ├── SKILL.md
+│   │   ├── README.md
+│   │   └── resources/               # 6 deep-dive reference files
+│   └── ux-copy/                     # UX copy — UI text patterns
 │       ├── SKILL.md
 │       ├── README.md
-│       └── resources/               # 6 deep-dive reference files
+│       └── resources/               # 8 deep-dive reference files
 ├── .claude-plugin/
 │   ├── plugin.json                    # Marketplace discovery
 │   └── marketplace.json               # Skill registry metadata
@@ -304,6 +312,7 @@ We're building a collection of skills where each one is the definitive reference
 | wcag-accessibility | **Shipped** | W3C WCAG 2.2 |
 | react-performance | **Shipped** | React docs, Web Vitals |
 | seo | **Shipped** | Google SEO Guide, llmstxt.org |
+| ux-copy | **Shipped** | NN/g, GOV.UK, Apple HIG, Microsoft, Shopify Polaris, Atlassian |
 | api-security | Planned | OWASP Top 10 (2025) |
 | typescript-strict | Planned | TypeScript handbook |
 | nextjs-app-router | Planned | Next.js docs |

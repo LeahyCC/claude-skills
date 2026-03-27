@@ -58,6 +58,28 @@
         ],
         "bashPatterns": ["lighthouse", "next build", "next-sitemap"]
       }
+    },
+    {
+      "name": "ux-copy",
+      "path": "skills/ux-copy",
+      "description": "UX copy patterns for UI text — buttons, errors, empty states, notifications, onboarding, confirmations, voice and tone calibration, and copy auditing",
+      "categories": ["ux-writing", "web-development", "content-design"],
+      "triggers": {
+        "filePatterns": [
+          "src/components/**/*.tsx",
+          "src/components/**/*.jsx",
+          "src/app/**/*.tsx",
+          "app/**/*.tsx",
+          "components/**/*.tsx",
+          "pages/**/*.tsx",
+          "src/content/**/*.ts",
+          "src/constants/**/*.ts",
+          "content/**/*.ts",
+          "messages/**/*.json",
+          "locales/**/*.json"
+        ],
+        "bashPatterns": []
+      }
     }
   ]
 }
