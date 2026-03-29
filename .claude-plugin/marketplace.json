@@ -35,6 +35,17 @@
       "dependencies": "none",
       "verified_against": "Google SEO Starter Guide, Google Structured Data docs, Next.js Metadata API, Web Vitals spec, llmstxt.org",
       "install": "npx skills add LeahyCC/claude-skills@seo"
+    },
+    {
+      "name": "api-security",
+      "display_name": "API Security (OWASP)",
+      "description": "OWASP API Security Top 10 (2023) and Web Top 10 (2021) with production Next.js App Router code — access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, SSRF",
+      "version": "1.0.0",
+      "categories": ["security", "api", "web-development", "owasp", "nextjs"],
+      "resource_files": 8,
+      "dependencies": "none",
+      "verified_against": "OWASP API Security Top 10 (2023), OWASP Top 10 (2021), Next.js Security Guide, Vercel Conformance",
+      "install": "npx skills add LeahyCC/claude-skills@api-security"
     }
   ]
 }

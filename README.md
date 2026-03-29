@@ -30,6 +30,9 @@ npx skills add LeahyCC/claude-skills@seo
 
 # UX Copy — UI text patterns for buttons, errors, empty states, and more
 npx skills add LeahyCC/claude-skills@ux-copy
+
+# API Security — OWASP API Top 10 with production Next.js code
+npx skills add LeahyCC/claude-skills@api-security
 ```
 
 That's it. No Python runtime. No shell scripts. No npm packages to install. Pure markdown — works in any Claude Code environment.
@@ -44,6 +47,7 @@ That's it. No Python runtime. No shell scripts. No npm packages to install. Pure
 | [react-performance](./skills/react-performance/) | Measurement-first React optimization | **8** resource files | [React docs](https://react.dev) + [Web Vitals](https://web.dev/articles/vitals) |
 | [seo](./skills/seo/) | SEO + GEO with production Next.js code | **6** resource files | [Google SEO Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) + [llmstxt.org](https://llmstxt.org/) |
 | [ux-copy](./skills/ux-copy/) | UI text — buttons, errors, empty states, tone, auditing | **8** resource files | [NN/g](https://www.nngroup.com/topic/writing-web/) + [GOV.UK](https://www.gov.uk/guidance/content-design) + [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/writing) + 3 more |
+| [api-security](./skills/api-security/) | OWASP API Security Top 10 for Next.js APIs | **8** resource files covering all 10 API + 10 Web categories | [OWASP API Security Top 10 (2023)](https://owasp.org/API-Security/editions/2023/en/0x11-t10/) + [OWASP Top 10 (2021)](https://owasp.org/Top10/) |
 
 > More skills coming — see [Roadmap](#roadmap). Each one will meet the same standard: complete coverage, verified against the official spec, production code examples.
 
@@ -258,6 +262,71 @@ The first SEO skill that generates production code instead of just auditing. Cov
 
 ---
 
+## Featured: api-security
+
+The first OWASP API Security skill with production Next.js code. Covers both the **OWASP API Security Top 10 (2023)** and the **OWASP Web Top 10 (2021)**, with FAIL/PASS code examples for every vulnerability class.
+
+### Why this skill?
+
+Most security skills are checklists, audit processes, or Python-only code. This skill gives you **production Next.js App Router code** — Server Actions, Route Handlers, `proxy.ts`, and the Data Access Layer pattern — for every OWASP category.
+
+| What others do | What we do |
+|---|---|
+| "Validate input" | **Zod schema for every Server Action and Route Handler, with `.strict()` to prevent mass assignment** |
+| "Check authorization" | **`getCurrentUser()` with ownership verification — never trust client-supplied IDs** |
+| "Use rate limiting" | **Upstash patterns per endpoint type — auth (5/min), AI (budget-based), general (60/min)** |
+| "Set security headers" | **Full CSP (nonce-based, hash-based, and static), HSTS, CORS allowlist, CSRF verification** |
+
+### What it catches
+
+```tsx
+// FAIL — Server Action without auth (it's a public HTTP endpoint!)
+'use server'
+export async function deleteAccount(userId: string) {
+  await db.delete(users).where(eq(users.id, userId))
+}
+
+// PASS — auth + ownership derived from session
+'use server'
+export async function deleteAccount() {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+  await db.delete(users).where(eq(users.id, user.id))
+}
+```
+
+```tsx
+// FAIL — mass assignment via unvalidated JSON body
+export async function PATCH(request: Request) {
+  const body = await request.json()
+  await db.update(users).set(body)
+  // Attacker sends: { "role": "admin" }
+}
+
+// PASS — strict Zod schema with explicit fields
+const UpdateSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  bio: z.string().max(500).optional(),
+}).strict()
+```
+
+### Coverage
+
+8 resource files covering both OWASP standards:
+
+| Resource | OWASP API | OWASP Web | Key Topics |
+|----------|-----------|-----------|------------|
+| [Access Control](./skills/api-security/resources/access-control.md) | API1, API5 | A01 | BOLA/IDOR, RBAC, CORS, multi-tenant |
+| [Authentication](./skills/api-security/resources/authentication.md) | API2 | A07, A02 | Sessions, JWT, Clerk, CVE-2025-29927, webhooks |
+| [Input Validation](./skills/api-security/resources/input-validation.md) | API3, API8 | A03 | Zod, SQL injection, XSS, mass assignment |
+| [Rate Limiting](./skills/api-security/resources/rate-limiting.md) | API4 | A04 | Upstash, cost attacks, AI budget limiting |
+| [Security Headers](./skills/api-security/resources/security-headers.md) | API8 | A05 | CSP, HSTS, CORS, CSRF, Cache-Control |
+| [Data Exposure](./skills/api-security/resources/data-exposure.md) | API3, API6 | A04 | DAL pattern, DTOs, error sanitization |
+| [Supply Chain](./skills/api-security/resources/supply-chain.md) | API9, API10 | A06, A08 | Dependencies, env vars, CI/CD |
+| [SSRF & Logging](./skills/api-security/resources/ssrf-and-logging.md) | API7 | A09, A10 | URL validation, structured logging |
+
+---
+
 ## What's Different
 
 This repo exists because most skills are surface-level. Here's what we do differently:
@@ -289,7 +358,11 @@ claude-skills/
 │   │   ├── SKILL.md
 │   │   ├── README.md
 │   │   └── resources/               # 6 deep-dive reference files
-│   └── ux-copy/                     # UX copy — UI text patterns
+│   ├── ux-copy/                     # UX copy — UI text patterns
+│   │   ├── SKILL.md
+│   │   ├── README.md
+│   │   └── resources/               # 8 deep-dive reference files
+│   └── api-security/               # OWASP API Security Top 10
 │       ├── SKILL.md
 │       ├── README.md
 │       └── resources/               # 8 deep-dive reference files
@@ -313,7 +386,7 @@ We're building a collection of skills where each one is the definitive reference
 | react-performance | **Shipped** | React docs, Web Vitals |
 | seo | **Shipped** | Google SEO Guide, llmstxt.org |
 | ux-copy | **Shipped** | NN/g, GOV.UK, Apple HIG, Microsoft, Shopify Polaris, Atlassian |
-| api-security | Planned | OWASP Top 10 (2025) |
+| api-security | **Shipped** | OWASP API Security Top 10 (2023), OWASP Top 10 (2021) |
 | typescript-strict | Planned | TypeScript handbook |
 | nextjs-app-router | Planned | Next.js docs |
 
