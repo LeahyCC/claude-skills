@@ -35,6 +35,19 @@ npx skills add LeahyCC/claude-skills@ux-copy
 npx skills add LeahyCC/claude-skills@api-security
 ```
 
+### Commands
+
+Commands are slash commands (`/command-name`) you add to your project. Copy the file into your project's `.claude/commands/` directory:
+
+```bash
+# Code Review — OWASP-mapped, risk-rated, with autofix diffs
+mkdir -p .claude/commands
+curl -sL https://raw.githubusercontent.com/LeahyCC/claude-skills/main/.claude/commands/code-review.md \
+  -o .claude/commands/code-review.md
+```
+
+Then use `/code-review` in any Claude Code session within that project.
+
 That's it. No Python runtime. No shell scripts. No npm packages to install. Pure markdown — works in any Claude Code environment.
 
 ---
@@ -48,6 +61,12 @@ That's it. No Python runtime. No shell scripts. No npm packages to install. Pure
 | [seo](./skills/seo/) | SEO + GEO with production Next.js code | **6** resource files | [Google SEO Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) + [llmstxt.org](https://llmstxt.org/) |
 | [ux-copy](./skills/ux-copy/) | UI text — buttons, errors, empty states, tone, auditing | **8** resource files | [NN/g](https://www.nngroup.com/topic/writing-web/) + [GOV.UK](https://www.gov.uk/guidance/content-design) + [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/writing) + 3 more |
 | [api-security](./skills/api-security/) | OWASP API Security Top 10 for Next.js APIs | **8** resource files covering all 10 API + 10 Web categories | [OWASP API Security Top 10 (2023)](https://owasp.org/API-Security/editions/2023/en/0x11-t10/) + [OWASP Top 10 (2021)](https://owasp.org/Top10/) |
+
+### Commands
+
+| Command | What It Does | Key Features |
+|---------|-------------|-------------|
+| [/code-review](./.claude/commands/code-review.md) | OWASP-mapped code review with risk ratings | Diff-focused, autofix diffs, risk quality (exploitability/blast radius/likelihood/detectability), pattern detection |
 
 > More skills coming — see [Roadmap](#roadmap). Each one will meet the same standard: complete coverage, verified against the official spec, production code examples.
 
@@ -366,6 +385,9 @@ claude-skills/
 │       ├── SKILL.md
 │       ├── README.md
 │       └── resources/               # 8 deep-dive reference files
+├── .claude/
+│   └── commands/
+│       └── code-review.md             # /code-review slash command
 ├── .claude-plugin/
 │   ├── plugin.json                    # Marketplace discovery
 │   └── marketplace.json               # Skill registry metadata
