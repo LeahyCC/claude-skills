@@ -33,6 +33,9 @@ npx skills add LeahyCC/claude-skills@ux-copy
 
 # API Security — OWASP API Top 10 with production Next.js code
 npx skills add LeahyCC/claude-skills@api-security
+
+# Product & Marketing — positioning, discovery, GTM, prioritization, metrics, copy
+npx skills add LeahyCC/claude-skills@product-marketing
 ```
 
 ### Commands
@@ -61,6 +64,7 @@ That's it. No Python runtime. No shell scripts. No npm packages to install. Pure
 | [seo](./skills/seo/) | SEO + GEO with production Next.js code | **6** resource files | [Google SEO Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) + [llmstxt.org](https://llmstxt.org/) |
 | [ux-copy](./skills/ux-copy/) | UI text — buttons, errors, empty states, tone, auditing | **8** resource files | [NN/g](https://www.nngroup.com/topic/writing-web/) + [GOV.UK](https://www.gov.uk/guidance/content-design) + [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/writing) + 3 more |
 | [api-security](./skills/api-security/) | OWASP API Security Top 10 for Next.js APIs | **8** resource files covering all 10 API + 10 Web categories | [OWASP API Security Top 10 (2023)](https://owasp.org/API-Security/editions/2023/en/0x11-t10/) + [OWASP Top 10 (2021)](https://owasp.org/Top10/) |
+| [product-marketing](./skills/product-marketing/) | Product management + marketing strategy | **8** resource files covering strategy, discovery, positioning, GTM, prioritization, metrics, copy, templates | [Cagan/SVPG](https://www.svpg.com/) + [Dunford](https://www.aprildunford.com/) + [Torres](https://www.producttalk.org/) + [Reforge](https://www.reforge.com/) + 14 more |
 
 ### Commands
 
@@ -346,6 +350,40 @@ const UpdateSchema = z.object({
 
 ---
 
+## Featured: product-marketing
+
+The first PM/PMM skill that combines product management and product marketing into one skill, verified against 18 authoritative primary sources. Every framework cites its author — no opinions disguised as best practice.
+
+### Why this skill?
+
+Most PM skills are collections of prompts. Most marketing skills are copywriting-only. This skill covers the **full product lifecycle** — from discovery through launch through metrics — with the PM and PMM disciplines integrated the way they work in practice.
+
+| What others do | What we do |
+|---|---|
+| "Validate your idea" | **Teresa Torres's Opportunity Solution Trees** with interview guides, JTBD scripts, and experiment templates |
+| "Position your product" | **April Dunford's 5-component framework** with worked examples and messaging hierarchy |
+| "Write a PRD" | **Production templates** — PRD, product brief, PR/FAQ, battle card, OKR doc, roadmap |
+| "Prioritize features" | **RICE, ICE, WSJF scoring** with worked examples and anti-pattern detection |
+| "Set metrics" | **North Star + AARRR + unit economics** with benchmarks by product type |
+| "Write a landing page" | **PAS, AIDA, BAB frameworks** with full page structure and email sequences |
+
+### What it covers
+
+8 resource files across the full product lifecycle:
+
+| Resource | Key Frameworks |
+|----------|---------------|
+| [Strategy](./skills/product-marketing/resources/strategy.md) | Cagan (SVPG), Biddle (DHM), Moore (Chasm), competitive analysis |
+| [Discovery](./skills/product-marketing/resources/discovery.md) | Torres (OSTs), Christensen (JTBD), Ulwick (ODI), experiment design |
+| [Positioning & Messaging](./skills/product-marketing/resources/positioning-and-messaging.md) | Dunford, Raskin (narrative), Miller (StoryBrand), category design |
+| [Go-to-Market](./skills/product-marketing/resources/go-to-market.md) | PLG/SLG/CLG, Van Westendorp pricing, Bullseye channels, launch tiers |
+| [Prioritization & Roadmap](./skills/product-marketing/resources/prioritization-and-roadmap.md) | RICE, ICE, WSJF, Now/Next/Later, OKRs, Shape Up |
+| [Metrics & Analytics](./skills/product-marketing/resources/metrics-and-analytics.md) | North Star (Amplitude), AARRR, retention cohorts, CAC/LTV |
+| [Marketing Copy](./skills/product-marketing/resources/marketing-copy.md) | PAS, AIDA, BAB, email sequences, case studies, changelogs |
+| [Templates](./skills/product-marketing/resources/templates.md) | PRD, PR/FAQ, positioning doc, battle card, OKR, roadmap |
+
+---
+
 ## What's Different
 
 This repo exists because most skills are surface-level. Here's what we do differently:
@@ -381,7 +419,11 @@ claude-skills/
 │   │   ├── SKILL.md
 │   │   ├── README.md
 │   │   └── resources/               # 8 deep-dive reference files
-│   └── api-security/               # OWASP API Security Top 10
+│   ├── api-security/               # OWASP API Security Top 10
+│   │   ├── SKILL.md
+│   │   ├── README.md
+│   │   └── resources/               # 8 deep-dive reference files
+│   └── product-marketing/          # Product management + marketing strategy
 │       ├── SKILL.md
 │       ├── README.md
 │       └── resources/               # 8 deep-dive reference files
@@ -409,6 +451,7 @@ We're building a collection of skills where each one is the definitive reference
 | seo | **Shipped** | Google SEO Guide, llmstxt.org |
 | ux-copy | **Shipped** | NN/g, GOV.UK, Apple HIG, Microsoft, Shopify Polaris, Atlassian |
 | api-security | **Shipped** | OWASP API Security Top 10 (2023), OWASP Top 10 (2021) |
+| product-marketing | **Shipped** | Cagan/SVPG, Dunford, Torres, Reforge, JTBD, + 13 more |
 | typescript-strict | Planned | TypeScript handbook |
 | nextjs-app-router | Planned | Next.js docs |
 
