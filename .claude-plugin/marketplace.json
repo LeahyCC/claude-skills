@@ -46,6 +46,17 @@
       "dependencies": "none",
       "verified_against": "OWASP API Security Top 10 (2023), OWASP Top 10 (2021), Next.js Security Guide, Vercel Conformance",
       "install": "npx skills add LeahyCC/claude-skills@api-security"
+    },
+    {
+      "name": "product-marketing",
+      "display_name": "Product & Marketing Strategy",
+      "description": "Product management and marketing strategy — positioning, discovery, go-to-market, prioritization, metrics, copywriting, and production templates. Verified against 18 authoritative sources including Cagan, Dunford, Torres, and Reforge.",
+      "version": "1.0.0",
+      "categories": ["product-management", "marketing", "strategy", "go-to-market"],
+      "resource_files": 8,
+      "dependencies": "none",
+      "verified_against": "Cagan/SVPG (Transformed 2024), Dunford (Obviously Awesome 2019, Sales Pitch 2023), Torres (Continuous Discovery Habits 2021), Christensen (JTBD), Reforge, Amplitude (North Star), Intercom (RICE), OpenView (PLG benchmarks), and 10 more primary sources",
+      "install": "npx skills add LeahyCC/claude-skills@product-marketing"
     }
   ]
 }
