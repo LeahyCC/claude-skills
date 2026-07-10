@@ -57,6 +57,17 @@
       "dependencies": "none",
       "verified_against": "Cagan/SVPG (Transformed 2024), Dunford (Obviously Awesome 2019, Sales Pitch 2023), Torres (Continuous Discovery Habits 2021), Christensen (JTBD), Reforge, Amplitude (North Star), Intercom (RICE), OpenView (PLG benchmarks), and 10 more primary sources",
       "install": "npx skills add LeahyCC/claude-skills@product-marketing"
+    },
+    {
+      "name": "nextjs-app-router",
+      "display_name": "Next.js App Router",
+      "description": "Production Next.js 16 App Router guidance — Server/Client Components, data fetching, Cache Components, routing, proxy.ts, error handling, metadata, assets, Pages Router migration, and 15→16 upgrade. Verified against Next.js and React docs.",
+      "version": "1.0.0",
+      "categories": ["nextjs", "web-development", "react"],
+      "resource_files": 10,
+      "dependencies": "none",
+      "verified_against": "Next.js 16 App Router documentation (nextjs.org/docs/app), React documentation (react.dev)",
+      "install": "npx skills add LeahyCC/claude-skills@nextjs-app-router"
     }
   ]
 }

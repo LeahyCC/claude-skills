@@ -36,6 +36,9 @@ npx skills add LeahyCC/claude-skills@api-security
 
 # Product & Marketing — positioning, discovery, GTM, prioritization, metrics, copy
 npx skills add LeahyCC/claude-skills@product-marketing
+
+# Next.js App Router — Server Components, caching, routing, proxy, migration (Next.js 16)
+npx skills add LeahyCC/claude-skills@nextjs-app-router
 ```
 
 ### Commands
@@ -65,6 +68,7 @@ That's it. No Python runtime. No shell scripts. No npm packages to install. Pure
 | [ux-copy](./skills/ux-copy/) | UI text — buttons, errors, empty states, tone, auditing | **8** resource files | [NN/g](https://www.nngroup.com/topic/writing-web/) + [GOV.UK](https://www.gov.uk/guidance/content-design) + [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/writing) + 3 more |
 | [api-security](./skills/api-security/) | OWASP API Security Top 10 for Next.js APIs | **8** resource files covering all 10 API + 10 Web categories | [OWASP API Security Top 10 (2023)](https://owasp.org/API-Security/editions/2023/en/0x11-t10/) + [OWASP Top 10 (2021)](https://owasp.org/Top10/) |
 | [product-marketing](./skills/product-marketing/) | Product management + marketing strategy | **8** resource files covering strategy, discovery, positioning, GTM, prioritization, metrics, copy, templates | [Cagan/SVPG](https://www.svpg.com/) + [Dunford](https://www.aprildunford.com/) + [Torres](https://www.producttalk.org/) + [Reforge](https://www.reforge.com/) + 14 more |
+| [nextjs-app-router](./skills/nextjs-app-router/) | Next.js 16 App Router — Server/Client Components, data fetching, Cache Components, routing, proxy, migration | **10** resource files | [Next.js docs](https://nextjs.org/docs/app) + [React docs](https://react.dev) |
 
 ### Commands
 
@@ -423,10 +427,14 @@ claude-skills/
 │   │   ├── SKILL.md
 │   │   ├── README.md
 │   │   └── resources/               # 8 deep-dive reference files
-│   └── product-marketing/          # Product management + marketing strategy
+│   ├── product-marketing/          # Product management + marketing strategy
+│   │   ├── SKILL.md
+│   │   ├── README.md
+│   │   └── resources/               # 8 deep-dive reference files
+│   └── nextjs-app-router/          # Next.js 16 App Router
 │       ├── SKILL.md
 │       ├── README.md
-│       └── resources/               # 8 deep-dive reference files
+│       └── resources/               # 10 deep-dive reference files
 ├── .claude/
 │   └── commands/
 │       └── code-review.md             # /code-review slash command
@@ -452,8 +460,8 @@ We're building a collection of skills where each one is the definitive reference
 | ux-copy | **Shipped** | NN/g, GOV.UK, Apple HIG, Microsoft, Shopify Polaris, Atlassian |
 | api-security | **Shipped** | OWASP API Security Top 10 (2023), OWASP Top 10 (2021) |
 | product-marketing | **Shipped** | Cagan/SVPG, Dunford, Torres, Reforge, JTBD, + 13 more |
+| nextjs-app-router | **Shipped** | Next.js docs, React docs |
 | typescript-strict | Planned | TypeScript handbook |
-| nextjs-app-router | Planned | Next.js docs |
 
 Have an idea? [Open a Discussion](https://github.com/LeahyCC/claude-skills/discussions) or [create an issue](https://github.com/LeahyCC/claude-skills/issues/new).
 
