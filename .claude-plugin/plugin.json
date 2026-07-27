@@ -138,6 +138,31 @@
         ],
         "bashPatterns": []
       }
+    },
+    {
+      "name": "nextjs-app-router",
+      "path": "skills/nextjs-app-router",
+      "description": "Next.js 16 App Router — Server vs Client Components, data fetching, Server Actions, Route Handlers, Cache Components, routing, proxy.ts, error handling, metadata, assets, and migration",
+      "categories": ["nextjs", "web-development", "react"],
+      "triggers": {
+        "filePatterns": [
+          "app/**/*.tsx",
+          "app/**/*.ts",
+          "src/app/**/*.tsx",
+          "src/app/**/*.ts",
+          "proxy.ts",
+          "src/proxy.ts",
+          "next.config.ts",
+          "next.config.js",
+          "next.config.mjs"
+        ],
+        "bashPatterns": [
+          "next dev",
+          "next build",
+          "next start",
+          "next typegen"
+        ]
+      }
     }
   ]
 }
