@@ -97,12 +97,44 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
+    // Next.js 16 defaults — override only when you need different behavior
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    imageSizes: [32, 48, 64, 96, 128, 256, 384], // 16 removed from default
+    qualities: [75], // quality prop coerced to nearest allowed value
+    minimumCacheTTL: 14400, // 4 hours (was 60s)
+    maximumRedirects: 3, // was unlimited
+    // dangerouslyAllowLocalIP: true, // private networks only
+    // localPatterns: [{ pathname: '/assets/**', search: '' }], // required if local src uses ?query
   },
 }
 
 export default nextConfig
+```
+
+### Migrating Image Config (Next.js 15 → 16)
+
+Next.js 16 tightens image optimization defaults. After upgrading:
+
+| Setting | Before (15) | After (16) | What to do |
+|---------|-------------|------------|------------|
+| `imageSizes` | Included `16` | `[32, 48, 64, 96, 128, 256, 384]` | Add `16` back only if you serve true 16px slots (rare; retina usually fetches 32) |
+| `qualities` | Any 1–100 | Default `[75]` | List every `quality` value you pass to `<Image>`; unmatched values are coerced to the closest allowed |
+| `minimumCacheTTL` | 60s | **4 hours** (14400s) | Expect slower pickup of source changes without `cache-control`; lower TTL only if images change often |
+| `dangerouslyAllowLocalIP` | Allowed | **Blocked** (`false`) | Set `true` only for private-network / self-hosted local IPs |
+| `maximumRedirects` | Unlimited | **3** | Raise for CDNs that chain redirects, or set `0` to disable redirects |
+| `localPatterns.search` | Not required | Required when local `src` has a query string | Set `search` explicitly (e.g. `''` to forbid query, or `'?v=2'` for exact match) — omitting `search` allows all query strings |
+
+```ts
+// Example: restore 16px sizes + allow quality 90 + exact query for local assets
+const nextConfig: NextConfig = {
+  images: {
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    qualities: [75, 90],
+    localPatterns: [
+      { pathname: '/assets/**', search: '?v=2' }, // exact search match
+    ],
+  },
+}
 ```
 
 ### Fonts — Root Layout
@@ -404,7 +436,8 @@ const inter = Inter({ subsets: ['latin'] })
 - Loading fonts via external CDN instead of `next/font`.
 - Missing `width`/`height` on non-fill images — causes CLS.
 - Decorative images with descriptive `alt` instead of `alt=""`.
-- Using `quality` above 75 without measurement — diminishing returns.
+- Using `quality` values not listed in `images.qualities` — coerced to nearest allowed (default `[75]`).
+- Local images with query strings without `images.localPatterns.search`.
 - Importing huge uncompressed PNGs — optimize source assets first.
 
 ## Best Practices
@@ -432,6 +465,7 @@ const inter = Inter({ subsets: ['latin'] })
 - [ ] Non-fill images specify `width` and `height`
 - [ ] `sizes` attribute matches responsive layout breakpoints
 - [ ] AVIF/WebP enabled in `next.config.ts`
+- [ ] Next.js 16 image defaults reviewed (`qualities`, `minimumCacheTTL`, `imageSizes`, redirects, localPatterns)
 
 ### Fonts
 

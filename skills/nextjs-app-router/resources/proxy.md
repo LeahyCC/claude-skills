@@ -98,10 +98,10 @@ export const config = {
 ```
 1. Place proxy.ts at project root (or src/) — same level as app/
 2. Define matcher to exclude _next/static, _next/image, public assets
-3. Implement auth gate (cookie/session check)
-4. Pass user context via request headers to downstream code
+3. Implement auth gate (`verifySession` on the cookie — not existence alone)
+4. Re-verify the session cookie in Server Components / Actions (never trust forwarded headers)
 5. Add redirects for legacy URLs
-6. Keep proxy logic under 50ms — no database calls
+6. Keep proxy logic under 50ms — no database calls or self-fetch
 7. Test: direct URL, client navigation, static asset loading
 ```
 
@@ -133,33 +133,32 @@ export const config = {
 
 ### Authentication Gate
 
+Authentication depends on **validating** the session cookie — not merely checking that it exists.
+
 ```ts
 // proxy.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { verifySession } from '@/lib/auth'
 
 const PUBLIC_PATHS = ['/login', '/signup', '/api/auth']
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
   }
 
-  const session = request.cookies.get('session')?.value
+  const token = request.cookies.get('session')?.value
+  const session = token ? await verifySession(token) : null
   if (!session) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-session-id', session)
-
-  return NextResponse.next({
-    request: { headers: requestHeaders },
-  })
+  return NextResponse.next()
 }
 
 export const config = {
@@ -167,19 +166,23 @@ export const config = {
 }
 ```
 
-### Reading Proxy Headers in Server Components
+### Re-verify Session in Server Components
+
+Never treat a forwarded header (e.g. `x-session-id`) as authentication. Headers can be spoofed on direct requests. Always read the session cookie and call `verifySession()` again — fail closed.
 
 ```tsx
 // app/dashboard/page.tsx
-import { headers } from 'next/headers'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { verifySession } from '@/lib/auth'
 
 export default async function DashboardPage() {
-  const sessionId = (await headers()).get('x-session-id')
-  if (!sessionId) redirect('/login')
+  const token = (await cookies()).get('session')?.value
+  const session = token ? await verifySession(token) : null
+  if (!session) redirect('/login')
 
   // Full authz still required here — proxy is not sufficient alone
-  return <Dashboard sessionId={sessionId} />
+  return <Dashboard userId={session.userId} />
 }
 ```
 
@@ -189,19 +192,19 @@ export default async function DashboardPage() {
 // proxy.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { verifySession } from '@/lib/auth-edge'
+import { verifySession } from '@/lib/auth'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const session = request.cookies.get('session')?.value
+  const token = request.cookies.get('session')?.value
+  const payload = token ? await verifySession(token) : null
 
   if (pathname.startsWith('/admin')) {
-    if (!session) {
+    if (!payload) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    const payload = await verifySession(session)
-    if (!payload || payload.role !== 'admin') {
+    if (payload.role !== 'admin') {
       return NextResponse.redirect(new URL('/unauthorized', request.url))
     }
   }
@@ -254,8 +257,9 @@ export function proxy(request: NextRequest) {
   if (hasLocale) return NextResponse.next()
 
   const locale = request.cookies.get('locale')?.value ?? DEFAULT_LOCALE
-  request.nextUrl.pathname = `/${locale}${pathname}`
-  return NextResponse.redirect(request.nextUrl)
+  const url = request.nextUrl.clone()
+  url.pathname = `/${locale}${pathname}`
+  return NextResponse.redirect(url)
 }
 
 export const config = {
@@ -268,14 +272,22 @@ export const config = {
 ### Fast existence check for 404 (compliance)
 
 ```ts
-// proxy.ts — lightweight slug check, not full content fetch
+// proxy.ts — local/fast-store lookup only; never fetch() back into the app
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { postSlugExists } from '@/lib/post-slugs' // in-memory set or Redis EXISTS
+
 export async function proxy(request: NextRequest) {
-  const slug = request.nextUrl.pathname.split('/').pop()
-  if (request.nextUrl.pathname.startsWith('/blog/') && slug) {
-    const exists = await fetch(`${request.nextUrl.origin}/api/posts/${slug}/exists`)
-    if (!exists.ok) {
-      return NextResponse.rewrite(new URL('/not-found', request.url))
-    }
+  const { pathname } = request.nextUrl
+  if (!pathname.startsWith('/blog/')) return NextResponse.next()
+
+  const rawSlug = pathname.split('/').pop()
+  if (!rawSlug) return NextResponse.next()
+
+  const slug = encodeURIComponent(rawSlug)
+  const exists = await postSlugExists(slug) // O(1) local check — no network to self
+  if (!exists) {
+    return NextResponse.rewrite(new URL('/not-found', request.url))
   }
   return NextResponse.next()
 }
@@ -310,10 +322,12 @@ export async function proxy(request: NextRequest) {
 ```
 
 ```ts
-// PASS — verify JWT/signed session only; full authz in Server Components
+// PASS — verifySession validates the cookie; full authz in Server Components
+import { verifySession } from '@/lib/auth'
+
 export async function proxy(request: NextRequest) {
-  const session = request.cookies.get('session')?.value
-  const payload = session ? await verifySession(session) : null
+  const token = request.cookies.get('session')?.value
+  const payload = token ? await verifySession(token) : null
   if (!payload) return NextResponse.redirect(new URL('/login', request.url))
   return NextResponse.next()
 }
@@ -323,9 +337,10 @@ export async function proxy(request: NextRequest) {
 
 ```ts
 // FAIL — auth check runs on /_next/static/chunks/*.js
-export function proxy(request: NextRequest) {
-  const session = request.cookies.get('session')
-  if (!session) return NextResponse.redirect(new URL('/login', request.url))
+export async function proxy(request: NextRequest) {
+  const token = request.cookies.get('session')?.value
+  const payload = token ? await verifySession(token) : null
+  if (!payload) return NextResponse.redirect(new URL('/login', request.url))
   return NextResponse.next()
 }
 // Missing config.matcher
@@ -369,7 +384,9 @@ export async function deleteAccount() {
 - Placing `proxy.ts` inside `app/` instead of project root / `src/`.
 - Using `middleware.ts` filename in new Next.js 16 projects.
 - Running proxy on `_next/static` and `_next/image` paths.
-- Heavy I/O in proxy (database, external API calls).
+- Heavy I/O in proxy (database, `fetch()` back into the app, external API calls).
+- Checking cookie presence without `verifySession()` — a forged cookie must fail closed.
+- Trusting forwarded headers (`x-session-id`) as authentication without re-verifying the cookie.
 - Treating proxy auth as sufficient — Server Actions and Route Handlers must re-verify.
 - Using dynamic values in `matcher` config (must be statically analyzable).
 - Calling `revalidateTag` or `updateTag` from proxy — server-only, not in proxy context.
@@ -378,8 +395,8 @@ export async function deleteAccount() {
 ## Best Practices
 
 - Keep proxy logic under ~50ms per request.
-- Use signed JWT or encrypted session cookies — verify, don't database-lookup.
-- Pass identity via request headers; read with `headers()` in Server Components.
+- Use signed JWT or encrypted session cookies — call `verifySession()`, don't database-lookup.
+- Re-read and verify the session cookie in Server Components — never trust forwarded auth headers.
 - Always re-authorize in Server Actions, Route Handlers, and DAL.
 - Exclude static assets, images, and favicon from matcher.
 - Use `NextResponse.redirect` for auth failures with `callbackUrl` preserved.
@@ -401,13 +418,14 @@ export async function deleteAccount() {
 ### Authentication
 
 - [ ] Unauthenticated users redirected before protected routes render
-- [ ] Session verified via signed token — no DB in proxy
+- [ ] Session verified with `verifySession()` — not cookie presence alone; no DB in proxy
+- [ ] Server Components / Actions re-verify the cookie — never trust forwarded auth headers
 - [ ] `callbackUrl` preserved on login redirect
 - [ ] Server Actions re-verify auth independently of proxy
 
 ### Performance
 
-- [ ] No database or heavy API calls in proxy
+- [ ] No database, self-`fetch()`, or heavy API calls in proxy
 - [ ] No shared mutable global state
 - [ ] Rewrites used instead of redirect when URL should stay the same
 

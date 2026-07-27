@@ -6,6 +6,16 @@
 
 The Metadata API generates `<title>`, `<meta>`, Open Graph, Twitter Card, and icon tags from `layout.tsx` and `page.tsx` exports. Use static `metadata` for fixed pages and `generateMetadata` for data-driven pages.
 
+This resource owns **App Router metadata conventions** — where metadata lives, how it inherits, and how `generateMetadata` shares data with pages. For deeper SEO implementation (JSON-LD, sitemaps, robots, Open Graph depth), use the sibling **seo** skill:
+
+| Topic | See |
+|-------|-----|
+| JSON-LD / structured data | [seo skill — Structured Data](../../seo/resources/structured-data.md) |
+| Sitemaps (`sitemap.ts`) | [seo skill — Crawlability](../../seo/resources/crawlability.md) |
+| Robots (`robots.ts`) | [seo skill — Crawlability](../../seo/resources/crawlability.md) |
+| Open Graph images & depth | [seo skill — OG Images](../../seo/resources/og-images.md) |
+| Full metadata patterns | [seo skill — Metadata](../../seo/resources/metadata.md) |
+
 For image/font performance affecting SEO Core Web Vitals, see [assets.md](assets.md). For routing of sitemap/robots files, see [routing.md](routing.md).
 
 ## Architecture
@@ -31,9 +41,8 @@ app/blog/[slug]/page.tsx
         ├── robots
         └── icons
 
-app/robots.ts ──► /robots.txt
-app/sitemap.ts ──► /sitemap.xml
-app/icon.tsx / opengraph-image.tsx ──► generated assets
+File conventions (robots.ts, sitemap.ts, opengraph-image.tsx)
+  → implement via seo skill; this resource covers Metadata API ownership only
 ```
 
 ## Decision Matrix
@@ -50,17 +59,17 @@ app/icon.tsx / opengraph-image.tsx ──► generated assets
 | Dashboard / app | Static `metadata` + `robots: noindex` | No | No |
 | Auth (login) | Static `metadata` + `noindex` | No | No |
 
-### File convention
+### File convention (ownership)
 
-| File | Output | When |
-|------|--------|------|
-| `export const metadata` | Static tags | Known at build time |
-| `generateMetadata()` | Dynamic tags | Depends on fetched data |
-| `robots.ts` | `/robots.txt` | Crawl rules |
-| `sitemap.ts` | `/sitemap.xml` | URL discovery |
-| `opengraph-image.tsx` | OG image per route | Social previews |
-| `icon.tsx` / `apple-icon.tsx` | Favicons | App icons |
-| JSON-LD `<script>` | Structured data | Rich results |
+| File | Output | Owned by |
+|------|--------|----------|
+| `export const metadata` | Static tags | This skill |
+| `generateMetadata()` | Dynamic tags | This skill |
+| `robots.ts` | `/robots.txt` | **seo** skill |
+| `sitemap.ts` | `/sitemap.xml` | **seo** skill |
+| `opengraph-image.tsx` | OG image per route | **seo** skill |
+| `icon.tsx` / `apple-icon.tsx` | Favicons | This skill (convention) / **seo** for depth |
+| JSON-LD `<script>` | Structured data | **seo** skill |
 
 ## Production Workflow
 
@@ -70,10 +79,9 @@ app/icon.tsx / opengraph-image.tsx ──► generated assets
 3. Implement generateMetadata on dynamic pages
 4. Memoize shared fetches with React cache()
 5. Set alternates.canonical on all indexable pages
-6. Add robots.ts and sitemap.ts
-7. noindex auth/dashboard routes
-8. Add JSON-LD for Product, Article, Organization as applicable
-9. Validate with Google Rich Results Test
+6. noindex auth/dashboard routes
+7. For robots.ts, sitemap.ts, JSON-LD, OG images → use seo skill
+8. Validate with View Source / Google Rich Results Test
 ```
 
 ### Root Layout Setup
@@ -221,149 +229,6 @@ export default function LiveFleetLayout({ children }: { children: React.ReactNod
 }
 ```
 
-### robots.ts
-
-```tsx
-// app/robots.ts
-import type { MetadataRoute } from 'next'
-
-export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://acme.com'
-
-  return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: ['/api/', '/dashboard/', '/account/', '/fleet/live/'],
-      },
-    ],
-    sitemap: `${baseUrl}/sitemap.xml`,
-  }
-}
-```
-
-### sitemap.ts
-
-```tsx
-// app/sitemap.ts
-import type { MetadataRoute } from 'next'
-import { db } from '@/lib/db'
-
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://acme.com'
-
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: baseUrl, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
-    { url: `${baseUrl}/pricing`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-  ]
-
-  const vehicles = await db.vehicle.findMany({
-    where: { published: true },
-    select: { vin: true, updatedAt: true },
-  })
-
-  const vehiclePages: MetadataRoute.Sitemap = vehicles.map((v) => ({
-    url: `${baseUrl}/vehicles/${v.vin}`,
-    lastModified: v.updatedAt,
-    changeFrequency: 'daily' as const,
-    priority: 0.7,
-  }))
-
-  return [...staticPages, ...vehiclePages]
-}
-```
-
-### JSON-LD Structured Data
-
-```tsx
-// components/JsonLd.tsx
-export function JsonLd({ data }: { data: Record<string, unknown> }) {
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
-  )
-}
-```
-
-```tsx
-// app/vehicles/[vin]/page.tsx
-import { JsonLd } from '@/components/JsonLd'
-
-export default async function VehiclePage({ params }: { params: Promise<{ vin: string }> }) {
-  const { vin } = await params
-  const vehicle = await getCachedVehicle(vin)
-  if (!vehicle) notFound()
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-    description: vehicle.description,
-    image: vehicle.imageUrl,
-    offers: {
-      '@type': 'Offer',
-      price: vehicle.price,
-      priceCurrency: 'USD',
-      availability: 'https://schema.org/InStock',
-    },
-  }
-
-  return (
-    <>
-      <JsonLd data={jsonLd} />
-      <VehicleDetail vehicle={vehicle} />
-    </>
-  )
-}
-```
-
-### Dynamic OG Image
-
-```tsx
-// app/blog/[slug]/opengraph-image.tsx
-import { ImageResponse } from 'next/og'
-import { getPost } from '@/lib/posts'
-
-export const alt = 'Blog post'
-export const size = { width: 1200, height: 630 }
-export const contentType = 'image/png'
-
-export default async function Image({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
-  const { slug } = await params
-  const post = await getPost(slug)
-
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          fontSize: 48,
-          background: '#0f172a',
-          color: '#f8fafc',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          padding: 64,
-        }}
-      >
-        <div style={{ fontSize: 24, opacity: 0.7 }}>Acme Blog</div>
-        <div style={{ fontWeight: 700 }}>{post?.title ?? 'Post'}</div>
-      </div>
-    ),
-    { ...size }
-  )
-}
-```
-
 ## PASS Examples
 
 ### Title template inheritance
@@ -473,22 +338,17 @@ export default function Layout({ children }) {
 - `noindex` missing on dashboard, auth, and staging routes.
 - `generateMetadata` and page fetch same data without `cache()`.
 - Exporting metadata from `'use client'` pages.
-- Sitemap includes `/api/`, `/dashboard/`, or auth routes.
-- JSON-LD with incorrect schema types or missing required fields.
-- OG images wrong aspect ratio (use 1200×630).
+- Duplicating robots/sitemap/JSON-LD guidance here — use the **seo** skill instead.
 
 ## Best Practices
 
 - Set `metadataBase` and title `template` in root layout exactly once.
 - Every indexable page: unique `title`, `description`, `alternates.canonical`.
 - Memoize data fetches shared between `generateMetadata` and page with `cache()`.
-- Use `robots: { index: false }` for app routes, not `robots.txt` alone.
-- Generate `sitemap.ts` from database for dynamic content.
-- Add JSON-LD for Product, Article, Organization, BreadcrumbList where eligible.
-- Use `opengraph-image.tsx` for dynamic social previews on high-share pages.
+- Use `robots: { index: false }` for app routes in layout metadata.
 - Set `lang` on `<html>` in root layout.
-- Test metadata with View Source and Google Rich Results Test.
 - For Cache Components: `generateMetadata` runtime access tracked separately — see Metadata with Cache Components docs.
+- Defer JSON-LD, sitemap, robots, and OG image generation to the **seo** skill.
 
 ## Production Checklist
 
@@ -504,21 +364,18 @@ export default function Layout({ children }) {
 - [ ] Unique `<title>` on every public page
 - [ ] Unique `description` on every public page
 - [ ] `alternates.canonical` on indexable pages
-- [ ] OG `title`, `description`, `images` on shareable pages
+- [ ] Basic OG `title` / `description` on shareable pages
 - [ ] `robots: noindex` on auth, dashboard, admin routes
-
-### Files
-
-- [ ] `app/robots.ts` disallows `/api/`, `/dashboard/`, private routes
-- [ ] `app/sitemap.ts` includes all public URLs
-- [ ] Sitemap `lastModified` reflects actual content updates
-- [ ] JSON-LD validates in Rich Results Test
 
 ### Dynamic Pages
 
 - [ ] `generateMetadata` uses `cache()` for shared data access
 - [ ] `params` awaited as `Promise<{}>`
 - [ ] Missing resources return sensible metadata or trigger `notFound()`
+
+### SEO depth (seo skill)
+
+- [ ] `robots.ts` / `sitemap.ts` / JSON-LD / OG images covered via **seo** skill
 
 ## References
 
@@ -527,12 +384,11 @@ export default function Layout({ children }) {
 - [Metadata and OG Images](https://nextjs.org/docs/app/getting-started/metadata-and-og-images)
 - [`generateMetadata`](https://nextjs.org/docs/app/api-reference/functions/generate-metadata)
 - [`metadata` object](https://nextjs.org/docs/app/api-reference/functions/generate-metadata#the-metadata-object)
-- [`robots.ts`](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/robots)
-- [`sitemap.ts`](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap)
-- [`opengraph-image`](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image)
-- [`icon`](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/app-icons)
-- [JSON-LD](https://nextjs.org/docs/app/guides/json-ld)
 - [`files` metadata API](https://nextjs.org/docs/app/api-reference/file-conventions/metadata)
+
+### Sibling skill
+
+- [seo skill](../../seo/SKILL.md) — JSON-LD, sitemaps, robots, Open Graph depth
 
 **Framework:** Next.js 16 App Router
 

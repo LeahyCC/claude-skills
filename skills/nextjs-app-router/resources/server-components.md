@@ -463,6 +463,6 @@ export default async function Page() { ... }
 - [`server-only` package](https://nextjs.org/docs/app/getting-started/server-and-client-components#preventing-environment-poisoning)
 - [Composition Patterns](https://nextjs.org/docs/app/getting-started/server-and-client-components#composing-server-and-client-components)
 
-**Framework:** Next.js 16 App Router · React 19
+**Framework:** Next.js 16 App Router · React 19.2
 
 **Last verified:** July 2026

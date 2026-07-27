@@ -160,7 +160,6 @@
           "next dev",
           "next build",
           "next start",
-          "next lint",
           "next typegen"
         ]
       }

@@ -57,8 +57,8 @@ Mutation (Server Action)
 | Legal pages, docs | Yes | `max` | Rare manual `revalidateTag` |
 | Blog posts, articles | Yes | `days` | `revalidateTag('posts', 'max')` on publish |
 | Product catalog | Yes | `hours` | Tag per category + `updateTag` on edit |
-| User dashboard | No | — | `cookies()` / per-user — use Suspense |
-| Cart, session | No | — | Runtime APIs — never `'use cache'` |
+| User dashboard | Yes (`'use cache: private'`) | `minutes` | Browser-only — never shared server cache |
+| Cart, session secrets | No shared `'use cache'` | — | Suspense or `'use cache: private'` |
 | Stock prices | Yes | `seconds` | Short TTL + Suspense fallback |
 | Admin-only data | No | — | Auth-gated, request-time only |
 
@@ -78,6 +78,7 @@ Mutation (Server Action)
 | Need | Directive |
 |------|-----------|
 | Default server caching | `'use cache'` |
+| Per-user / runtime APIs (`cookies`, `headers`) | `'use cache: private'` — browser memory only; not in static shell |
 | Compliance / cannot pass runtime data as args | `'use cache: private'` |
 | Serverless / shared durable cache (Redis, KV) | `'use cache: remote'` |
 | Per-request dynamic data | No directive — wrap in `<Suspense>` |
@@ -209,7 +210,6 @@ export default function DashboardPage() {
 
 ```tsx
 // app/account/page.tsx
-import { cookies } from 'next/headers'
 import { Suspense } from 'react'
 import { getAccountSummary } from '@/lib/account'
 
@@ -222,10 +222,9 @@ export default function AccountPage() {
 }
 
 async function AccountContent() {
-  const sessionId = (await cookies()).get('session')?.value
-  if (!sessionId) return <p>Sign in to view your account.</p>
+  const summary = await getAccountSummary()
+  if (!summary) return <p>Sign in to view your account.</p>
 
-  const summary = await getAccountSummary(sessionId)
   return <AccountDashboard summary={summary} />
 }
 ```
@@ -233,12 +232,19 @@ async function AccountContent() {
 ```tsx
 // lib/account.ts
 import { cacheLife, cacheTag } from 'next/cache'
+import { cookies } from 'next/headers'
+import { db } from '@/lib/db'
 
-export async function getAccountSummary(sessionId: string) {
-  'use cache'
+// Per-user data: 'use cache: private' may read cookies(); results stay in
+// browser memory only — never stored on the server or shared across users.
+export async function getAccountSummary() {
+  'use cache: private'
   cacheLife('minutes')
-  cacheTag(`account-${sessionId}`)
 
+  const sessionId = (await cookies()).get('session')?.value
+  if (!sessionId) return null
+
+  cacheTag(`account-${sessionId}`)
   return db.account.findUnique({ where: { sessionId } })
 }
 ```
@@ -325,6 +331,7 @@ export async function POST(request: NextRequest) {
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { db } from '@/lib/db'
 
 export async function updateSiteSettings() {
   await db.settings.update({ data: { maintenanceMode: false } })
@@ -338,6 +345,7 @@ export async function updateSiteSettings() {
 
 ```tsx
 import { cacheLife, cacheTag } from 'next/cache'
+import { db } from '@/lib/db'
 
 export async function getCategories() {
   'use cache'
@@ -365,25 +373,45 @@ export async function getExternalPosts() {
 import { cacheLife } from 'next/cache'
 import { ShortLivedWidget } from '@/components/ShortLivedWidget'
 
-export default async function DashboardPage() {
+export default async function CatalogPage() {
   'use cache'
   cacheLife('hours')
 
   return (
     <div>
-      <h1>Dashboard</h1>
+      <h1>Catalog</h1>
       <ShortLivedWidget />
     </div>
   )
 }
 ```
 
-## FAIL Examples
-
-### Caching per-user data without scoping
+### Per-user dashboard with `'use cache: private'`
 
 ```tsx
-// FAIL — caches first user's data for everyone
+import { cacheLife, cacheTag } from 'next/cache'
+import { cookies } from 'next/headers'
+import { db } from '@/lib/db'
+
+async function PrivateDashboard() {
+  'use cache: private'
+  cacheLife('minutes')
+
+  const sessionId = (await cookies()).get('session')?.value
+  if (!sessionId) return null
+
+  cacheTag(`dashboard-${sessionId}`)
+  const data = await db.dashboard.findUnique({ where: { sessionId } })
+  return <Dashboard data={data} />
+}
+```
+
+## FAIL Examples
+
+### Caching per-user data with shared `'use cache'`
+
+```tsx
+// FAIL — shared server cache keyed incorrectly / cookies inside 'use cache'
 import { cookies } from 'next/headers'
 
 export default async function Page() {
@@ -394,16 +422,21 @@ export default async function Page() {
 ```
 
 ```tsx
-// PASS — read cookies outside cache, pass as argument
-async function PageContent() {
-  const session = (await cookies()).get('session')?.value
-  return <CachedDashboard sessionId={session ?? ''} />
-}
+// PASS — 'use cache: private' may read cookies(); never stored on the server
+import { cacheLife, cacheTag } from 'next/cache'
+import { cookies } from 'next/headers'
+import { db } from '@/lib/db'
 
-async function CachedDashboard({ sessionId }: { sessionId: string }) {
-  'use cache'
+async function CachedDashboard() {
+  'use cache: private'
+  cacheLife('minutes')
+
+  const sessionId = (await cookies()).get('session')?.value
+  if (!sessionId) return null
+
   cacheTag(`dashboard-${sessionId}`)
-  // ...
+  const data = await db.dashboard.findUnique({ where: { sessionId } })
+  return <Dashboard data={data} />
 }
 ```
 
@@ -419,9 +452,9 @@ export async function deleteProduct(id: string) {
 ```
 
 ```tsx
-// PASS
 'use server'
 import { updateTag } from 'next/cache'
+import { db } from '@/lib/db'
 
 export async function deleteProduct(id: string) {
   await db.product.delete({ where: { id } })
@@ -464,10 +497,10 @@ export default async function Page() {
 
 ## Common Mistakes
 
-- Enabling `'use cache'` on components that read `cookies()`, `headers()`, or `searchParams` directly.
+- Enabling `'use cache'` on components that read `cookies()`, `headers()`, or `searchParams` directly — use `'use cache: private'` or pass values as arguments.
 - Using `revalidatePath` when `revalidateTag` would invalidate fewer, more precise entries.
 - Calling `revalidateTag(tag)` without the second argument — deprecated; use `revalidateTag(tag, 'max')`.
-- Caching user-specific data without including user ID in cache key (via arguments + `cacheTag`).
+- Caching user-specific data with shared `'use cache'` — use `'use cache: private'` so results are never stored on the server.
 - Omitting `cacheLife` on outer `'use cache'` when nesting short-lived inner caches.
 - Expecting `use cache: remote` to work without platform cache handler configuration.
 - Using `updateTag` in Route Handlers — it is Server Actions only.
@@ -479,10 +512,10 @@ export default async function Page() {
 - Use descriptive, hierarchical tags: `products`, `product-{slug}`, `category-{id}`.
 - Prefer `updateTag` in Server Actions for user-initiated mutations.
 - Prefer `revalidateTag(tag, 'max')` for webhooks and background jobs.
-- Pass runtime values as arguments into cached scopes — never read request APIs inside `'use cache'`.
+- Pass runtime values as arguments into shared `'use cache'` scopes — or use `'use cache: private'` for per-user data that must read `cookies()` / `headers()`.
 - Wrap dynamic sections in `<Suspense>` with meaningful skeleton UI.
 - Use `'use cache: remote'` on serverless when cross-request persistence is required.
-- Reserve `'use cache: private'` for compliance cases that cannot be refactored.
+- Reserve `'use cache: private'` for per-user dashboards and compliance cases — browser memory only; not part of the static shell.
 - Audit build output to confirm expected routes are prerendered.
 - Keep cached return values serializable and minimal — avoid returning full ORM graphs.
 
@@ -498,8 +531,8 @@ export default async function Page() {
 
 - [ ] Every `'use cache'` scope has explicit `cacheLife`
 - [ ] Cacheable data tagged with `cacheTag` or `fetch` `next.tags`
-- [ ] No `cookies()` / `headers()` / `searchParams` inside `'use cache'` scopes
-- [ ] Per-user data scoped by argument + tag, not shared globally
+- [ ] No `cookies()` / `headers()` / `searchParams` inside shared `'use cache'` scopes
+- [ ] Per-user data uses `'use cache: private'` (browser-only) — never shared server cache
 - [ ] Short-lived nested caches have explicit outer `cacheLife`
 
 ### Invalidation
@@ -523,6 +556,7 @@ export default async function Page() {
 - [Caching](https://nextjs.org/docs/app/getting-started/caching)
 - [Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)
 - [`use cache` directive](https://nextjs.org/docs/app/api-reference/directives/use-cache)
+- [`use cache: private`](https://nextjs.org/docs/app/api-reference/directives/use-cache-private)
 - [`cacheComponents` config](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents)
 - [`cacheLife`](https://nextjs.org/docs/app/api-reference/functions/cacheLife)
 - [`cacheTag`](https://nextjs.org/docs/app/api-reference/functions/cacheTag)
