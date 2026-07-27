@@ -33,17 +33,29 @@ Next.js 16 Upgrade Impact
 
 | Change | Before (15) | After (16) |
 |--------|-------------|------------|
-| Middleware file | `middleware.ts` | `proxy.ts` |
+| Default bundler | Webpack (Turbopack opt-in) | **Turbopack** default for `next dev` / `next build`; use `--webpack` to opt out |
+| Custom webpack + default build | Silent ignore risk | Build **fails** if `webpack` config present unless `--webpack` or migrate to Turbopack |
+| Middleware file | `middleware.ts` | `proxy.ts` (filename deprecated → renamed) |
 | Middleware export | `export function middleware` | `export function proxy` |
-| `params` in pages/layouts | Sync object | `Promise<{}>` — must `await` |
-| `searchParams` | Sync object | `Promise<{}>` — must `await` |
-| `cookies()` | Sync | `await cookies()` |
-| `headers()` | Sync | `await headers()` |
-| `draftMode()` | Sync | `await draftMode()` |
+| Proxy runtime | Middleware could use Edge | `proxy` is **Node.js only** — Edge not supported |
+| `params` in pages/layouts | Sync object (compat shim) | `Promise<{}>` — must `await` (**sync removed**) |
+| `searchParams` | Sync object (compat shim) | `Promise<{}>` — must `await` (**sync removed**) |
+| `cookies()` / `headers()` / `draftMode()` | Sync compat | Must `await` (**sync removed**) |
+| `serverRuntimeConfig` / `publicRuntimeConfig` | Supported | **Removed** — use env vars (`NEXT_PUBLIC_*` for client) |
+| AMP (`next/amp`, `amp` config) | Supported | **Removed** |
+| Node.js | 18+ common | **20.9.0+** minimum |
+| TypeScript | Older OK | **5.1.0+** minimum |
+| Parallel route slots | Implicit fallback | Explicit `default.js` **required** per slot or build fails |
+| `experimental.dynamicIO` | Experimental flag | **Removed** — use `cacheComponents: true` |
+| `experimental.useCache` | Experimental flag | **Removed** — use `cacheComponents: true` |
 | Caching model | Implicit fetch cache defaults | Opt-in Cache Components (`cacheComponents: true`) + `'use cache'` |
 | `revalidateTag(tag)` | Immediate expiry | Deprecated — use `revalidateTag(tag, 'max')` |
 | PPR | Experimental flag | Default **when** Cache Components are enabled |
-| Proxy runtime | Middleware could use Edge | `proxy` is Node.js only — Edge not supported |
+| `unstable_rootParams()` | Experimental | **Removed** (replacement forthcoming) |
+| Dev output | Shared `.next` | `next dev` writes to **`.next/dev`** (concurrent with build) |
+| `generateImageMetadata` `id` | Sync string | `id` is `Promise<string>` in the image function |
+| `generateSitemaps` `id` | Sync | `id` is async (`Promise`) in the sitemap function |
+| `next lint` | Built-in command | **Removed** — use ESLint/Biome CLI; `next build` no longer lints |
 
 ## Decision Matrix
 
@@ -62,12 +74,15 @@ Next.js 16 Upgrade Impact
 1. npx @next/codemod@canary upgrade latest
 2. npx @next/codemod@canary middleware-to-proxy .
 3. npx @next/codemod@canary next-async-request-api .
-4. Add cacheComponents: true to next.config.ts
-5. Fix remaining TypeScript errors (await params, cookies, headers)
-6. Replace revalidateTag(tag) → revalidateTag(tag, 'max')
-7. Audit 'use cache' boundaries for runtime API access
-8. Run next build && next typegen
-9. Test proxy matcher excludes static assets
+4. npx @next/codemod@canary next-lint-to-eslint-cli .   # next lint removed
+5. Confirm Node ≥ 20.9 and TypeScript ≥ 5.1
+6. Add cacheComponents: true (replaces experimental.dynamicIO / useCache)
+7. Fix remaining TypeScript errors (await params, cookies, headers)
+8. Replace revalidateTag(tag) → revalidateTag(tag, 'max')
+9. Add default.js to every parallel route slot
+10. Audit webpack config — use Turbopack or next build --webpack
+11. Run next build && next typegen
+12. Test proxy matcher excludes static assets
 ```
 
 ### package.json Upgrade
@@ -283,12 +298,30 @@ export default function Page() {
 
 ### generateStaticParams with Cache Components
 
-Must return **at least one** param when `cacheComponents` is enabled. Empty arrays cause build errors.
+Must return **at least one** param when `cacheComponents` is enabled. Empty arrays cause build errors — Cache Components needs a sample param to validate the route does not incorrectly access runtime APIs.
+
+If real params are unknown at build time, return a placeholder, then call `notFound()` for it in the page. **Limitation:** a placeholder bypasses effective build-time validation and may surface runtime errors instead.
 
 ```tsx
+import { notFound } from 'next/navigation'
+
 export async function generateStaticParams() {
   const slugs = await getAllSlugs()
-  return slugs.length > 0 ? slugs.map((slug) => ({ slug })) : [{ slug: 'default' }]
+  if (slugs.length > 0) {
+    return slugs.map((slug) => ({ slug }))
+  }
+  // Placeholder only when no real params exist yet — prefer real IDs when available
+  return [{ slug: '__placeholder__' }]
+}
+
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = await params
+  if (slug === '__placeholder__') notFound()
+  // ...
 }
 ```
 
@@ -339,8 +372,8 @@ const session = (await cookies()).get('session')
 
 ### Keeping middleware.ts filename
 
-```ts
-// FAIL — deprecated in Next.js 16
+```tsx
+// FAIL — removed in Next.js 16
 // middleware.ts still works temporarily but will be removed
 export function middleware(request: NextRequest) { ... }
 ```
@@ -379,15 +412,20 @@ async function ThemedContent() {
 }
 ```
 
-## Deprecated APIs
+## Removed / Deprecated APIs
 
 | API | Status | Replacement |
 |-----|--------|-------------|
-| `middleware.ts` | Deprecated | `proxy.ts` |
-| `export function middleware` | Deprecated | `export function proxy` |
-| Sync `params` | Deprecated | `await params` or `use(params)` |
-| Sync `cookies()` | Deprecated | `await cookies()` |
-| Sync `headers()` | Deprecated | `await headers()` |
+| `middleware.ts` | Deprecated (rename) | `proxy.ts` |
+| `export function middleware` | Deprecated (rename) | `export function proxy` |
+| Sync `params` / `searchParams` | **Removed** | `await params` / `use(params)` |
+| Sync `cookies()` / `headers()` / `draftMode()` | **Removed** | `await cookies()` / `await headers()` / `await draftMode()` |
+| `serverRuntimeConfig` / `publicRuntimeConfig` | **Removed** | Environment variables |
+| AMP (`next/amp`, `amp` config) | **Removed** | Built-in optimizations / modern web |
+| `next lint` | **Removed** | ESLint or Biome CLI |
+| `experimental.dynamicIO` | **Removed** | `cacheComponents: true` |
+| `experimental.useCache` | **Removed** | `cacheComponents: true` |
+| `unstable_rootParams()` | **Removed** | Forthcoming alternative API |
 | `revalidateTag(tag)` single arg | Deprecated | `revalidateTag(tag, 'max')` |
 | Implicit fetch cache defaults | Changed | Cache Components model |
 
@@ -398,6 +436,7 @@ async function ThemedContent() {
 | Upgrade Next.js | `npx @next/codemod@canary upgrade latest` |
 | middleware → proxy | `npx @next/codemod@canary middleware-to-proxy .` |
 | Async request APIs | `npx @next/codemod@canary next-async-request-api .` |
+| `next lint` → ESLint CLI | `npx @next/codemod@canary next-lint-to-eslint-cli .` |
 
 Run codemods before manual fixes. Review diffs — codemods may not cover every edge case.
 
@@ -406,7 +445,12 @@ Run codemods before manual fixes. Review diffs — codemods may not cover every 
 ### Upgrade
 
 - [ ] `next`, `react`, `react-dom` updated to latest
+- [ ] Node.js ≥ 20.9.0 and TypeScript ≥ 5.1.0
 - [ ] `npx @next/codemod@canary upgrade latest` run
+- [ ] Turbopack default accepted, or `--webpack` / config migrated
+- [ ] `next lint` removed from scripts — ESLint/Biome CLI in place
+- [ ] `serverRuntimeConfig` / `publicRuntimeConfig` / AMP usage removed
+- [ ] Parallel route slots each have `default.js`
 - [ ] `next build` passes
 
 ### proxy.ts
@@ -422,16 +466,19 @@ Run codemods before manual fixes. Review diffs — codemods may not cover every 
 - [ ] All `searchParams` awaited
 - [ ] `cookies()` and `headers()` awaited
 - [ ] `draftMode()` awaited
+- [ ] `generateImageMetadata` / `generateSitemaps` `id` awaited where applicable
 - [ ] Client Components use `use(params)` where needed
 
 ### Cache Components
 
-- [ ] `cacheComponents: true` in `next.config.ts`
+- [ ] `cacheComponents: true` in `next.config.ts` (not `experimental.dynamicIO` / `useCache`)
 - [ ] `revalidateTag(tag, 'max')` updated everywhere
 - [ ] `updateTag` only in Server Actions
-- [ ] `generateStaticParams` returns ≥1 entry
+- [ ] `generateStaticParams` returns ≥1 entry (`__placeholder__` + `notFound()` only if needed)
 - [ ] No runtime APIs inside `'use cache'` scopes
 - [ ] `connection()` used for request-time non-deterministic values
+- [ ] No remaining `unstable_rootParams()` calls
+- [ ] Dev tooling aware of `.next/dev` output directory
 
 ## References
 
@@ -447,6 +494,6 @@ Run codemods before manual fixes. Review diffs — codemods may not cover every 
 - [`updateTag`](https://nextjs.org/docs/app/api-reference/functions/updateTag)
 - [Codemods](https://nextjs.org/docs/app/guides/upgrading/codemods)
 
-**Framework:** Next.js 16 App Router · React 19
+**Framework:** Next.js 16 App Router · React 19.2
 
 **Last verified:** July 2026

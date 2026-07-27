@@ -562,6 +562,6 @@ export default function GlobalError({ unstable_retry }: { unstable_retry: () => 
 - [`notFound`](https://nextjs.org/docs/app/api-reference/functions/not-found)
 - [Streaming — Status Codes](https://nextjs.org/docs/app/api-reference/file-conventions/loading#status-codes)
 
-**Framework:** Next.js 16 App Router · React 19
+**Framework:** Next.js 16 App Router · React 19.2
 
 **Last verified:** July 2026

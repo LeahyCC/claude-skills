@@ -16,9 +16,8 @@ metadata:
     - "next dev"
     - "next build"
     - "next start"
-    - "next lint"
     - "next typegen"
-  priority: 60
+  priority: 50
 ---
 
 # Next.js App Router
@@ -50,7 +49,7 @@ Request → proxy.ts → Route (layout/page) → Server Components → DB/API
 | Layouts, navigation, dynamic routes | [routing.md](resources/routing.md) |
 | `proxy.ts`, auth gates | [proxy.md](resources/proxy.md) |
 | `error.tsx`, `loading.tsx`, `notFound()` | [error-handling.md](resources/error-handling.md) |
-| Metadata, sitemap, robots | [metadata-and-seo.md](resources/metadata-and-seo.md) |
+| Metadata, App Router ownership | [metadata-and-seo.md](resources/metadata-and-seo.md) |
 | `next/image`, `next/font` | [assets.md](resources/assets.md) |
 | Pages Router migration | [migration.md](resources/migration.md) |
 | Next.js 15 → 16 upgrade | [version-changes.md](resources/version-changes.md) |
@@ -91,7 +90,7 @@ Need to mutate data?
 |----------|---------|
 | Independent fetches | `Promise.all()` in Server Component |
 | Slow section | `<Suspense>` + streaming |
-| User-specific data | No `'use cache'` — `cookies()` + Suspense |
+| User-specific data | `'use cache: private'` (or Suspense — no shared `'use cache'`) |
 | Shared catalog | `'use cache'` + `cacheTag` |
 | After mutation | `updateTag()` (actions) or `revalidateTag` (webhooks) |
 
@@ -121,7 +120,7 @@ Need to mutate data?
 
 - [ ] Server Actions authenticate and authorize
 - [ ] `updateTag` or `revalidateTag` after mutations
-- [ ] No `cookies()` inside `'use cache'` scopes
+- [ ] No `cookies()` inside shared `'use cache'` scopes (use `'use cache: private'` for per-user)
 
 ### Routing & UX
 
@@ -147,7 +146,7 @@ Need to mutate data?
 - [ ] Route Handlers for internal reads (use Server Components)
 - [ ] Sequential awaits for independent requests
 - [ ] `middleware.ts` instead of `proxy.ts` (Next.js 16)
-- [ ] Sync `params` or `cookies()` (deprecated)
+- [ ] Sync `params` or `cookies()` (removed)
 - [ ] `revalidateTag(tag)` without second argument
 - [ ] Auth only in proxy — not in Server Actions
 
@@ -161,7 +160,7 @@ Need to mutate data?
 | [routing.md](resources/routing.md) | Layouts, pages, parallel/intercepting routes, Link |
 | [proxy.md](resources/proxy.md) | proxy.ts, matcher, redirects, auth gates |
 | [error-handling.md](resources/error-handling.md) | loading, error, not-found boundaries |
-| [metadata-and-seo.md](resources/metadata-and-seo.md) | Metadata API, sitemap, robots, JSON-LD |
+| [metadata-and-seo.md](resources/metadata-and-seo.md) | Metadata API ownership; SEO depth → seo skill |
 | [assets.md](resources/assets.md) | next/image, next/font |
 | [migration.md](resources/migration.md) | Pages Router → App Router |
 | [version-changes.md](resources/version-changes.md) | Next.js 15 → 16 breaking changes |

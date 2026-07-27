@@ -444,6 +444,6 @@ const inventory = await getInventory()
 - [React `use()`](https://react.dev/reference/react/use)
 - [React Suspense](https://react.dev/reference/react/Suspense)
 
-**Framework:** Next.js 16 App Router · React 19
+**Framework:** Next.js 16 App Router · React 19.2
 
 **Last verified:** July 2026
