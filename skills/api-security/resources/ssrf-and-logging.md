@@ -257,7 +257,7 @@ async function getClientIp(): Promise<string> {
 export async function login(email: string, password: string) {
   const ip = await getClientIp()
 
-  const user = await db.select().from(users).where(eq(users.email, email))
+  const [user] = await db.select().from(users).where(eq(users.email, email))
   if (!user || !await verifyPassword(password, user.passwordHash)) {
     securityLog('auth.login.failed', {
       ip,
@@ -293,7 +293,7 @@ export async function deleteProject(projectId: string) {
     throw new Error('Unauthorized')
   }
 
-  const project = await db.select().from(projects)
+  const [project] = await db.select().from(projects)
     .where(and(eq(projects.id, projectId), eq(projects.ownerId, user.id)))
 
   if (!project) {

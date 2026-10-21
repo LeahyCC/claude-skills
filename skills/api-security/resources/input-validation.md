@@ -241,12 +241,9 @@ function Comment({ markdown }: { markdown: string }) {
 
 ### URL Injection
 
-```tsx
-// FAIL — rendering user-supplied URLs without validation
-<a href={userProfile.website}>Visit site</a>
-// Attacker sets website to: javascript:alert(document.cookie)
+React rewrites a `javascript:` href to a URL that throws, so this does not run the script. `data:` URLs are not rewritten, and neither is `window.location`. Keep an http(s) check.
 
-// PASS — validate URL scheme
+```tsx
 function SafeLink({ href, children }: { href: string; children: React.ReactNode }) {
   const isValid = /^https?:\/\//i.test(href)
   if (!isValid) return <span>{children}</span>
@@ -350,3 +347,4 @@ grep -rn "request.json()" --include="*.ts" -A5 | grep -v "safeParse\|parse(\|Sch
 - [OWASP A05:2025 — Injection](https://owasp.org/Top10/2025/A05_2025-Injection/)
 - [Next.js Data Security Guide](https://nextjs.org/docs/app/guides/data-security)
 - [Zod Documentation](https://zod.dev)
+- [React `sanitizeURL`](https://github.com/facebook/react/blob/v19.2.4/packages/react-dom-bindings/src/shared/sanitizeURL.js)
