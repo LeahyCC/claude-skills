@@ -41,14 +41,6 @@ export default function HomePage() {
     '@type': 'WebSite',
     name: 'Carzilly',
     url: 'https://carzilly.com',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: 'https://carzilly.com/search?q={search_term_string}',
-      },
-      'query-input': 'required name=search_term_string',
-    },
   }
 
   return (
@@ -61,12 +53,19 @@ export default function HomePage() {
 }
 ```
 
-## Product / Vehicle Listing
+Google removed the sitelinks search box in November 2024. Do not add `SearchAction`. `WebSite` is still used for the site name.
+
+## Product
 
 ```tsx
 // app/listings/[id]/page.tsx
-export default async function ListingPage({ params }) {
-  const listing = await getListing(params.id)
+export default async function ListingPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  const listing = await getListing(id)
 
   const productData = {
     '@context': 'https://schema.org',
@@ -87,13 +86,6 @@ export default async function ListingPage({ params }) {
         '@type': 'Organization',
         name: listing.dealershipName,
       },
-    },
-    // Vehicle-specific properties
-    vehicleModelDate: String(listing.year),
-    mileageFromOdometer: {
-      '@type': 'QuantitativeValue',
-      value: listing.mileage,
-      unitCode: 'SMI',
     },
   }
 
@@ -132,6 +124,8 @@ const articleData = {
   },
 }
 ```
+
+Article has no required properties. Add the ones you have. `headline`, `image`, `datePublished`, and `author` are the usual set for a post.
 
 ## BreadcrumbList
 
@@ -200,7 +194,7 @@ const localBusinessData = {
 
 ## FAQPage
 
-> **Note:** As of August 2023, Google restricted FAQ rich results to well-known, authoritative government and health websites. The structured data is still valid but may not generate rich results for most sites.
+> Google stopped showing FAQ rich results on May 7, 2026. HowTo rich results ended on September 13, 2023. Leaving this markup in place does not cause a penalty, and it does not produce a rich result.
 
 ```tsx
 const faqData = {
@@ -233,13 +227,6 @@ const faqData = {
 const data = {
   '@type': 'Product',
   offers: { price: 0 },  // Page shows $25,000
-}
-
-// WRONG — missing required fields
-const data = {
-  '@type': 'Article',
-  headline: 'Title',
-  // Missing: author, datePublished, image
 }
 
 // WRONG — Microdata instead of JSON-LD

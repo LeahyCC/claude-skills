@@ -37,7 +37,7 @@ Production-ready SEO patterns for Next.js applications. Covers traditional SEO (
 [Structured Data]
     ├── JSON-LD via <script type="application/ld+json">
     ├── Schema.org types (Article, Product, Organization, BreadcrumbList)
-    └── Rich results eligibility (FAQ, HowTo, Review, Video)
+    └── Rich results eligibility (Article, Product, Review, Video)
               ↓
 [Crawlability]
     ├── robots.ts (Google + AI crawler control)
@@ -75,7 +75,7 @@ Production-ready SEO patterns for Next.js applications. Covers traditional SEO (
 
 | Page Type | Title | Description | OG Image | Canonical | Structured Data |
 |-----------|-------|-------------|----------|-----------|-----------------|
-| Home page | Static | Yes | Yes (branded) | Yes | Organization, WebSite, SearchAction |
+| Home page | Static | Yes | Yes (branded) | Yes | Organization, WebSite |
 | Listing/product page | Dynamic (from data) | Dynamic | Dynamic (from image) | Yes | Product, BreadcrumbList |
 | Blog post | Dynamic | Dynamic | Dynamic (generated) | Yes | Article, BreadcrumbList |
 | Category/search | Dynamic (with filters) | Dynamic | Optional | Yes (without query params) | BreadcrumbList, ItemList |
@@ -89,11 +89,11 @@ Production-ready SEO patterns for Next.js applications. Covers traditional SEO (
 Is the page valuable to search users?
 ├── YES (content, product, article)
 │   ├── Is there a canonical version? → Set alternates.canonical
-│   ├── Is it paginated? → Set rel prev/next or canonical to page 1
+│   ├── Is it paginated? → Each page canonicals to itself. Link next with <a href>
 │   └── Index it (default — no robots directive needed)
 └── NO (auth, dashboard, admin, API, staging)
     └── Set robots: { index: false, follow: false }
-        └── Also consider: noindex via robots.ts rules
+        └── Do not Disallow that URL in robots.ts. Google must crawl it to see noindex.
 ```
 
 ## SEO Anti-Myths (Google's Actual Guidance)
@@ -103,7 +103,7 @@ These are widely believed but **wrong** according to Google's official documenta
 | Myth | Reality | Source |
 |------|---------|--------|
 | "Add meta keywords" | Google has ignored `<meta name="keywords">` since 2009 | [Google Webmaster Blog](https://developers.google.com/search/blog/2009/09/google-does-not-use-keywords-meta-tag) |
-| "E-E-A-T is a ranking factor" | E-E-A-T is a quality rater guideline, not an algorithm signal | [Google Quality Rater Guidelines](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) |
+| "E-E-A-T is a ranking factor" | There is no E-E-A-T score to add. Ranking systems look for signals that match experience, expertise, authoritativeness, and trust. | [Helpful content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) |
 | "Content must be X words long" | No minimum or maximum. Write what's useful. | [Google SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) |
 | "Heading order affects rankings" | Heading hierarchy helps accessibility, not rankings | Google Search Central (multiple confirmations) |
 | "Duplicate content is a penalty" | No spam penalty. Google picks a canonical. Bad UX, not a ranking hit. | [Google Search Central](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls) |
