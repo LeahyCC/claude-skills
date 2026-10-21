@@ -18,15 +18,14 @@ Synthesis (combine sources into unified answer)
 Citation (link to sources used)
 ```
 
-**Key differences from Google:**
-- No "page 1" — either you're cited or you're not
-- AI has strong **recency bias** (content > 3 months old sees citation drops)
-- **Structure matters more** than keyword density
-- **Third-party mentions** (being referenced on other cited sites) strongly influence selection
+**Key differences from a classic results page:**
+- A citation is the outcome people are chasing. There is no public rank for it.
+- Clear structure is easier to quote than a buried answer.
+- Third-party mentions on other cited sites show up in selection.
 
 ## llms.txt
 
-A proposed standard for helping AI systems understand your site structure. Think of it as `robots.txt` but for content discovery.
+A proposal for helping some AI tools understand your site. Google Search does not use `llms.txt`, including AI Overviews and AI Mode. Do not treat the file as a ranking or citation requirement.
 
 ```markdown
 # Carzilly
@@ -125,14 +124,14 @@ AI engines prefer content that is:
    H1 → H2 → H3, one topic per section
 
 3. USING LISTS for scannable information
-   - Bullet points increase citation likelihood 30-40%
+   - Bullet points for a set of facts
    - Numbered lists for sequential processes
 
 4. ATTRIBUTED with sources
    "According to Kelley Blue Book, the 2024 M4 retains 85% of its value..."
 
-5. RECENT (published within 3 months)
-   Include visible publication dates and "last updated" timestamps
+5. DATED
+   Show a published date and a last-updated date when the page has them. There is no official age cutoff.
 
 6. FIRST-HAND (original data, case studies)
    "We analyzed 10,000 listings and found..."
@@ -169,12 +168,15 @@ export default function robots(): MetadataRoute.Robots {
       // Allow all search engines
       { userAgent: '*', allow: '/' },
 
-      // GEO strategy: Allow AI browsing/search, block training
-      { userAgent: 'ChatGPT-User', allow: '/' },    // ChatGPT search (citations)
-      { userAgent: 'PerplexityBot', allow: '/' },    // Perplexity (citations)
-      { userAgent: 'GPTBot', disallow: '/' },         // OpenAI training (block)
-      { userAgent: 'Google-Extended', disallow: '/' }, // Gemini training (block)
-      { userAgent: 'CCBot', disallow: '/' },           // Common Crawl (block)
+      // Search crawlers. These are the citation rules.
+      { userAgent: 'OAI-SearchBot', allow: '/' },
+      { userAgent: 'Claude-SearchBot', allow: '/' },
+      { userAgent: 'PerplexityBot', allow: '/' },
+      // Training. Blocking these does not remove you from search.
+      { userAgent: 'GPTBot', disallow: '/' },
+      { userAgent: 'ClaudeBot', disallow: '/' },
+      { userAgent: 'Google-Extended', disallow: '/' },
+      { userAgent: 'CCBot', disallow: '/' },
     ],
     sitemap: 'https://example.com/sitemap.xml',
   }
@@ -186,7 +188,7 @@ export default function robots(): MetadataRoute.Robots {
 AI engines heavily use structured data to understand content:
 
 ```tsx
-// FAQ content is especially valuable for AI citation
+// Not a Google rich result as of May 2026. Visible Q&A on the page is the useful part.
 const faqData = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',

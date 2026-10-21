@@ -193,7 +193,7 @@ export const metadata: Metadata = {
 - Pages with query parameters (e.g., `/search?q=test` → canonical `/search`)
 - Pages accessible with/without trailing slash
 - HTTP/HTTPS variants (handle with redirect, not canonical)
-- Paginated content (canonical to page 1 or self-referencing)
+- Paginated content: each page canonicals to itself. Do not point page 2 at page 1. Google ignores rel prev/next.
 
 ## File-Based Metadata
 
@@ -231,7 +231,8 @@ export const metadata: Metadata = {
   title: 'My App',  // Every page says "My App" — bad for SEO
 }
 
-// WRONG — description too long (truncated at ~155 chars in SERP)
+// WRONG — description that does not summarize the page
+// Google fits the snippet to the result. There is no character cutoff in the docs.
 export const metadata: Metadata = {
   description: 'A very long description that goes on and on and includes every possible keyword...',
 }

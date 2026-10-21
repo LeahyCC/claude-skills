@@ -2,7 +2,7 @@
 
 ## robots.ts
 
-Controls which pages search engines and AI crawlers can access:
+Controls which URLs a crawler may fetch. It does not keep a page out of Google. Use `robots: { index: false }` for that, and do not Disallow the same URL. A disallowed URL can still appear, and Google cannot see a noindex tag it was not allowed to crawl.
 
 ```tsx
 // app/robots.ts
@@ -14,30 +14,23 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: ['/api/', '/dashboard/', '/admin/'],
+        disallow: ['/api/'],
       },
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/dashboard/', '/admin/'],
+        disallow: ['/api/'],
       },
-      // AI crawlers — allow for GEO visibility (or disallow to block training)
-      {
-        userAgent: ['GPTBot', 'ChatGPT-User'],
-        allow: '/',           // Allow: AI search can cite your content
-        // disallow: ['/'],   // Disallow: block from AI training/citations
-      },
-      {
-        userAgent: ['anthropic-ai', 'ClaudeBot'],
-        allow: '/',
-      },
-      {
-        userAgent: 'PerplexityBot',
-        allow: '/',
-      },
+      // Search crawlers. Blocking one of these removes you from that product.
+      { userAgent: 'OAI-SearchBot', allow: '/' },
+      { userAgent: 'Claude-SearchBot', allow: '/' },
+      { userAgent: 'PerplexityBot', allow: '/' },
+      // Training. A separate choice. Disallow does not remove you from search.
+      { userAgent: 'GPTBot', allow: '/' },
+      { userAgent: 'ClaudeBot', allow: '/' },
       {
         userAgent: 'Google-Extended',
-        allow: '/',           // Controls Gemini training (separate from Search)
+        allow: '/', // Gemini training and grounding. Not Google Search or AI Overviews.
       },
     ],
     sitemap: 'https://example.com/sitemap.xml',
@@ -49,20 +42,25 @@ export default function robots(): MetadataRoute.Robots {
 
 | User Agent | Service | Purpose |
 |------------|---------|---------|
-| `GPTBot` | OpenAI | Training data |
-| `ChatGPT-User` | OpenAI | Live browsing (ChatGPT search) |
-| `Google-Extended` | Google | Gemini training (separate from Search) |
-| `Googlebot` | Google | Search + AI Overviews |
-| `anthropic-ai` | Anthropic | Training data |
-| `ClaudeBot` | Anthropic | Claude web browsing |
-| `PerplexityBot` | Perplexity | Search and citations |
+| `OAI-SearchBot` | OpenAI | ChatGPT search. Blocking this keeps you out of ChatGPT search answers. |
+| `GPTBot` | OpenAI | Training. Independent of search. |
+| `ChatGPT-User` | OpenAI | User-triggered fetch. Does not decide Search inclusion. robots.txt may not apply. |
+| `Googlebot` | Google | Search, including AI Overviews |
+| `Google-Extended` | Google | Gemini training and grounding. Does not affect Google Search or AI Overviews. |
+| `Claude-SearchBot` | Anthropic | Claude search index |
+| `ClaudeBot` | Anthropic | Training |
+| `Claude-User` | Anthropic | User-triggered fetch |
+| `PerplexityBot` | Perplexity | Search results. Not used for training. |
+| `Perplexity-User` | Perplexity | User-triggered fetch. Generally ignores robots.txt. |
 | `CCBot` | Common Crawl | Open dataset (used by many AI systems) |
 
-**Strategic decision:** Allowing AI crawlers means your content can be cited in AI search results (GEO benefit). Blocking means your content won't be used for training. Many sites allow `ChatGPT-User` and `PerplexityBot` (for citations) but block `GPTBot` and `Google-Extended` (training-only).
+**Search and training are separate rules.** Allow `OAI-SearchBot`, `Claude-SearchBot`, and `PerplexityBot` if you want citations. Disallow `GPTBot`, `ClaudeBot`, or `Google-Extended` on its own if you want out of training. `ChatGPT-User` and `Perplexity-User` are user fetches, and robots.txt may not apply to them.
 
 ## sitemap.ts
 
 ### Basic Sitemap
+
+Google ignores `priority` and `changefreq`. `lastModified` only helps when it is the real modification time. Do not stamp `new Date()` on every build.
 
 ```tsx
 // app/sitemap.ts
@@ -72,15 +70,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
       url: 'https://example.com',
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1,
+      lastModified: '2026-03-01',
     },
     {
       url: 'https://example.com/about',
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
+      lastModified: '2025-11-12',
     },
   ]
 }
@@ -96,9 +90,9 @@ import { db } from '@/lib/db'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
-    { url: 'https://example.com', lastModified: new Date(), priority: 1 },
-    { url: 'https://example.com/about', lastModified: new Date(), priority: 0.5 },
-    { url: 'https://example.com/contact', lastModified: new Date(), priority: 0.5 },
+    { url: 'https://example.com', lastModified: '2026-03-01' },
+    { url: 'https://example.com/about', lastModified: '2025-11-12' },
+    { url: 'https://example.com/contact', lastModified: '2025-11-12' },
   ]
 
   // Dynamic pages from database
@@ -110,9 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const listingPages: MetadataRoute.Sitemap = listings.map((listing) => ({
     url: `https://example.com/listings/${listing.id}`,
     lastModified: listing.updatedAt,
-    changeFrequency: 'weekly',
-    priority: 0.8,
-    images: listing.images,  // Image sitemap support
+    images: listing.images,  // Absolute image URLs. Next.js image sitemap.
   }))
 
   return [...staticPages, ...listingPages]
@@ -135,10 +127,11 @@ export async function generateSitemaps() {
   return Array.from({ length: sitemapsNeeded }, (_, i) => ({ id: i }))
 }
 
-// Each sitemap gets its own ID
-export default async function sitemap(
-  { id }: { id: number }
-): Promise<MetadataRoute.Sitemap> {
+// Next 16: id is a Promise<string>
+export default async function sitemap(props: {
+  id: Promise<string>
+}): Promise<MetadataRoute.Sitemap> {
+  const id = Number(await props.id)
   const listings = await db.listings.findMany({
     select: { id: true, updatedAt: true },
     skip: id * 50000,
@@ -151,7 +144,7 @@ export default async function sitemap(
     lastModified: listing.updatedAt,
   }))
 }
-// Generates: /sitemap/0.xml, /sitemap/1.xml, etc.
+// app/sitemap.ts serves /sitemap/0.xml, /sitemap/1.xml, and so on.
 ```
 
 ### Sitemap with i18n
@@ -161,7 +154,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
       url: 'https://example.com/about',
-      lastModified: new Date(),
+      lastModified: '2025-11-12',
       alternates: {
         languages: {
           es: 'https://example.com/es/about',

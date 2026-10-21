@@ -1,6 +1,6 @@
 # Performance for SEO
 
-Core Web Vitals are a Google ranking factor since June 2021. Pages must pass at the 75th percentile across real user data.
+Core Web Vitals are used by Google's ranking systems. Scores are judged at the 75th percentile of real users. A good score does not guarantee a higher rank.
 
 ## Thresholds
 
@@ -26,7 +26,6 @@ import Image from 'next/image'
   width={1200}
   height={630}
   priority           // Critical for LCP
-  placeholder="blur" // Prevents blank space during load
 />
 ```
 

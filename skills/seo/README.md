@@ -22,7 +22,7 @@ When you edit layout or page files, this skill auto-activates and provides SEO i
 Every existing SEO skill tells you what's wrong. This one generates the code to fix it:
 
 - **Implementation-first** — production `generateMetadata`, `sitemap.ts`, `robots.ts`, JSON-LD components
-- **Anti-myth enforcement**: Google's docs, not folklore. Meta keywords do nothing, E-E-A-T is not a ranking factor, and there is no minimum word count.
+- **Anti-myth enforcement**: Google's docs, not folklore. Meta keywords do nothing, there is no E-E-A-T score to add, and there is no minimum word count.
 - **GEO-aware** — llms.txt generation, AI crawler management, citation-optimized content patterns
 - **INP-aware** — references the correct Core Web Vital (INP replaced FID in March 2024)
 
@@ -45,7 +45,7 @@ Every existing SEO skill tells you what's wrong. This one generates the code to 
 - [Web Vitals Specification](https://web.dev/articles/vitals)
 - [llmstxt.org](https://llmstxt.org/)
 
-Last verified: March 2026
+Last verified: October 2026
 
 ## License
 
