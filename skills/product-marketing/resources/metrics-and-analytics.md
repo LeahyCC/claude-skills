@@ -118,17 +118,19 @@ What to look for:
 - **Improving cohorts over time**: Great. Your product/onboarding is getting better.
 - **Declining cohorts over time**: Alarming. Something changed (market, product, audience).
 
-### Retention Benchmarks (Lenny Rachitsky, 2024-2025)
+### Retention Benchmarks (Lenny Rachitsky, June 2020)
 
-| Product Type | Good Day-1 | Good Day-7 | Good Day-30 |
-|---|---|---|---|
-| Consumer social | 50%+ | 30%+ | 20%+ |
-| Consumer non-social | 35%+ | 15%+ | 8%+ |
-| SaaS (SMB) | 70%+ | 50%+ | 35%+ |
-| SaaS (Enterprise) | 90%+ | 80%+ | 70%+ |
-| Developer tools | 50%+ | 30%+ | 20%+ |
+Long-run user retention: the share of signups still active about six months later. Not day-1, day-7, or day-30. From "What is good retention" (newsletter issue 29).
 
-These are approximate. Your specific market and use case matter more than benchmarks.
+| Product type | Good | Great |
+|---|---|---|
+| Consumer social | ~25% | ~45% |
+| Consumer transactional | ~30% | ~50% |
+| Consumer SaaS | ~40% | ~70% |
+| SMB / mid-market SaaS | ~60% | ~80% |
+| Enterprise SaaS | ~70% | ~90% |
+
+These are approximate. Your market and use case matter more than the benchmarks.
 
 ### Activation Metrics ("Aha Moment")
 
@@ -155,9 +157,9 @@ Once you find yours, optimize the entire onboarding to get users there as fast a
 | Metric | Formula | Healthy Range (SaaS) | Source |
 |---|---|---|---|
 | **CAC** (Customer Acquisition Cost) | Total sales & marketing spend / New customers | Varies by ACV | Skok |
-| **LTV** (Lifetime Value) | ARPA × Gross Margin × (1 / Churn Rate) | LTV:CAC > 3:1 | Skok |
+| **LTV** (Lifetime Value) | ARPA × Gross Margin / Churn, same period | LTV:CAC > 3:1 | Skok |
 | **CAC Payback** | CAC / (ARPA × Gross Margin) | < 12 months | Skok |
-| **Net Revenue Retention** | (Start MRR + Expansion - Contraction - Churn) / Start MRR | > 100% (good), > 120% (great) | OpenView |
+| **Net Revenue Retention** | (Start MRR + Expansion - Contraction - Churn) / Start MRR | ~100% good, ~120% great (bottom-up SaaS) | Lenny Rachitsky, 2020 |
 | **Gross Margin** | (Revenue - COGS) / Revenue | > 70% for SaaS | Industry standard |
 | **Burn Multiple** | Net Burn / Net New ARR | < 2x (efficient), < 1x (excellent) | Bessemer |
 
@@ -175,9 +177,9 @@ Once you find yours, optimize the entire onboarding to get users there as fast a
 FAIL — tracking revenue without understanding economics:
 ```
 "We grew MRR from $10k to $50k!"
-But: CAC is $3000, ACV is $1200, churn is 8%/month.
-LTV = $1200 × 0.80 × (1/0.08) = $12,000
-LTV:CAC = 4:1 ← looks OK
+But: CAC is $3000, monthly revenue is $100 (ACV $1200), churn is 8%/month.
+LTV = $100 × 0.80 / 0.08 = $1,000
+LTV:CAC = 0.33:1
 CAC payback = $3000 / ($100 × 0.80) = 37.5 months ← terrible
 
 Reality: You'll run out of cash before customers pay back CAC.
@@ -187,10 +189,10 @@ PASS — tracking the full picture:
 ```
 MRR: $50k (+$40k this quarter)
 CAC: $800 (improved from $3000 via content marketing)
-ACV: $1200
+Monthly revenue: $100 (ACV $1200)
 Monthly churn: 3%
-LTV: $1200 × 0.80 × (1/0.03) = $32,000
-LTV:CAC = 40:1
+LTV = $100 × 0.80 / 0.03 = $2,667
+LTV:CAC = 3.3:1
 CAC payback = $800 / ($100 × 0.80) = 10 months ✓
 Burn multiple: 0.8x ✓
 

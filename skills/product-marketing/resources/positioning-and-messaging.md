@@ -40,7 +40,7 @@ List concrete capabilities, not benefits. Benefits come in step 3.
 
 ```
 Unique attributes:
-- Covers all 50 WCAG 2.2 AA criteria (alternatives cover <20)
+- Covers all 55 WCAG 2.2 AA criteria
 - Works inside the IDE/CLI at coding time (not post-deploy)
 - Production code examples, not just warnings
 - Zero dependencies (pure markdown, no runtime)
@@ -54,7 +54,7 @@ Map each attribute to a value that matters to the target customer:
 
 | Attribute | Value (capability enabled) |
 |---|---|
-| 50/50 criteria coverage | Ship fully accessible products, not "partially compliant" |
+| All 55 WCAG 2.2 AA criteria | Ship fully accessible products, not "partially compliant" |
 | Works at coding time | Catch issues before they reach production or audit |
 | Production code examples | Fix issues immediately instead of researching how |
 | Zero dependencies | Install in seconds, no security review needed |
@@ -98,7 +98,7 @@ The right category makes your unique attributes feel like table-stakes expectati
 
 ## The Positioning Statement
 
-Once you've completed the 5 components, assemble them:
+Dunford's output is the five components above. Geoffrey Moore's fill-in, from "Crossing the Chasm", is a separate summary some teams write later:
 
 ```
 For [target customer]
@@ -109,21 +109,23 @@ Unlike [competitive alternative],
 we [primary differentiator].
 ```
 
-Example:
+"Obviously Awesome" treats that template as a weak stand-in for the five components. "Sales Pitch" (2023) is a narrative pitch, not this blank.
+
+Example, written only after the five components exist:
 ```
 For frontend teams at growing SaaS companies
 who need to ship accessible products without dedicated accessibility engineers,
 claude-skills is a collection of AI coding skills
 that provides production-ready code for every WCAG 2.2 AA criterion.
-Unlike manual audits or linting tools that catch <20 criteria,
-we cover all 50 criteria with real code examples that fix issues at coding time.
+Unlike manual audits or linting tools,
+we cover all 55 WCAG 2.2 AA criteria with real code examples that fix issues at coding time.
 ```
 
-This statement is **internal**. It guides all external copy. You never paste it on a website verbatim.
+Keep this internal. It can guide external copy. Do not paste it on a website.
 
 ## Messaging Hierarchy
 
-The positioning statement feeds a messaging hierarchy. Each level serves a different context:
+The five components feed a messaging hierarchy. Each level serves a different context:
 
 ```
 Level 1: Tagline (3-8 words)
@@ -135,7 +137,7 @@ Level 2: Value Proposition (1-2 sentences)
 
 Level 3: Messaging Pillars (3-4 themes, each with proof)
     ├── Pillar 1: Complete coverage
-    │     Proof: 50/50 WCAG 2.2 AA criteria mapped and verified
+    │     Proof: All 55 WCAG 2.2 AA criteria mapped and verified
     │
     ├── Pillar 2: Production code, not checklists
     │     Proof: Real React/Next.js/Tailwind FAIL→PASS examples
@@ -172,7 +174,7 @@ Andy Raskin's framework for B2B storytelling. Use for your website hero section,
 
 4. **Introduce features as 'magic gifts' that enable the promised land**
    NOW you talk about your product. Each feature is a tool that gets them to the promised land.
-   "50/50 WCAG criteria covered. Production code examples. One-command install."
+   "All 55 WCAG 2.2 AA criteria covered. Production code examples. One-command install."
 
 5. **Present evidence you can deliver**
    Social proof, data, case studies.
@@ -182,16 +184,16 @@ Andy Raskin's framework for B2B storytelling. Use for your website hero section,
 
 FAIL — leading with features:
 ```
-"We built an accessibility skill for Claude Code. It covers 50 WCAG criteria
+"We built an accessibility skill for Claude Code. It covers 55 WCAG 2.2 AA criteria
 and has production code examples."
 ```
 
 PASS — leading with the shift:
 ```
 "AI is writing more code than ever. But AI doesn't check for accessibility
-by default — and accessibility lawsuits hit $13.8B in settlements last year.
+by default. Seyfarth counted 3,117 federal website accessibility lawsuits in 2025.
 The teams that win enterprise deals are the ones shipping accessible products
-from day one. [Product] makes that happen: 50/50 WCAG criteria, production
+from day one. [Product] makes that happen: all 55 WCAG 2.2 AA criteria, production
 React code, one-command install."
 ```
 

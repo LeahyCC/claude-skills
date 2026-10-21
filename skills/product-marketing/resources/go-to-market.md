@@ -45,10 +45,11 @@ Conversion (free → paid, triggered by limit or team need)
 Key PLG metrics:
 | Metric | Good | Great | Source |
 |---|---|---|---|
-| Free → paid conversion (freemium) | 2-5% | 5-10% | OpenView 2025 |
-| Trial → paid conversion (free trial) | 10-20% | 25%+ | OpenView 2025 |
+| Free → paid conversion (freemium, self-serve) | 3-5% | 6-8% | Lenny Rachitsky and Kyle Poyar, 2023 (1,000+ products) |
 | Time to activation | < 1 day | < 1 hour | Wes Bush |
-| Net revenue retention | 100-110% | 120%+ | OpenView 2025 |
+| Net revenue retention (bottom-up SaaS) | ~100% | ~120% | Lenny Rachitsky, 2020 |
+
+Free-trial conversion depends on whether a card is required up front, so it is not one band (Lenny Rachitsky and Kyle Poyar, 2023).
 
 ### PLG Anti-Patterns
 
@@ -197,7 +198,7 @@ Key factors (current as of 2025-2026):
 - **Maker comment** — post a thoughtful first comment explaining what you built and why
 - **Respond to every comment** — engagement signals matter
 - **Don't ask for upvotes** — PH penalizes coordinated voting
-- **Expectation setting**: PH is one channel. A top-5 finish drives ~500-2000 visits. It's a credibility signal, not a growth engine
+- **Expectation setting**: PH is one channel. It is a credibility signal, not a growth engine
 
 ## Channel Selection (Bullseye Framework)
 

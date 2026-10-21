@@ -14,7 +14,7 @@ Best for: short-form, pain-driven products, ads, email subject lines.
 Problem:  Your AI-generated code isn't accessible.
 Agitate:  Every inaccessible component is a potential lawsuit, a lost
           enterprise deal, and a user who can't use your product.
-Solution: claude-skills covers all 50 WCAG 2.2 AA criteria with
+Solution: claude-skills covers all 55 WCAG 2.2 AA criteria with
           production React code. Install in one command.
 ```
 
@@ -23,7 +23,7 @@ Solution: claude-skills covers all 50 WCAG 2.2 AA criteria with
 Best for: landing pages, longer content, products that need education.
 
 ```
-Attention: Over 96% of home pages have detectable WCAG failures (WebAIM Million, 2024).
+Attention: 95.9% of the top million home pages had detectable WCAG failures in the 2026 WebAIM Million (automated checks on home pages only).
 Interest:  The usual fix — hire an auditor, get a report, spend 6 months
            remediating — costs $10-50k and is outdated the day after.
 Desire:    What if every component was accessible from the first commit?
@@ -71,7 +71,7 @@ CTA: "Learn more"
 PASS — clear and specific:
 ```
 Headline: "Ship accessible products without accessibility experts"
-Subheadline: "50/50 WCAG 2.2 AA criteria. Production React code.
+Subheadline: "All 55 WCAG 2.2 AA criteria. Production React code.
 One-command install for Claude Code."
 CTA: "Install the skill"
 Secondary CTA: "See the coverage" (transitional — for those not ready to commit)
@@ -139,7 +139,7 @@ CTA: [Verb] + [object] (specific action, not "Learn more")
 | Rule | Why | FAIL → PASS |
 |---|---|---|
 | **Headline = benefit, not feature** | People care about outcomes | "AI-powered analysis" → "Find accessibility issues before your users do" |
-| **Specific > vague** | Specificity builds trust | "Comprehensive coverage" → "50/50 WCAG 2.2 AA criteria" |
+| **Specific > vague** | Specificity builds trust | "Comprehensive coverage" → "All 55 WCAG 2.2 AA criteria" |
 | **One CTA per section** | Multiple choices = no choice | "Sign up / Book demo / Read docs / Contact us" → "Install the skill" |
 | **Address objections near CTA** | Reduce friction at decision point | CTA alone → CTA + "Free forever. No credit card." |
 | **Use customer language** | If they call it "a11y audit", don't say "accessibility assessment" | Pull exact phrases from interview transcripts |
@@ -287,14 +287,14 @@ FAIL:
 
 PASS:
 ```
-"Over 96% of home pages have detectable WCAG failures (WebAIM Million, 2024).
+"95.9% of the top million home pages had detectable WCAG failures in the 2026 WebAIM Million (automated checks on home pages only).
 
 The 3 criteria most teams miss:
 1. Focus Not Obscured (2.4.11) — sticky headers hide focused elements
 2. Dragging Movements (2.5.7) — drag-only reorder with no keyboard alternative
 3. Accessible Auth (3.3.8) — blocking paste in password fields
 
-Most a11y tools catch <20 of 50 criteria. We built a skill that covers all 50.
+We built a skill that covers all 55 WCAG 2.2 AA criteria.
 
 [optional link for those who want more]"
 ```
