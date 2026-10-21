@@ -16,7 +16,39 @@ npx skills add LeahyCC/claude-skills@api-security
 - **OWASP API Security Top 10 (2023)** — every category covered with prevention code
 - **OWASP Web Top 10 (2021)** — cross-referenced to API-specific resources
 - **FAIL/PASS side-by-side** — see the vulnerability and the fix together
-- **Audit commands** — grep/find patterns to scan your codebase for each vulnerability class
+- **Audit commands**: grep and find patterns to scan your codebase for each vulnerability class
+
+## What it catches
+
+```tsx
+// Public HTTP endpoint. The caller picks the id.
+'use server'
+export async function deleteAccount(userId: string) {
+  await db.delete(users).where(eq(users.id, userId))
+}
+
+// User id comes from the session.
+'use server'
+export async function deleteAccount() {
+  const user = await getCurrentUser()
+  if (!user) throw new Error('Unauthorized')
+  await db.delete(users).where(eq(users.id, user.id))
+}
+```
+
+```tsx
+// Unvalidated JSON. `{ "role": "admin" }` is written straight through.
+export async function PATCH(request: Request) {
+  const body = await request.json()
+  await db.update(users).set(body)
+}
+
+// Explicit fields. Unknown keys are rejected.
+const UpdateSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  bio: z.string().max(500).optional(),
+}).strict()
+```
 
 ## Coverage
 

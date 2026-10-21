@@ -18,13 +18,16 @@ When you edit React component files (`.tsx`, `.jsx`), this skill auto-activates 
 
 ## What's Different
 
-Most React performance skills are lists of "use React.memo everywhere." This skill:
+Most React performance skills say "use React.memo everywhere."
 
-- **Starts with measurement** — teaches profiling before any optimization
-- **React Compiler-aware** — knows when manual memoization is unnecessary
-- **Covers Web Vitals** — LCP, INP, CLS with React-specific causes and fixes
-- **Includes what NOT to do** — anti-patterns with explanations of why they hurt
-- **Framework-aware** — Next.js App Router patterns alongside vanilla React
+| Other React skills | This skill |
+| --- | --- |
+| Use React.memo everywhere | Measure first. Is it actually slow? |
+| No React Compiler awareness | Skips manual memoization when the compiler already handles it |
+| No profiling guidance | Starts with the DevTools Profiler |
+| Generic JS micro-optimizations | React patterns tied to LCP, INP, and CLS |
+| Next.js only | Core React patterns, plus Next.js where the framework changes the answer |
+| Trick lists | Anti-patterns, and why they hurt |
 
 ## Coverage
 
