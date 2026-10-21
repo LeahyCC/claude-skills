@@ -12,7 +12,7 @@ metadata:
   bashPattern:
     - "lighthouse"
     - "next build"
-    - "next experimental-analyze"
+    - "next analyze"
     - "ANALYZE=true"
     - "web-vitals"
   priority: 50
@@ -72,14 +72,14 @@ Comprehensive React performance guidance covering measurement, rendering optimiz
 | LCP > 2.5s, text content | Render-blocking JS | Server Components, code split | server-components, bundle |
 | LCP > 2.5s, font flash | Font loading delay | `next/font` | assets |
 | TTFB > 800ms | Slow data fetching | Parallel fetches, streaming | server-components |
-| Large JS bundle (> 200KB) | Too much client code | Dynamic imports, tree shaking | bundle |
+| Large client JS bundle | Too much client code | Measure with `next analyze`, then split or tree-shake | bundle |
 
 ### "My page feels janky/unresponsive"
 
 | Symptom | Likely Cause | Fix | Resource |
 |---------|-------------|-----|----------|
 | INP > 200ms on typing | Heavy re-renders on input | `useTransition`, state colocation | rendering |
-| INP > 200ms on click | Expensive event handler | `startTransition`, `requestIdleCallback` | rendering |
+| INP > 200ms on click | Long task in the handler | `scheduler.yield()`, or a worker | web-vitals |
 | INP > 200ms on navigation | Route transition re-renders | `useTransition` for navigation | rendering |
 | Scrolling stutter | Large list rendering | Virtualization | data-and-lists |
 | Input lag | Context re-rendering entire tree | Split context, selector pattern | rendering |
@@ -101,7 +101,7 @@ Is React Compiler enabled?
 └── NO
     ├── Have you measured with Profiler?
     │   ├── NO → Measure first. The problem might not be re-renders.
-    │   └── YES, renders are slow (> 1ms per component)
+    │   └── YES, renders are noticeably slow (Profiler, production build)
     │       ├── Can you restructure? (children pattern, local state)
     │       │   ├── YES → Do that instead. No memo needed.
     │       │   └── NO → Use memo/useMemo/useCallback.

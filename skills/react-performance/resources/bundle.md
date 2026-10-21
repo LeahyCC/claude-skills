@@ -6,7 +6,12 @@ Before optimizing, understand what's in your bundle:
 
 ```bash
 # Next.js Turbopack (v16.1+)
-npx next experimental-analyze
+npx next analyze
+npx next analyze --output   # writes .next/diagnostics/analyze
+
+# v16.4+: export a saved snapshot
+npx next analyze --output --snapshot before
+npx next analyze export --snapshot before
 
 # Next.js Webpack
 ANALYZE=true npm run build
@@ -19,8 +24,8 @@ npx source-map-explorer 'build/static/js/*.js'
 
 | Finding | Impact | Fix |
 |---------|--------|-----|
-| Library > 50KB gzipped in client bundle | Slow initial load | Dynamic import or Server Component |
-| Full icon library imported | 200KB+ wasted | Direct imports or optimizePackageImports |
+| Large library in the client bundle | Slow initial load | Measure with `next analyze`, then dynamic import or a Server Component |
+| Barrel import that Next does not already optimize | Extra modules downloaded | `experimental.optimizePackageImports` |
 | moment.js / lodash (full) | 70-230KB | date-fns / lodash-es with tree shaking |
 | Same module in multiple chunks | Duplicate download | Check import paths, use shared chunk |
 | Server-only code in client bundle | Security + size | Move to Server Component |
@@ -123,26 +128,22 @@ function EditButton({ listingId }: { listingId: string }) {
 
 ## Tree Shaking
 
-### Barrel Import Problem
+### Packages with many exports
 
 ```tsx
-// BAD — imports the entire library (lucide-react has 1000+ icons)
+// In Next.js this barrel import is fine. lucide-react, date-fns, lodash-es,
+// and the heroicons entry points (@heroicons/react/20/solid, 24/solid, 24/outline)
+// are optimized by default.
 import { Search, Home, User } from 'lucide-react'
 
-// GOOD — direct imports (each icon is a separate module)
-import Search from 'lucide-react/dist/esm/icons/search'
-import Home from 'lucide-react/dist/esm/icons/home'
-import User from 'lucide-react/dist/esm/icons/user'
-
-// BEST — use Next.js optimizePackageImports (handles it automatically)
+// For a package that is not on that default list, add it.
+// The option is still under experimental.
 // next.config.ts
 export default {
   experimental: {
-    optimizePackageImports: ['lucide-react', '@heroicons/react', 'date-fns'],
+    optimizePackageImports: ['some-other-package'],
   },
 }
-// Then barrel imports work fine:
-import { Search, Home, User } from 'lucide-react'  // Auto-optimized
 ```
 
 ### Side Effect-Free Imports
@@ -163,7 +164,7 @@ import { Search, Home, User } from 'lucide-react'  // Auto-optimized
 ## Server Components for Zero-JS
 
 ```tsx
-// BEFORE: Heavy library in client bundle (50KB+ gzipped)
+// BEFORE: Heavy library in a Client Component
 'use client'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'

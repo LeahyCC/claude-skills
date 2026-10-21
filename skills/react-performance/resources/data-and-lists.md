@@ -205,7 +205,7 @@ function ItemList({ items, sortBy }: Props) {
   return <ul>{sorted.map(item => <li key={item.id}>{item.name}</li>)}</ul>
 }
 
-// GOOD — memoize when sort is expensive (> 1ms, measured)
+// GOOD — memoize when the sort is noticeably slow and the inputs rarely change
 function ItemList({ items, sortBy }: Props) {
   const sorted = useMemo(
     () => [...items].sort((a, b) => a[sortBy] - b[sortBy]),

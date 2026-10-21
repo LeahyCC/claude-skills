@@ -7,7 +7,7 @@ React Compiler (formerly "React Forget") is a build-time tool that automatically
 - **Production-ready** — deployed at Meta across Facebook, Instagram, Threads, and Quest Store (100,000+ components)
 - **Available for React 17-18** via `react-compiler-runtime` polyfill
 - **Native support in React 19**
-- **Next.js support** via SWC plugin (v15.3.1+)
+- **Next.js 16** runs `babel-plugin-react-compiler`. An SWC pass limits that plugin to files with JSX or Hooks. Set top-level `reactCompiler` (moved out of `experimental` in 16.0.0).
 - **Babel plugin** for non-Next.js projects
 
 ## What It Replaces
@@ -31,60 +31,83 @@ React Compiler (formerly "React Forget") is a build-time tool that automatically
 ## Setup: Next.js
 
 ```bash
-npm install babel-plugin-react-compiler
+npm install -D babel-plugin-react-compiler
 ```
 
 ```ts
 // next.config.ts
-export default {
-  experimental: {
-    reactCompiler: true,
+import type { NextConfig } from 'next'
+
+const nextConfig: NextConfig = {
+  reactCompiler: true,
+}
+
+export default nextConfig
+```
+
+Annotation mode opts in per component with `'use memo'`:
+
+```ts
+const nextConfig: NextConfig = {
+  reactCompiler: {
+    compilationMode: 'annotation',
   },
 }
 ```
 
-## Setup: Vite / Other Bundlers
+## Setup: Vite
+
+`@vitejs/plugin-react` 6 and later dropped the inline `babel` option. Use `reactCompilerPreset()` with `@rolldown/plugin-babel`.
 
 ```bash
-npm install babel-plugin-react-compiler @babel/plugin-transform-react-jsx
+npm install -D babel-plugin-react-compiler @rolldown/plugin-babel
 ```
 
 ```ts
 // vite.config.ts
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
+import babel from '@rolldown/plugin-babel'
 
-export default {
+export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: ['babel-plugin-react-compiler'],
-      },
+    react(),
+    babel({
+      presets: [reactCompilerPreset()],
     }),
   ],
-}
+})
 ```
 
-## ESLint Plugin (Use Immediately)
+Older `@vitejs/plugin-react` (before 6) can still pass the plugin inline:
 
-Even before enabling the compiler, the ESLint plugin validates your code follows the Rules of React (required for the compiler to work):
+```ts
+react({
+  babel: {
+    plugins: ['babel-plugin-react-compiler'],
+  },
+})
+```
+
+## ESLint
+
+Compiler rules ship in `eslint-plugin-react-hooks`, in the `recommended-latest` preset. React's install page says to use that preset. The plugin README calls it bleeding edge.
 
 ```bash
-npm install eslint-plugin-react-compiler
+npm install -D eslint-plugin-react-hooks@latest
 ```
 
 ```js
 // eslint.config.js
-import reactCompiler from 'eslint-plugin-react-compiler'
+import reactHooks from 'eslint-plugin-react-hooks'
+import { defineConfig } from 'eslint/config'
 
-export default [
-  {
-    plugins: { 'react-compiler': reactCompiler },
-    rules: {
-      'react-compiler/react-compiler': 'error',
-    },
-  },
-]
+export default defineConfig([
+  reactHooks.configs.flat['recommended-latest'],
+])
 ```
+
+The preset includes `react-hooks/purity`, `immutability`, `refs`, `use-memo`, `preserve-manual-memoization`, and the other compiler rules. `unsupported-syntax` and `incompatible-library` are warnings. A reported component is skipped. The rest of the file still compiles.
 
 ## Rules of React (Required for Compiler)
 
@@ -113,23 +136,15 @@ function Component({ items }) {
 ## Opting Out (Per-Component)
 
 ```tsx
-// Disable compiler for a specific component
-// eslint-disable-next-line react-compiler/react-compiler
 function LegacyComponent() {
-  // Component that breaks Rules of React
-  // Fix the violations instead when possible
-}
-
-// Or use the directive
-function LegacyComponent() {
-  'use no memo'  // Opt out of compiler memoization
-  // ...
+  'use no memo'  // Skip compiler memoization for this component
+  // Fix the Rules of React violation when you can
 }
 ```
 
 ## Migration Strategy
 
-1. **Start with ESLint plugin** — fix all violations (these are bugs regardless of compiler)
+1. **Turn on `recommended-latest`** — it flags components the compiler will skip. Fix them as you go.
 2. **Enable compiler on a single route/page** to verify behavior
 3. **Roll out incrementally** — the compiler is designed for gradual adoption
 4. **Existing memo/useMemo/useCallback can stay** — removing them may subtly change behavior, so do it gradually

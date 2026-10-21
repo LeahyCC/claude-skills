@@ -88,8 +88,9 @@ Long Task = anything > 50ms blocking the main thread
 console.time('filter todos')
 const filtered = todos.filter(t => t.completed)
 console.timeEnd('filter todos')
-// If < 1ms → don't bother with useMemo
-// If >= 1ms → consider useMemo
+// useMemo is for work that is noticeably slow, often a loop over thousands
+// of objects, when the inputs rarely change. A fast filter does not need it.
+// Also use it to keep a memo() child from re-rendering, or to stabilize a Hook dependency.
 // Always measure in production builds, not development
 ```
 
@@ -141,8 +142,8 @@ export function WebVitalsReporter() {
 ### Next.js (Turbopack — v16.1+)
 
 ```bash
-npx next experimental-analyze          # Interactive UI
-npx next experimental-analyze --output # Save to .next/diagnostics/analyze
+npx next analyze                 # Interactive UI
+npx next analyze --output        # Writes .next/diagnostics/analyze
 ```
 
 ### Next.js (Webpack)
@@ -167,13 +168,13 @@ ANALYZE=true npm run build  # Opens treemap visualization
 
 ```
 Red flags in bundle analysis:
-├── Large libraries in client bundle (> 50KB gzipped)
+├── Large libraries in the client bundle (see what `next analyze` reports)
 │   ├── moment.js → use date-fns or Temporal
-│   ├── lodash (full) → use lodash-es with tree shaking
+│   ├── lodash (full) → use lodash-es (Next optimizes lodash-es by default)
 │   └── chart.js → dynamic import
 ├── Duplicated modules (same lib in multiple chunks)
 ├── Server-only code leaked to client bundle
-└── Entire icon library imported (lucide-react, heroicons)
+└── Barrel import from a package that is not on Next's default optimizePackageImports list
 ```
 
 ## Performance Testing in CI

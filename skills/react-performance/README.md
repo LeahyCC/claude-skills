@@ -14,7 +14,7 @@ When you edit React component files (`.tsx`, `.jsx`), this skill auto-activates 
 
 **Auto-triggers on:**
 - Component files: `src/components/**/*.tsx`, `src/app/**/*.tsx`, `app/**/*.tsx`
-- Build/analysis: `next build`, `lighthouse`, `next experimental-analyze`
+- Build/analysis: `next build`, `lighthouse`, `next analyze`
 
 ## What's Different
 
@@ -48,7 +48,7 @@ Most React performance skills say "use React.memo everywhere."
 - [Web Vitals specification](https://web.dev/articles/vitals)
 - [Next.js optimization docs](https://nextjs.org/docs/app/building-your-application/optimizing)
 
-Last verified: March 2026
+Last verified: October 2026
 
 ## License
 
