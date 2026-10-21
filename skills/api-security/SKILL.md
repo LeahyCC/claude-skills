@@ -36,12 +36,12 @@ metadata:
 
 # API Security — OWASP API Security Top 10 (2023) for Next.js
 
-Production-grade API security patterns for Next.js App Router. Covers every category in the OWASP API Security Top 10 (2023) with cross-references to the OWASP Web Top 10 (2021). Verified against the official OWASP specifications.
+Production-grade API security patterns for Next.js App Router. Covers every category in the OWASP API Security Top 10 (2023) with cross-references to the OWASP Web Top 10 (2025). Verified against the official OWASP specifications.
 
 ## Architecture
 
 ```
-Request → proxy.ts (auth gate) → Route Handler / Server Action
+Request → proxy.ts (logged-out redirect) → Route Handler / Server Action
                                        ↓
                                   Input Validation (Zod)
                                        ↓
@@ -59,19 +59,19 @@ The **Data Access Layer (DAL)** is the central security architecture recommended
 | Resource | OWASP API | OWASP Web | What It Covers |
 |----------|-----------|-----------|----------------|
 | [Access Control](resources/access-control.md) | API1, API5 | A01 | BOLA/IDOR, function-level auth, ownership checks |
-| [Authentication](resources/authentication.md) | API2 | A07, A02 | Session management, JWT, Clerk/Auth0, proxy.ts |
-| [Input Validation](resources/input-validation.md) | API3, API8 | A03 | Zod schemas, SQL injection, XSS, Server Action validation |
-| [Rate Limiting](resources/rate-limiting.md) | API4 | A04 | Per-endpoint limits, cost attacks, Upstash patterns |
-| [Security Headers](resources/security-headers.md) | API8 | A05 | CSP, HSTS, CORS, Permissions-Policy, next.config |
-| [Data Exposure](resources/data-exposure.md) | API3, API6 | A04 | DAL pattern, DTOs, error sanitization, response filtering |
-| [Supply Chain](resources/supply-chain.md) | API9, API10 | A06, A08 | Dependencies, env vars, CI/CD, third-party APIs |
-| [SSRF & Logging](resources/ssrf-and-logging.md) | API7 | A09, A10 | URL validation, fetch safety, secure logging, audit trails |
+| [Authentication](resources/authentication.md) | API2 | A07, A04 | Session management, JWT, Clerk/Auth0, proxy.ts |
+| [Input Validation](resources/input-validation.md) | API3, API8 | A05 | Zod schemas, SQL injection, XSS, Server Action validation |
+| [Rate Limiting](resources/rate-limiting.md) | API4 | A06 | Per-endpoint limits, cost attacks, Upstash patterns |
+| [Security Headers](resources/security-headers.md) | API8 | A02 | CSP, HSTS, CORS, Permissions-Policy, next.config |
+| [Data Exposure](resources/data-exposure.md) | API3, API6 | A06, A10 | DAL pattern, DTOs, error sanitization, response filtering |
+| [Supply Chain](resources/supply-chain.md) | API9, API10 | A03, A08 | Dependencies, env vars, CI/CD, third-party APIs |
+| [SSRF & Logging](resources/ssrf-and-logging.md) | API7 | A01, A09 | URL validation, fetch safety, secure logging, audit trails |
 
 ## Decision Matrix: "Where Do I Add Security?"
 
 | Layer | What to Check | Why |
 |-------|--------------|-----|
-| `proxy.ts` | Auth redirect, CSP nonce, rate limit headers | First line — blocks unauthenticated requests early |
+| `proxy.ts` | Logged-out redirect, CSP nonce, rate limits | A cookie check here is not the authorization check |
 | Route Handler (`route.ts`) | Auth + authz, input validation, CORS, CSRF | Public HTTP endpoint — treat as untrusted |
 | Server Action (`'use server'`) | Auth + authz, input validation, return filtering | **Also a public HTTP endpoint** — not protected by the UI |
 | Data Access Layer (`data/*.ts`) | Ownership checks, field filtering, parameterized queries | Last line — defense in depth |
@@ -111,40 +111,40 @@ Notice: the PASS version doesn't accept `userId` as a parameter — it derives i
 | Does the response return only needed fields? | Add DTO layer | [Data Exposure](resources/data-exposure.md) |
 | Are rate limits in place for auth endpoints? | Add Upstash/Arcjet | [Rate Limiting](resources/rate-limiting.md) |
 | Are security headers configured? | Add to next.config.ts | [Security Headers](resources/security-headers.md) |
-| Is `proxy.ts` checking auth before page access? | Add auth middleware | [Authentication](resources/authentication.md) |
+| Does the DAL reject a missing or revoked session? | Check in `getCurrentUser()`, not only in `proxy.ts` | [Authentication](resources/authentication.md) |
 | Are env vars only accessed in the DAL? | Move to server-only module | [Supply Chain](resources/supply-chain.md) |
 | Does `fetch()` in server code validate URLs? | Add URL allowlist | [SSRF & Logging](resources/ssrf-and-logging.md) |
 | Are errors sanitized before returning to client? | Return generic messages | [Data Exposure](resources/data-exposure.md) |
 
 ## OWASP API Security Top 10 (2023) — Full Mapping
 
-| # | Category | Severity | Resource |
-|---|----------|----------|----------|
-| API1 | Broken Object Level Authorization (BOLA) | Critical | [access-control](resources/access-control.md) |
-| API2 | Broken Authentication | Critical | [authentication](resources/authentication.md) |
-| API3 | Broken Object Property Level Authorization | High | [input-validation](resources/input-validation.md), [data-exposure](resources/data-exposure.md) |
-| API4 | Unrestricted Resource Consumption | High | [rate-limiting](resources/rate-limiting.md) |
-| API5 | Broken Function Level Authorization | Critical | [access-control](resources/access-control.md) |
-| API6 | Unrestricted Access to Sensitive Business Flows | Medium | [data-exposure](resources/data-exposure.md) |
-| API7 | Server Side Request Forgery | High | [ssrf-and-logging](resources/ssrf-and-logging.md) |
-| API8 | Security Misconfiguration | Medium | [security-headers](resources/security-headers.md), [input-validation](resources/input-validation.md) |
-| API9 | Improper Inventory Management | Medium | [supply-chain](resources/supply-chain.md) |
-| API10 | Unsafe Consumption of APIs | Medium | [supply-chain](resources/supply-chain.md) |
+| # | Category | Resource |
+|---|----------|----------|
+| API1 | Broken Object Level Authorization (BOLA) | [access-control](resources/access-control.md) |
+| API2 | Broken Authentication | [authentication](resources/authentication.md) |
+| API3 | Broken Object Property Level Authorization | [input-validation](resources/input-validation.md), [data-exposure](resources/data-exposure.md) |
+| API4 | Unrestricted Resource Consumption | [rate-limiting](resources/rate-limiting.md) |
+| API5 | Broken Function Level Authorization | [access-control](resources/access-control.md) |
+| API6 | Unrestricted Access to Sensitive Business Flows | [data-exposure](resources/data-exposure.md) |
+| API7 | Server Side Request Forgery | [ssrf-and-logging](resources/ssrf-and-logging.md) |
+| API8 | Security Misconfiguration | [security-headers](resources/security-headers.md), [input-validation](resources/input-validation.md) |
+| API9 | Improper Inventory Management | [supply-chain](resources/supply-chain.md) |
+| API10 | Unsafe Consumption of APIs | [supply-chain](resources/supply-chain.md) |
 
-## OWASP Web Top 10 (2021) — Cross-Reference
+## OWASP Web Top 10 (2025) — Cross-Reference
 
 | # | Category | Mapped To |
 |---|----------|-----------|
-| A01 | Broken Access Control | [access-control](resources/access-control.md) |
-| A02 | Cryptographic Failures | [authentication](resources/authentication.md) |
-| A03 | Injection | [input-validation](resources/input-validation.md) |
-| A04 | Insecure Design | [rate-limiting](resources/rate-limiting.md), [data-exposure](resources/data-exposure.md) |
-| A05 | Security Misconfiguration | [security-headers](resources/security-headers.md) |
-| A06 | Vulnerable & Outdated Components | [supply-chain](resources/supply-chain.md) |
-| A07 | Auth Failures | [authentication](resources/authentication.md) |
-| A08 | Software & Data Integrity Failures | [supply-chain](resources/supply-chain.md) |
-| A09 | Logging & Monitoring Failures | [ssrf-and-logging](resources/ssrf-and-logging.md) |
-| A10 | SSRF | [ssrf-and-logging](resources/ssrf-and-logging.md) |
+| A01 | Broken Access Control (includes SSRF) | [access-control](resources/access-control.md), [ssrf-and-logging](resources/ssrf-and-logging.md) |
+| A02 | Security Misconfiguration | [security-headers](resources/security-headers.md) |
+| A03 | Software Supply Chain Failures | [supply-chain](resources/supply-chain.md) |
+| A04 | Cryptographic Failures | [authentication](resources/authentication.md) |
+| A05 | Injection | [input-validation](resources/input-validation.md) |
+| A06 | Insecure Design | [rate-limiting](resources/rate-limiting.md), [data-exposure](resources/data-exposure.md) |
+| A07 | Authentication Failures | [authentication](resources/authentication.md) |
+| A08 | Software or Data Integrity Failures | [supply-chain](resources/supply-chain.md) |
+| A09 | Security Logging and Alerting Failures | [ssrf-and-logging](resources/ssrf-and-logging.md) |
+| A10 | Mishandling of Exceptional Conditions | [data-exposure](resources/data-exposure.md) |
 
 ## Code Review Checklist
 
@@ -158,7 +158,7 @@ When reviewing API code in Next.js, verify:
 - [ ] Error messages don't leak stack traces, SQL, or internal paths
 - [ ] Security headers set in `next.config.ts` (CSP, HSTS, X-Frame-Options)
 - [ ] Rate limiting on auth endpoints and expensive operations
-- [ ] `proxy.ts` gates auth before page/action access
+- [ ] `proxy.ts` may redirect logged-out page loads. Every action still checks the session
 - [ ] Environment variables accessed only in `server-only` modules
 - [ ] No `fetch()` to user-controlled URLs without allowlist
 - [ ] Dependencies audited — no known vulnerabilities

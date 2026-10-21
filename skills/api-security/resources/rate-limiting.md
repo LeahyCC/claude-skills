@@ -1,8 +1,10 @@
 # Rate Limiting
 
-> OWASP API4:2023 (Unrestricted Resource Consumption), A04:2021 (Insecure Design)
+> OWASP API4:2023 (Unrestricted Resource Consumption), A06:2025 (Insecure Design)
 
 APIs without rate limits are vulnerable to brute force, credential stuffing, cost attacks (SMS/email abuse), and denial of service. Next.js does not include built-in rate limiting — you must implement it.
+
+The numbers below are starting points. OWASP does not publish them.
 
 ## Where to Rate Limit
 
@@ -42,6 +44,13 @@ export const authLimiter = new Ratelimit({
   prefix: 'ratelimit:auth',
 })
 
+export const resetLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '1 h'),  // 5 password resets per hour
+  analytics: true,
+  prefix: 'ratelimit:reset',
+})
+
 export const apiLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(60, '1 m'),  // 60 requests per minute
@@ -55,18 +64,28 @@ export const uploadLimiter = new Ratelimit({
   analytics: true,
   prefix: 'ratelimit:upload',
 })
+
+// Vercel overwrites x-forwarded-for, so a single value is the client.
+// Off Vercel the left-most value is client-controlled. Take the right-most, the one the proxy appended.
+// A missing header uses the shared key 'unknown'.
+export function clientIp(headerList: Headers): string {
+  const forwarded = headerList.get('x-forwarded-for')
+  if (!forwarded) return 'unknown'
+  const parts = forwarded.split(',').map((part) => part.trim()).filter(Boolean)
+  return parts.at(-1) ?? 'unknown'
+}
 ```
 
 ### Rate Limiting in Route Handlers
 
 ```tsx
 // app/api/auth/login/route.ts
-import { authLimiter } from '@/lib/rate-limit'
+import { authLimiter, clientIp } from '@/lib/rate-limit'
 import { headers } from 'next/headers'
 
 export async function POST(request: Request) {
   const headerList = await headers()
-  const ip = (headerList.get('x-forwarded-for') ?? '127.0.0.1').split(',')[0].trim()
+  const ip = clientIp(headerList)
 
   const { success, limit, remaining, reset } = await authLimiter.limit(ip)
 
@@ -104,19 +123,19 @@ export async function requestPasswordReset(email: string) {
 // PASS — rate limited by IP
 'use server'
 import { headers } from 'next/headers'
-import { authLimiter } from '@/lib/rate-limit'
+import { resetLimiter, clientIp } from '@/lib/rate-limit'
 
 export async function requestPasswordReset(email: string) {
   const headerList = await headers()
-  const ip = (headerList.get('x-forwarded-for') ?? '127.0.0.1').split(',')[0].trim()
+  const ip = clientIp(headerList)
 
-  const { success } = await authLimiter.limit(`reset:${ip}`)
+  const { success } = await resetLimiter.limit(ip)
   if (!success) {
     return { error: 'Too many requests. Try again later.' }
   }
 
   // Always return success to prevent account enumeration
-  const user = await db.select().from(users).where(eq(users.email, email))
+  const [user] = await db.select().from(users).where(eq(users.email, email))
   if (user) await sendResetEmail(user.email)
   return { success: 'If an account exists, a reset email has been sent.' }
 }
@@ -146,13 +165,14 @@ export async function createPost(input: unknown) {
 
 ## Rate Limiting in proxy.ts
 
-For global rate limiting across all routes:
+This matcher only covers `/api/`. A Server Action posts to the page path, so this check misses it.
 
 ```tsx
 // proxy.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import { clientIp } from '@/lib/rate-limit'
 
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
@@ -160,10 +180,9 @@ const ratelimit = new Ratelimit({
 })
 
 export async function proxy(request: NextRequest) {
-  // Only rate limit API routes
+  // Server Actions POST to the page path, so this does not see them.
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    const ip = (request.headers.get('x-forwarded-for') ?? '127.0.0.1')
-      .split(',')[0].trim()
+    const ip = clientIp(request.headers)
 
     const { success, limit, remaining, reset } = await ratelimit.limit(ip)
 
@@ -251,7 +270,7 @@ Ratelimit.fixedWindow(20, '1 h')
 // Sliding window — smooth, no boundary bursts
 Ratelimit.slidingWindow(60, '1 m')
 
-// Token bucket — 10 tokens, refills 1 per second
+// Refills 10 tokens every second. Bucket size is 10.
 Ratelimit.tokenBucket(10, '1 s', 10)
 ```
 
@@ -311,5 +330,6 @@ grep -rn "generateText\|streamText\|openai\|anthropic" --include="route.ts" -l |
 ## Sources
 
 - [OWASP API4:2023 — Unrestricted Resource Consumption](https://owasp.org/API-Security/editions/2023/en/0xa4-unrestricted-resource-consumption/)
+- [OWASP A06:2025 — Insecure Design](https://owasp.org/Top10/2025/A06_2025-Insecure_Design/)
 - [Upstash Rate Limiting Documentation](https://upstash.com/docs/oss/sdks/ts/ratelimit/overview)
 - [Next.js Weekly — Rate Limiting Server Actions](https://nextjsweekly.com/blog/rate-limiting-server-actions)

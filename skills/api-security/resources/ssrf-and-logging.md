@@ -1,6 +1,6 @@
 # SSRF & Logging
 
-> OWASP API7:2023 (Server Side Request Forgery), A09:2021 (Security Logging & Monitoring Failures), A10:2021 (SSRF)
+> OWASP API7:2023 (Server Side Request Forgery), A01:2025 (Broken Access Control), A09:2025 (Security Logging and Alerting Failures)
 
 Two related concerns: preventing the server from being tricked into making unintended requests (SSRF), and ensuring you can detect and investigate attacks (logging).
 
@@ -44,7 +44,8 @@ function validateUrl(input: string): URL | null {
   // Only allow HTTPS
   if (url.protocol !== 'https:') return null
 
-  // Check against allowlist
+  // Allowlisted names skip the IP checks below.
+  // DNS can still point one of those names at a private address.
   if (!ALLOWED_HOSTS.has(url.hostname)) return null
 
   // Block private/internal IPs (basic check)
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
     signal: AbortSignal.timeout(5000), // timeout
   })
 
-  return Response.json(await response.json())
+  return Response.json({ ok: response.ok, status: response.status })
 }
 ```
 
@@ -93,15 +94,18 @@ export async function updateAvatar(imageUrl: string) {
   await uploadToStorage(await image.blob())
 }
 
-// PASS — validate URL, or better: accept file upload instead
+// PASS — file.type is the browser's claim. Check the bytes.
 export async function updateAvatar(formData: FormData) {
-  const file = formData.get('avatar') as File
-  if (!file) throw new Error('No file provided')
+  const file = formData.get('avatar')
+  if (!(file instanceof File)) throw new Error('No file provided')
 
-  // Validate file type
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-    throw new Error('Invalid file type')
-  }
+  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer())
+  const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+  const png = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47
+  const webp =
+    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  if (!jpeg && !png && !webp) throw new Error('Invalid file type')
 
   await uploadToStorage(file)
 }
@@ -146,18 +150,19 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ r
   redirect(url)  // attacker sends ?redirect=https://evil.com
 }
 
-// PASS — validate redirect target
-const ALLOWED_REDIRECT_PATHS = ['/dashboard', '/settings', '/profile']
+// PASS — exact path only. startsWith('/dashboard') also matches /dashboard-extra.
+const ALLOWED_REDIRECT_PATHS = new Set(['/dashboard', '/settings', '/profile'])
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ redirect: string }> }) {
   const { redirect: target } = await searchParams
+  const path = (target ?? '').split(/[?#]/)[0]
 
-  // Only allow relative paths from an allowlist
-  if (!ALLOWED_REDIRECT_PATHS.some(p => target?.startsWith(p))) {
+  // Reject protocol-relative (//) and backslash. Redirect only a path in the set.
+  if (!path || path.includes('\\') || path.startsWith('//') || !ALLOWED_REDIRECT_PATHS.has(path)) {
     redirect('/dashboard')
   }
 
-  redirect(target)
+  redirect(path)
 }
 ```
 
@@ -174,7 +179,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ r
 
 ## Security Logging
 
-Without logging, you can't detect attacks, investigate incidents, or prove compliance. The OWASP stats: breaches go undetected for an average of 287 days.
+Without logging, you can't detect attacks or investigate them afterwards.
 
 ### What to Log
 
@@ -242,7 +247,11 @@ import { headers } from 'next/headers'
 
 async function getClientIp(): Promise<string> {
   const headerList = await headers()
-  return (headerList.get('x-forwarded-for') ?? '127.0.0.1').split(',')[0].trim()
+  // Last X-Forwarded-For address, or 'unknown'. Same rule as rate limiting.
+  const forwarded = headerList.get('x-forwarded-for')
+  if (!forwarded) return 'unknown'
+  const parts = forwarded.split(',').map((part) => part.trim()).filter(Boolean)
+  return parts.at(-1) ?? 'unknown'
 }
 
 export async function login(email: string, password: string) {
@@ -341,16 +350,12 @@ Logging without monitoring is useless. Set up alerts for:
 Integration with observability platforms:
 
 ```tsx
-// Vercel Logs — automatically captures console.log from Functions
-// View at: vercel logs <deployment-url>
-
-// For external platforms, use Vercel Log Drains:
-// vercel.json / vercel.ts
-{
-  "logDrains": [
-    { "delivery": "json", "url": "https://your-siem.com/api/logs" }
-  ]
-}
+// Vercel captures console.log from Functions.
+// Read them with: vercel logs <deployment-url>
+//
+// Drains are not a vercel.json property. Add them in Team Settings → Drains.
+// Pro and Enterprise: https://vercel.com/docs/drains
+// https://vercel.com/docs/drains/using-drains
 ```
 
 ## Audit Patterns
@@ -375,6 +380,6 @@ grep -rn "console.log\|console.error" --include="*.ts" | grep -i "password\|toke
 ## Sources
 
 - [OWASP API7:2023 — Server Side Request Forgery](https://owasp.org/API-Security/editions/2023/en/0xa7-server-side-request-forgery/)
-- [OWASP A09:2021 — Security Logging and Monitoring Failures](https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/)
-- [OWASP A10:2021 — Server-Side Request Forgery](https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery/)
+- [OWASP A01:2025 — Broken Access Control](https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/)
+- [OWASP A09:2025 — Security Logging and Alerting Failures](https://owasp.org/Top10/2025/A09_2025-Security_Logging_and_Alerting_Failures/)
 - [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)
