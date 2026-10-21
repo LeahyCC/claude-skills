@@ -8,7 +8,7 @@
     {
       "name": "wcag-accessibility",
       "path": "skills/wcag-accessibility",
-      "description": "WCAG 2.2 Level AA compliance — all 50 success criteria with production React/Next.js/Tailwind code examples",
+      "description": "WCAG 2.2 Level AA. All 55 success criteria, with React, Next.js, and Tailwind examples",
       "categories": ["accessibility", "web-development", "compliance"],
       "triggers": {
         "filePatterns": [

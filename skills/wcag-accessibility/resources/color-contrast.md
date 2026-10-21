@@ -6,11 +6,13 @@ WCAG Success Criteria: 1.4.3 (AA), 1.4.6 (AAA), 1.4.11 (Non-text Contrast)
 
 | Content Type                 | AA    | AAA   |
 | ---------------------------- | ----- | ----- |
-| Normal text (<18px, <14px bold) | 4.5:1 | 7:1   |
-| Large text (>=18px, >=14px bold) | 3:1   | 4.5:1 |
+| Normal text (under 18pt / 24px, or bold under 14pt / 18.5px) | 4.5:1 | 7:1   |
+| Large text (18pt / 24px and up, or bold 14pt / 18.5px and up) | 3:1   | 4.5:1 |
 | UI components and graphics   | 3:1   | N/A   |
 | Disabled elements            | None  | None  |
 | Logos and decorative images  | None  | None  |
+
+Large text in WCAG 1.4.3 is a point size. 18pt renders as 24px, and bold 14pt renders as about 18.5px. Regular text at 18px is normal text.
 
 ## Calculating Contrast
 

@@ -1,49 +1,11 @@
 ---
 name: wcag-accessibility
-description: Use when building UI components, reviewing color contrast, adding ARIA attributes, handling keyboard navigation, writing alt text, creating forms, or ensuring WCAG 2.2 AA compliance. Covers color contrast ratios, semantic HTML, focus management, screen reader support, motion preferences, and accessibility auditing.
-metadata:
-  filePattern:
-    - "src/components/**/*.tsx"
-    - "src/components/**/*.jsx"
-    - "src/app/**/*.tsx"
-    - "app/**/*.tsx"
-    - "components/**/*.tsx"
-    - "pages/**/*.tsx"
-  bashPattern:
-    - "lighthouse"
-    - "axe"
-    - "pa11y"
-  priority: 50
+description: WCAG 2.2 Level AA for web UI. Use when the task is accessibility, contrast, ARIA, keyboard access, focus, screen readers, alt text, or an accessibility audit. Do not use for styling, performance, or copy that is not an accessibility fix.
 ---
 
 # WCAG 2.2 AA Accessibility
 
-Comprehensive accessibility guidance for web applications targeting WCAG 2.2 Level AA conformance.
-
-## Architecture Overview
-
-```
-[Component Authoring]
-    ├── Semantic HTML (landmarks, headings, lists)
-    ├── ARIA attributes (roles, states, properties)
-    ├── Keyboard interaction (focus, tab order, shortcuts)
-    └── Visual design (contrast, spacing, motion)
-              ↓
-[Automated Testing]
-    ├── axe-core / jest-axe (unit)
-    ├── Lighthouse CI (integration)
-    └── pa11y (page-level)
-              ↓
-[Manual Testing]
-    ├── Keyboard-only navigation
-    ├── Screen reader walkthrough (VoiceOver, NVDA)
-    └── Zoom to 200% / reflow check
-              ↓
-[Continuous Compliance]
-    ├── CI gate (axe failures block merge)
-    ├── Design token enforcement (contrast-safe palette)
-    └── Periodic audit (quarterly full review)
-```
+Accessibility guidance for web applications targeting WCAG 2.2 Level AA.
 
 ## Quick Reference
 
@@ -63,33 +25,18 @@ Comprehensive accessibility guidance for web applications targeting WCAG 2.2 Lev
 
 ## Decision Matrix
 
-### Text Contrast Requirements (WCAG 1.4.3 / 1.4.6)
+### Text contrast (WCAG 1.4.3, 1.4.11)
 
-| Text Type              | AA Minimum | AAA Target | How to Check                   |
-| ---------------------- | ---------- | ---------- | ------------------------------ |
-| Normal text (<18px)    | 4.5:1      | 7:1        | Foreground vs background color |
-| Large text (>=18px)    | 3:1        | 4.5:1      | Foreground vs background color |
-| Bold text (>=14px)     | 3:1        | 4.5:1      | Counts as "large"              |
-| UI components / icons  | 3:1        | N/A        | Against adjacent colors        |
-| Decorative / disabled  | No req     | No req     | Must look obviously disabled   |
-| Placeholder text       | 4.5:1      | 7:1        | Treated as normal text by WCAG |
+Large text is a point size. 18pt is 24px. Bold 14pt is about 18.5px. Regular text at 18px is still normal text and needs 4.5:1.
 
-### Common Tailwind Opacity Pitfalls
+| Text | AA | AAA |
+| --- | --- | --- |
+| Normal text (under 18pt / 24px, or bold under 14pt / 18.5px) | 4.5:1 | 7:1 |
+| Large text (18pt / 24px and up, or bold 14pt / 18.5px and up) | 3:1 | 4.5:1 |
+| UI components and graphics (1.4.11) | 3:1 | none |
+| Disabled controls, decorative graphics, logos | none | none |
 
-Opacity modifiers on semantic color tokens (e.g., `text-muted-foreground/60`) reduce contrast below WCAG thresholds. Common failures:
-
-| Pattern                          | Typical Ratio | Verdict    | Fix                          |
-| -------------------------------- | ------------- | ---------- | ---------------------------- |
-| `text-foreground`                | 15:1+         | Passes AA  | No change needed             |
-| `text-muted-foreground`         | 5-6:1         | Passes AA  | No change needed             |
-| `text-muted-foreground/80`      | 4-5:1         | Borderline | Use `text-muted-foreground`  |
-| `text-muted-foreground/70`      | 3.5-4:1       | Fails AA   | Use `text-muted-foreground`  |
-| `text-muted-foreground/60`      | 2.5-3:1       | Fails AA   | Use `text-muted-foreground`  |
-| `text-muted-foreground/50`      | 2-2.5:1       | Fails AA   | Use `text-muted-foreground`  |
-| `text-muted-foreground/40`      | 1.5-2:1       | Fails AA   | Use `text-muted-foreground`  |
-| `placeholder:text-*/40`         | 1.5-2:1       | Fails AA   | Use full `text-muted-foreground` |
-
-**Rule of thumb**: Never apply opacity below `/80` to text tokens. If you need visual hierarchy below `text-muted-foreground`, the design system's contrast floor has been reached — use size, weight, or spacing instead.
+If someone has to read placeholder text, it needs the same ratio as normal text. Do not treat an opacity modifier as a passing color until the pair is measured. Token floors, Tailwind failures, and dark mode are in [Color Contrast](./resources/color-contrast.md).
 
 ### Interactive Element Requirements
 
@@ -97,7 +44,7 @@ Opacity modifiers on semantic color tokens (e.g., `text-muted-foreground/60`) re
 | ------------------- | -------- | ---------- | -------------- | -------- |
 | Button              | Enter/Space | Required | `button` role  | 4.5:1 text, 3:1 boundary |
 | Link                | Enter    | Required   | `<a>` or `link` role | 4.5:1 + distinguishable |
-| Menu / Dropdown     | Arrow keys | Required | `menu`, `menuitem` | 4.5:1 |
+| Action menu         | Arrow keys | Required | `menu`, `menuitem`. Site nav uses links, not `menu` | 4.5:1 |
 | Tab                 | Arrow keys | Required | `tablist`, `tab`, `tabpanel` | 4.5:1 |
 | Modal / Dialog      | Trap focus | Required | `dialog`, `aria-modal` | 4.5:1 |
 | Toggle / Switch     | Space    | Required   | `switch` or `checkbox` | 3:1 boundary |
@@ -209,9 +156,9 @@ Dynamic status updates must be announced to screen readers without receiving foc
 
 ## WCAG 2.2 Complete Success Criteria Coverage
 
-All 50 Level A + AA success criteria are covered across the skill resources:
+All 55 Level A and AA success criteria are covered across the skill resources:
 
-### Principle 1: Perceivable
+### Principle 1: Perceivable (20 criteria)
 | # | Name | Level | Resource |
 |---|------|-------|----------|
 | 1.1.1 | Non-text Content | A | images-and-media |
@@ -235,7 +182,7 @@ All 50 Level A + AA success criteria are covered across the skill resources:
 | 1.4.12 | Text Spacing | AA | page-structure |
 | 1.4.13 | Content on Hover or Focus | AA | SKILL.md (above) |
 
-### Principle 2: Operable
+### Principle 2: Operable (20 criteria)
 | # | Name | Level | Resource |
 |---|------|-------|----------|
 | 2.1.1 | Keyboard | A | keyboard-navigation |
@@ -249,7 +196,7 @@ All 50 Level A + AA success criteria are covered across the skill resources:
 | 2.4.3 | Focus Order | A | keyboard-navigation |
 | 2.4.4 | Link Purpose (In Context) | A | links-and-navigation |
 | 2.4.5 | Multiple Ways | AA | links-and-navigation |
-| 2.4.6 | Headings and Labels | AA | semantic-html, forms-and-inputs |
+| 2.4.6 | Headings and Labels | AA | semantic-html |
 | 2.4.7 | Focus Visible | AA | keyboard-navigation |
 | 2.4.11 | Focus Not Obscured | AA | keyboard-navigation [NEW 2.2] |
 | 2.5.1 | Pointer Gestures | A | pointer-and-touch |
@@ -259,7 +206,7 @@ All 50 Level A + AA success criteria are covered across the skill resources:
 | 2.5.7 | Dragging Movements | AA | pointer-and-touch [NEW 2.2] |
 | 2.5.8 | Target Size (Minimum) | AA | pointer-and-touch [NEW 2.2] |
 
-### Principle 3: Understandable
+### Principle 3: Understandable (13 criteria)
 | # | Name | Level | Resource |
 |---|------|-------|----------|
 | 3.1.1 | Language of Page | A | page-structure |
@@ -276,7 +223,7 @@ All 50 Level A + AA success criteria are covered across the skill resources:
 | 3.3.7 | Redundant Entry | A | timing-and-authentication [NEW 2.2] |
 | 3.3.8 | Accessible Authentication | AA | timing-and-authentication [NEW 2.2] |
 
-### Principle 4: Robust
+### Principle 4: Robust (2 criteria)
 | # | Name | Level | Resource |
 |---|------|-------|----------|
 | 4.1.2 | Name, Role, Value | A | semantic-html |
