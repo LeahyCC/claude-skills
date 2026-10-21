@@ -12,7 +12,6 @@ Every button label starts with a verb and names the specific action. 2-4 words.
 // FAIL — generic, tells nothing
 <Button>Submit</Button>
 <Button>OK</Button>
-<Button>Next</Button>
 <Button>Click here</Button>
 
 // PASS — specific, tells the user what happens
@@ -63,8 +62,12 @@ The button label should match what the user sees next. If the button says "Revie
 Source: Nielsen Norman Group, Shopify Polaris — CTA labels should describe the destination, not just the mechanism
 
 ```tsx
-// FAIL — button says "Next" but user doesn't know what's next
+// FAIL — "Next" when the user can't see what the next step is
 <Button>Next</Button>
+
+// OK — "Next" when the step name is already on screen
+// <p>Step 2 of 3: Payment</p>
+// <Button>Next</Button>
 
 // PASS — button tells the user what they'll do next
 <Button>Choose a plan</Button>   // → plan selection screen

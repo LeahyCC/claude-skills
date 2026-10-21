@@ -44,7 +44,7 @@ Production-ready UX copy patterns for React and Next.js applications. Every patt
     └── Tooltips → one sentence, answers "what is this?"
               ↓
 [Writing]
-    ├── Apply universal rules (plain language, active voice, front-load)
+    ├── Apply universal rules (plain language, don't blame, front-load)
     ├── Modulate tone to context (errors serious, onboarding flexible)
     └── Match existing voice if mature codebase
               ↓
@@ -83,8 +83,8 @@ Production-ready UX copy patterns for React and Next.js applications. Every patt
 | **Error (inline)** | What's wrong + how to fix | 1 sentence | Serious | "Enter a password with at least 8 characters." |
 | **Error (system)** | What happened + recovery path | 1-2 sentences | Serious | "We couldn't save your changes. Check your connection and try again." |
 | **Empty state** | What goes here + how to start | 1-2 sentences + CTA | Flexible | "No projects yet. Create your first project to get started." |
-| **Toast (success)** | Confirm what happened | 2-4 words | Brief | "Changes saved" / "Invite sent" |
-| **Toast (error)** | What failed + next step | 1 sentence | Serious | "Couldn't save changes. Try again." |
+| **Toast (success)** | Confirm what happened | About 3 words | Brief | "Changes saved" / "Invite sent" |
+| **Toast (status)** | Short state, nothing to do | About 3 words | Brief | "You're offline" |
 | **Banner** | Awareness + optional action | 1-2 sentences | Informational | "Your trial expires in 3 days. Upgrade to keep your data." |
 | **Confirmation dialog** | Consequence + specific action buttons | 1-3 sentences | Serious | "This will permanently delete 12 files. They can't be recovered." |
 | **Onboarding** | Value + single next step | 1-2 sentences + CTA | Warm/flexible | "Track your team's work in one place. Create your first board." |
@@ -116,23 +116,31 @@ These 8 rules are universal — every major UX writing authority agrees on them 
 
 Use "buy" not "purchase." Use "start" not "initiate." Use "end" not "terminate." This applies even to formal/enterprise products — plain is not casual, it's clear.
 
-Source: GOV.UK (9-year-old reading age target), Microsoft ("simpler is better"), Shopify Polaris (7th-grade reading level)
+Source: GOV.UK aims at a reading age of 9 for public content. Polaris aims at a 7th-grade reading level for merchant admin. Pick the target for the product. Microsoft: simpler is better.
 
-### 2. Active voice, address the user as "you"
+### 2. Say what happened. Don't blame.
+
+Instructions can address the user as "you". An error should name the problem and the fix. Don't write "you did this wrong", and don't credit the user for something the product did.
 
 ```tsx
-// FAIL — passive, impersonal
-<p>The password has been reset successfully.</p>
+// FAIL — blames the user
+<p>You didn't enter a store name.</p>
 
-// PASS — active, direct
+// PASS — names the problem
+<p>Store name is required.</p>
+
+// FAIL — credits the user for a system action
 <p>You reset your password.</p>
+
+// PASS — says what happened
+<p>Password reset.</p>
 ```
 
-Source: All 6 sources (NN/g, GOV.UK, Google, Microsoft, Apple, Atlassian)
+Source: Shopify Polaris (inline errors stay passive so they don't blame). GOV.UK and Apple address the person as "you" in instructions. The six sources are NN/g, GOV.UK, Apple, Microsoft, Shopify, and Atlassian. They do not all agree on voice.
 
 ### 3. Front-load important information
 
-Users read in an F-pattern — they scan the first few words of each line. Put the critical information first.
+Put the action first. People scan the start of a line.
 
 ```tsx
 // FAIL — buries the action
@@ -142,13 +150,15 @@ Users read in an F-pattern — they scan the first few words of each line. Put t
 <p>Verify your email to access your dashboard.</p>
 ```
 
-Source: NN/g (users read only 20-28% of page content), GOV.UK (inverted pyramid)
+Source: GOV.UK (inverted pyramid)
 
 ### 4. One idea per copy unit
 
-Every microcopy element has one job. A button label describes one action. An error message addresses one problem. A tooltip answers one question. If you need to convey two ideas, use two elements.
+A button names one action. An error covers one problem. A tooltip answers one question.
 
-Source: NN/g (3 I's — each copy item either Informs, Influences, or facilitates Interaction), Kinneret Yifrah ("1 microcopy item = 1 idea")
+The 3 I's are the job of the line: inform, influence, or help the action. A line can do more than one of those.
+
+Source: NN/g — [The 3 I's of Microcopy](https://www.nngroup.com/articles/3-is-of-microcopy/)
 
 ### 5. Never blame the user
 
@@ -166,7 +176,7 @@ Source: NN/g (3 I's — each copy item either Informs, Influences, or facilitate
 <p className="text-destructive">That password doesn't match. Try again or reset it.</p>
 ```
 
-Words to avoid in error states: "invalid", "illegal", "incorrect", "wrong", "bad", "failed"
+Words to avoid in error states: "invalid", "illegal", "incorrect", "oops". "Save failed" can stay when it names what happened. "Error" on its own does not.
 
 Source: NN/g (13 error message guidelines), Apple HIG, Shopify Polaris
 
@@ -211,8 +221,8 @@ When reviewing UI code, watch for these copy problems:
 - [ ] **"Please" in instructions** — usually unnecessary: "Enter your email" not "Please enter your email"
 - [ ] **"Loading..."** without context — say what's loading: "Loading your dashboard..."
 - [ ] **Mixed terminology** — same concept called different names in different places
-- [ ] **Passive voice in actions** — "Your password has been reset" → "You reset your password"
-- [ ] **Humor in error states** — stales on repetition, frustrates stuck users
+- [ ] **Blame in errors** — "You didn't enter a store name" → "Store name is required"
+- [ ] **Jokes on errors people can hit again** — they go stale. A full outage is the exception.
 - [ ] **ALL CAPS text** — harder to read, signals shouting
 - [ ] **Jargon or internal terms** — "token expired" → "Your session ended. Log in again."
 - [ ] **Vague success messages** — "Success!" → "Payment sent" (name what succeeded)
@@ -228,7 +238,7 @@ Run this checklist on any component with user-facing text:
 - [ ] Confirmation dialogs name the destructive action in the button label (not "OK")
 - [ ] The same concept uses the same term everywhere (check nav, headings, buttons, empty states)
 - [ ] Placeholder text shows format or example, not the label ("name@company.com" not "Enter email")
-- [ ] Toast messages are 2-5 words for success, 1 sentence with next step for errors
+- [ ] Success toasts are about 3 words. An error the user must act on stays on the page. A 3-word status ("You're offline") can be a toast.
 - [ ] No instances of "invalid", "illegal", "incorrect", "click here", "submit", or "are you sure"
 - [ ] Sentences under 25 words, paragraphs under 3 sentences in UI text
 - [ ] Copy reads naturally when spoken aloud

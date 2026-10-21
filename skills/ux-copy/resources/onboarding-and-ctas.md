@@ -12,7 +12,7 @@ Every CTA tells the user exactly what happens when they act. "Submit" tells noth
 |-----|------|-----|
 | Submit | Create account | Names what's being created |
 | Click here | Download report | Names what they get |
-| Next | Review payment | Names what's on the next screen |
+| Next, when the step isn't named | Review payment | "Next" is fine when the step name is already on screen |
 | Continue | Start free trial | Names what starts |
 | Learn more | View pricing | Names the destination |
 | Go | Search projects | Names the action |
@@ -97,11 +97,12 @@ Keep sign-up forms minimal. Every extra field reduces conversion.
 
 ### Social Login Labels
 
-| Context | Label | Not |
-|---------|-------|-----|
-| Registration flow | "Continue with Google" | "Sign in with Google" (implies existing account) |
-| Login flow | "Log in with Google" | "Continue with Google" (ambiguous) |
-| Either/both | "Continue with Google" | "Sign up with Google" (wrong on login page) |
+Google's own button text is "Sign in with Google", "Sign up with Google", or "Continue with Google". "Continue with Google" is fine on both pages. Don't write "Log in with Google".
+
+| Context | Label |
+|---------|-------|
+| Sign up | "Sign up with Google" or "Continue with Google" |
+| Sign in | "Sign in with Google" or "Continue with Google" |
 
 ### Login vs. Sign Up Distinction
 
@@ -277,7 +278,7 @@ When nudging users toward a paid plan:
 
 ```bash
 # Find generic CTAs
-grep -rn '"Submit"\|"Click here"\|"Next"\|"Continue"\|"Go"\|"Learn more"' src/ --include="*.tsx"
+grep -rn '"Submit"\|"Click here"\|"Continue"\|"Go"\|"Learn more"' src/ --include="*.tsx"
 
 # Find aggressive upsell copy
 grep -rn '"[Uu]pgrade required"\|"[Ff]eature locked"\|"[Pp]ay to"\|"[Uu]nlock"' src/ --include="*.tsx"
@@ -293,6 +294,6 @@ grep -rn '"Step\|"step' src/ --include="*.tsx"
 
 - Nielsen Norman Group — [UX Copy Sizes](https://www.nngroup.com/articles/ux-copy-sizes/)
 - Apple HIG — [Writing](https://developer.apple.com/design/human-interface-guidelines/writing)
-- Shopify Polaris — [Actionable language](https://polaris.shopify.com/content/actionable-language)
+- Shopify Polaris — [Voice and tone](https://polaris.shopify.com/content/voice-and-tone)
 - Atlassian Design System — [Designing Messages](https://atlassian.design/foundations/content/designing-messages)
 - Microsoft Writing Style Guide — [Top 10 tips](https://learn.microsoft.com/en-us/style-guide/top-10-tips-style-voice)

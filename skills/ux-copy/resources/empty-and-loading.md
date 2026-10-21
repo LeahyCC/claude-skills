@@ -198,11 +198,11 @@ Skeletons replace loading text when the layout is known. They don't need copy â€
 
 ### Long-Running Operations
 
-For operations that take more than a few seconds:
+NN/g's limit for an uninterrupted flow is about 1 second.
 
-1. **0-2 seconds**: Show a spinner or skeleton. No text needed.
-2. **2-10 seconds**: Add loading text: "Loading your dashboard..."
-3. **10-30 seconds**: Set expectations: "This usually takes about 15 seconds."
+1. **Under 1 second**: Show a spinner or skeleton. No text needed.
+2. **About 1 second and up**: Add loading text: "Loading your dashboard..."
+3. **Past 10 seconds**: Set expectations: "This usually takes about 15 seconds."
 4. **30+ seconds**: Offer to notify: "We'll email you when this is ready."
 5. **Background operations**: Confirm with a toast: "Export started. We'll notify you when it's ready."
 
