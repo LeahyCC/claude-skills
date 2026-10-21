@@ -135,17 +135,28 @@ function handleClick() {
   updateUI()                 // State update — user sees nothing for 500ms
 }
 
-// GOOD — critical work first, defer the rest
+// GOOD — paint the click, then move non-render work off the main thread.
+// startTransition does not do this. React calls that function immediately,
+// and a synchronous loop inside it still blocks the main thread.
 function handleClick() {
-  updateUI()  // State update — user sees result immediately
+  updateUI()
+  const worker = new Worker(new URL('./dataset.worker.ts', import.meta.url))
+  worker.postMessage(data)
+}
 
-  startTransition(() => {
-    processLargeDataset(data)  // Deferred — won't block paint
-  })
-
-  requestIdleCallback(() => {
-    sendAnalytics()  // Runs when browser is idle
-  })
+// If the work has to stay on the main thread, split it.
+// A long task is anything over 50ms.
+async function handleClickChunked(chunks: DataChunk[]) {
+  updateUI()
+  for (const chunk of chunks) {
+    processChunk(chunk)
+    if (typeof scheduler !== 'undefined' && scheduler.yield) {
+      await scheduler.yield()
+    } else {
+      await new Promise(resolve => setTimeout(resolve, 0))
+    }
+  }
+  sendAnalytics()
 }
 ```
 

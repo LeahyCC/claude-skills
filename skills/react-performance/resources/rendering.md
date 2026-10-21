@@ -104,7 +104,7 @@ useEffect(() => {
 const [items, setItems] = useState([])
 const filtered = items.filter(i => i.active)
 
-// GOOD — if filtering is expensive (> 1ms, measured)
+// GOOD — if filtering is noticeably slow (thousands of items, measured)
 const filtered = useMemo(() => items.filter(i => i.active), [items])
 ```
 
@@ -208,7 +208,7 @@ const SlowResults = memo(function SlowResults({ query }: { query: string }) {
 ```tsx
 // Only use when:
 // 1. Component re-renders frequently with same props AND
-// 2. Rendering is measurably expensive (> 1ms, profiled)
+// 2. Rendering is noticeably slow (Profiler, production build)
 
 const ExpensiveList = memo(function ExpensiveList({ items }: { items: Item[] }) {
   return (
@@ -236,9 +236,11 @@ const handleClick = useCallback(() => { /* ... */ }, [])
 ### useMemo — Cache Expensive Calculations
 
 ```tsx
-// Only use when calculation takes >= 1ms (measured with console.time)
+// Use when the work is noticeably slow (often thousands of items) and the
+// inputs rarely change. Also valid to keep a memo() child from re-rendering,
+// or to keep a Hook dependency stable. Measure on a production build.
 const sortedItems = useMemo(
-  () => items.sort((a, b) => a.name.localeCompare(b.name)),
+  () => [...items].sort((a, b) => a.name.localeCompare(b.name)),
   [items]
 )
 
