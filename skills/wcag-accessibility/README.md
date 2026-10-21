@@ -10,11 +10,7 @@ npx skills add LeahyCC/claude-skills@wcag-accessibility
 
 ## What It Does
 
-When you edit `.tsx` or `.jsx` component files, this skill auto-activates and provides WCAG 2.2 compliance guidance. It covers every Level A and AA success criterion, including the 6 added in WCAG 2.2.
-
-**Auto-triggers on:**
-- Component files: `src/components/**/*.tsx`, `src/app/**/*.tsx`, `app/**/*.tsx`
-- CLI tools: `lighthouse`, `axe`, `pa11y`
+WCAG 2.2 Level AA for web UI. It loads when the task is accessibility: contrast, ARIA, keyboard access, focus, screen readers, alt text, or an audit. It covers all 55 Level A and AA criteria, including the 6 added in WCAG 2.2.
 
 ## Coverage
 
@@ -167,7 +163,7 @@ Plus: Hover/Focus Content (1.4.13) and Status Messages (4.1.3) in the main [SKIL
 
 [W3C WCAG 2.2 Recommendation](https://www.w3.org/TR/WCAG22/) (October 2023)
 
-Last verified: March 2026
+Last verified: October 2026
 
 ## License
 
