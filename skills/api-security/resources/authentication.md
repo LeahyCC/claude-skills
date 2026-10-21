@@ -1,6 +1,6 @@
 # Authentication
 
-> OWASP API2:2023 (Broken Authentication), A07:2021 (Identification and Authentication Failures), A02:2021 (Cryptographic Failures)
+> OWASP API2:2023 (Broken Authentication), A07:2025 (Authentication Failures), A04:2025 (Cryptographic Failures)
 
 Authentication verifies identity. Get it wrong and every other security control is meaningless — the attacker is "you."
 
@@ -16,7 +16,7 @@ Browser → proxy.ts (redirect unauthenticated) → Page (Server Component)
                                               Data Access Layer (re-verify auth)
 ```
 
-### proxy.ts — The Auth Gate
+### proxy.ts
 
 `proxy.ts` (formerly `middleware.ts` — renamed in Next.js 16) intercepts requests before they reach pages. Use it to redirect unauthenticated users — but never as the only auth check.
 
@@ -37,7 +37,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Check for session cookie
+  // A present cookie is not a session. Anyone can send `session=x`.
+  // This redirect is a convenience. getCurrentUser() is the check.
   const session = request.cookies.get('session')?.value
   if (!session) {
     const loginUrl = new URL('/login', request.url)
@@ -55,7 +56,9 @@ export function proxy(request: NextRequest) {
 
 In March 2025, a critical vulnerability (CVSS 9.1) was disclosed: attackers could send an `x-middleware-subrequest` header to bypass all middleware logic, including auth checks.
 
-**Fixed in:** Next.js 12.3.5, 13.5.9, 14.2.25, 15.2.3+
+**Fixed in:** Next.js 12.3.5, 13.5.9, 14.2.25, 15.2.3
+
+Vercel-hosted apps were already protected. Those releases fix this bug only. Later advisories exist, so 15.2.3 is not a current pin.
 
 **Lesson:** This is why auth must be checked in the DAL, not just in middleware. Defense in depth.
 
@@ -79,10 +82,18 @@ export const getCurrentUser = cache(async () => {
 
   try {
     const { payload } = await jwtVerify(token, SECRET)
+    if (typeof payload.sub !== 'string' || typeof payload.sid !== 'string') return null
+
+    // jwtVerify does not revoke anything. The session row does.
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(and(eq(sessions.id, payload.sid), eq(sessions.userId, payload.sub)))
+    if (!session) return null
+
     return {
-      id: payload.sub as string,
-      email: payload.email as string,
-      role: payload.role as string,
+      id: payload.sub,
+      role: typeof payload.role === 'string' ? payload.role : 'user',
     }
   } catch {
     return null  // expired, tampered, or invalid
@@ -93,8 +104,9 @@ export const getCurrentUser = cache(async () => {
 **Key points:**
 - `server-only` prevents import from Client Components
 - `cache()` deduplicates across the same request (not across requests)
-- Never returns raw database user — returns a minimal object
-- Catches all JWT errors — expired, tampered, malformed
+- Never returns raw database user. Returns a minimal object
+- Catches all JWT errors: expired, tampered, malformed
+- Rejects the token when the session row is gone, so logout and password change revoke it
 
 ## Session Management
 
@@ -112,7 +124,8 @@ export async function createSession(userId: string) {
 
 // PASS — secure cookie settings
 export async function createSession(userId: string) {
-  const token = await signJWT({ sub: userId })
+  const [session] = await db.insert(sessions).values({ userId }).returning({ id: sessions.id })
+  const token = await signJWT({ sub: userId, sid: session.id })
   const cookieStore = await cookies()
   cookieStore.set('session', token, {
     httpOnly: true,       // prevents XSS from reading the cookie
@@ -127,7 +140,7 @@ export async function createSession(userId: string) {
 ### Session Invalidation
 
 ```tsx
-// Logout — invalidate server-side, not just client-side
+// Logout deletes the session row. The JWT cookie is useless once that row is gone.
 'use server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -176,6 +189,7 @@ const token = await new SignJWT({
 // PASS — minimal claims only
 const token = await new SignJWT({
   sub: user.id,
+  sid: session.id,
   role: user.role,
 })
   .setProtectedHeader({ alg: 'HS256' })
@@ -237,26 +251,29 @@ If you're implementing custom auth (not Clerk/Auth0):
 import crypto from 'crypto'
 const hash = crypto.createHash('md5').update(password).digest('hex')  // crackable in seconds
 
-// PASS — bcrypt with proper cost factor
-import bcrypt from 'bcrypt'
-
-const SALT_ROUNDS = 12  // ~250ms on modern hardware
+// PASS — Argon2id at the OWASP minimum
+import argon2 from 'argon2'
 
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS)
+  return argon2.hash(password, {
+    type: argon2.argon2id,
+    memoryCost: 19456, // 19 MiB
+    timeCost: 2,
+    parallelism: 1,
+  })
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash)
+  return argon2.verify(hash, password)
 }
 ```
 
 | Algorithm | Status | Notes |
 |-----------|--------|-------|
-| MD5, SHA-1, SHA-256 | Never use for passwords | Fast = crackable |
-| bcrypt | Good | Widely supported, use cost 12+ |
-| scrypt | Good | Memory-hard, harder to GPU crack |
-| Argon2id | Best | Winner of Password Hashing Competition |
+| MD5, SHA-1, SHA-256 | Never use for passwords | Fast hashes are cheap to crack |
+| Argon2id | Use this | OWASP minimum: 19 MiB, 2 iterations, parallelism 1 |
+| scrypt | If Argon2id is unavailable | Memory-hard. OWASP: N=2^17, r=8, p=1 |
+| bcrypt | Legacy only | Work factor 10 or more. Ignores bytes after 72 |
 
 ## Re-Authentication for Sensitive Operations
 
@@ -283,7 +300,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
     passwordHash: await hashPassword(newPassword),
   }).where(eq(users.id, user.id))
 
-  // Invalidate all other sessions (user must re-login on other devices)
+  // Drops every session row. The next request fails getCurrentUser.
   await db.delete(sessions).where(eq(sessions.userId, user.id))
 }
 ```
@@ -355,7 +372,9 @@ export async function POST(request: Request) {
 ## Sources
 
 - [OWASP API2:2023 — Broken Authentication](https://owasp.org/API-Security/editions/2023/en/0xa2-broken-authentication/)
-- [OWASP A07:2021 — Identification and Authentication Failures](https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/)
+- [OWASP A07:2025 — Authentication Failures](https://owasp.org/Top10/2025/A07_2025-Authentication_Failures/)
+- [OWASP A04:2025 — Cryptographic Failures](https://owasp.org/Top10/2025/A04_2025-Cryptographic_Failures/)
+- [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
 - [Next.js Security Blog — Server Components and Actions](https://nextjs.org/blog/security-nextjs-server-components-actions)
-- [CVE-2025-29927 — Next.js Middleware Bypass](https://github.com/advisories/GHSA-f82v-mhx4-hgm8)
+- [CVE-2025-29927 — Next.js Middleware Bypass](https://github.com/advisories/GHSA-f82v-jwr5-mffw)
 - [NIST 800-63b — Digital Identity Guidelines](https://pages.nist.gov/800-63-4/sp800-63b.html)

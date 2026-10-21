@@ -1,6 +1,6 @@
 # Data Exposure
 
-> OWASP API3:2023 (Broken Object Property Level Authorization), API6:2023 (Unrestricted Access to Sensitive Business Flows), A04:2021 (Insecure Design)
+> OWASP API3:2023 (Broken Object Property Level Authorization), API6:2023 (Unrestricted Access to Sensitive Business Flows), A06:2025 (Insecure Design), A10:2025 (Mishandling of Exceptional Conditions)
 
 The most common data leak is returning too much. Developers query the database, serialize the result, and return the whole object — including fields the user should never see.
 
@@ -176,7 +176,7 @@ export function toAdminUserDTO(user: DbUser): AdminUserDTO {
 
 ## Error Sanitization
 
-Error messages are a common source of data leaks — stack traces, SQL queries, internal paths, and variable names.
+Error messages are a common source of data leaks (A10:2025): stack traces, SQL queries, internal paths, and variable names.
 
 ```tsx
 // FAIL — leaking internal details in error responses
@@ -357,5 +357,7 @@ find . -name "route.ts" -exec grep -l "select\|findMany\|find(" {} \; | \
 
 - [OWASP API3:2023 — Broken Object Property Level Authorization](https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/)
 - [OWASP API6:2023 — Unrestricted Access to Sensitive Business Flows](https://owasp.org/API-Security/editions/2023/en/0xa6-unrestricted-access-to-sensitive-business-flows/)
+- [OWASP A06:2025 — Insecure Design](https://owasp.org/Top10/2025/A06_2025-Insecure_Design/)
+- [OWASP A10:2025 — Mishandling of Exceptional Conditions](https://owasp.org/Top10/2025/A10_2025-Mishandling_of_Exceptional_Conditions/)
 - [Next.js Data Security Guide](https://nextjs.org/docs/app/guides/data-security)
 - [Next.js Security Blog — Server Components and Actions](https://nextjs.org/blog/security-nextjs-server-components-actions)

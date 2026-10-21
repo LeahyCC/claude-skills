@@ -1,6 +1,6 @@
 # Access Control
 
-> OWASP API1:2023 (Broken Object Level Authorization), API5:2023 (Broken Function Level Authorization), A01:2021 (Broken Access Control)
+> OWASP API1:2023 (Broken Object Level Authorization), API5:2023 (Broken Function Level Authorization), A01:2025 (Broken Access Control)
 
 Access control is the #1 API vulnerability. Every API endpoint — Route Handler or Server Action — must verify both **authentication** (who are you?) and **authorization** (can you do this to this resource?).
 
@@ -66,7 +66,7 @@ The `and()` clause ensures the order belongs to the requesting user. If it doesn
 
 ## Rule 2: Auth in Every Server Action
 
-Server Actions are public HTTP endpoints. Page-level auth (in `proxy.ts` or layout) does NOT extend to actions.
+Server Actions are public HTTP endpoints. A check in the page or layout does not run again for the action. `proxy.ts` may see the POST, but a cookie redirect there is not the authorization check. The action still verifies the caller.
 
 ```tsx
 // FAIL — relies on page-level auth
@@ -308,5 +308,5 @@ grep -rn "Access-Control-Allow-Origin.*\*" --include="*.ts"
 
 - [OWASP API1:2023 — Broken Object Level Authorization](https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/)
 - [OWASP API5:2023 — Broken Function Level Authorization](https://owasp.org/API-Security/editions/2023/en/0xa5-broken-function-level-authorization/)
-- [OWASP A01:2021 — Broken Access Control](https://owasp.org/Top10/A01_2021-Broken_Access_Control/)
+- [OWASP A01:2025 — Broken Access Control](https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/)
 - [Next.js Security: Server Components and Actions](https://nextjs.org/blog/security-nextjs-server-components-actions)

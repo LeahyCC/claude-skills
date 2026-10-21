@@ -1,8 +1,8 @@
 # Supply Chain
 
-> OWASP API9:2023 (Improper Inventory Management), API10:2023 (Unsafe Consumption of APIs), A06:2021 (Vulnerable & Outdated Components), A08:2021 (Software & Data Integrity Failures)
+> OWASP API9:2023 (Improper Inventory Management), API10:2023 (Unsafe Consumption of APIs), A03:2025 (Software Supply Chain Failures), A08:2025 (Software or Data Integrity Failures)
 
-Your code is only as secure as its weakest dependency. The average Next.js project pulls in 500+ packages — each one is an attack surface.
+Your code is only as secure as its weakest dependency.
 
 ## Dependency Security
 
@@ -147,7 +147,7 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@<40-character SHA>  # release tag
 
       - name: Install dependencies (frozen lockfile)
         run: npm ci
@@ -162,7 +162,7 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Lint
-        run: npx next lint
+        run: npx eslint .
 ```
 
 ### CI/CD Security Checklist
@@ -182,8 +182,8 @@ jobs:
 # FAIL — mutable tag, could be compromised
 - uses: actions/checkout@v4
 
-# PASS — pinned to specific commit SHA
-- uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+# PASS — pin the full 40-character commit SHA. The release tag stays in the comment.
+- uses: actions/checkout@<40-character SHA>  # release tag
 ```
 
 ## Third-Party API Security (API10)
@@ -304,6 +304,6 @@ find . -name "route.ts" -path "*/api/*" | sort
 
 - [OWASP API9:2023 — Improper Inventory Management](https://owasp.org/API-Security/editions/2023/en/0xa9-improper-inventory-management/)
 - [OWASP API10:2023 — Unsafe Consumption of APIs](https://owasp.org/API-Security/editions/2023/en/0xaa-unsafe-consumption-of-apis/)
-- [OWASP A06:2021 — Vulnerable and Outdated Components](https://owasp.org/Top10/A06_2021-Vulnerable_and_Outdated_Components/)
-- [OWASP A08:2021 — Software and Data Integrity Failures](https://owasp.org/Top10/A08_2021-Software_and_Data_Integrity_Failures/)
+- [OWASP A03:2025 — Software Supply Chain Failures](https://owasp.org/Top10/2025/A03_2025-Software_Supply_Chain_Failures/)
+- [OWASP A08:2025 — Software or Data Integrity Failures](https://owasp.org/Top10/2025/A08_2025-Software_or_Data_Integrity_Failures/)
 - [Socket.dev — Supply Chain Security](https://socket.dev/)

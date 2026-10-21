@@ -1,6 +1,6 @@
 # Input Validation
 
-> OWASP API3:2023 (Broken Object Property Level Authorization), API8:2023 (Security Misconfiguration), A03:2021 (Injection)
+> OWASP API3:2023 (Broken Object Property Level Authorization), API8:2023 (Security Misconfiguration), A05:2025 (Injection)
 
 Every piece of data from the client is hostile until validated. TypeScript types disappear at runtime — they provide zero security.
 
@@ -59,7 +59,7 @@ export async function createPost(input: unknown) {
 // PASS — validate FormData with Zod
 'use server'
 const ContactSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   message: z.string().min(10).max(5000).trim(),
 })
 
@@ -89,10 +89,10 @@ export async function POST(request: Request) {
 // PASS — strict schema validation
 import { z } from 'zod'
 
-const CreateUserSchema = z.object({
+const CreateUserSchema = z.strictObject({
   name: z.string().min(1).max(100).trim(),
-  email: z.string().email().toLowerCase(),
-}).strict()  // .strict() rejects unknown fields
+  email: z.email().transform((value) => value.toLowerCase()),
+})  // unknown keys are rejected
 
 export async function POST(request: Request) {
   const user = await getCurrentUser()
@@ -115,7 +115,11 @@ export async function POST(request: Request) {
     )
   }
 
-  const newUser = await db.insert(users).values(parsed.data).returning()
+  const [newUser] = await db.insert(users).values(parsed.data).returning({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+  })
   return Response.json(newUser, { status: 201 })
 }
 ```
@@ -132,11 +136,11 @@ export async function PATCH(request: Request) {
   // Attacker sends: { "name": "Alice", "role": "admin", "verified": true }
 }
 
-// PASS — explicit field selection with .strict()
-const UpdateProfileSchema = z.object({
+// PASS — explicit field selection with z.strictObject()
+const UpdateProfileSchema = z.strictObject({
   name: z.string().min(1).max(100).trim().optional(),
   bio: z.string().max(500).trim().optional(),
-}).strict()  // rejects "role", "verified", or any other field
+})  // rejects "role", "verified", or any other field
 
 export async function PATCH(request: Request) {
   const user = await getCurrentUser()
@@ -317,7 +321,7 @@ const DateRangeSchema = z.object({
 
 // ID parameter (from route params)
 const IdSchema = z.object({
-  id: z.string().cuid2(),  // or .uuid() depending on your ID format
+  id: z.cuid2(),  // or z.uuid(), depending on your ID format
 })
 ```
 
@@ -343,6 +347,6 @@ grep -rn "request.json()" --include="*.ts" -A5 | grep -v "safeParse\|parse(\|Sch
 ## Sources
 
 - [OWASP API3:2023 — Broken Object Property Level Authorization](https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/)
-- [OWASP A03:2021 — Injection](https://owasp.org/Top10/A03_2021-Injection/)
+- [OWASP A05:2025 — Injection](https://owasp.org/Top10/2025/A05_2025-Injection/)
 - [Next.js Data Security Guide](https://nextjs.org/docs/app/guides/data-security)
 - [Zod Documentation](https://zod.dev)

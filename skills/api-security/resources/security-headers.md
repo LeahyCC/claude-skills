@@ -1,6 +1,6 @@
 # Security Headers
 
-> OWASP API8:2023 (Security Misconfiguration), A05:2021 (Security Misconfiguration)
+> OWASP API8:2023 (Security Misconfiguration), A02:2025 (Security Misconfiguration)
 
 Security headers are the cheapest, highest-impact security measure. Set them once in `next.config.ts` and they protect every response.
 
@@ -12,7 +12,7 @@ These five headers are required by Vercel's conformance rules (`NEXTJS_MISSING_S
 |--------|-------|----------|
 | `Content-Security-Policy` | See CSP section | XSS, code injection |
 | `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | HTTPS downgrade attacks |
-| `X-Frame-Options` | `SAMEORIGIN` | Clickjacking |
+| `X-Frame-Options` | `DENY` | Clickjacking |
 | `X-Content-Type-Options` | `nosniff` | MIME sniffing attacks |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Referrer leakage |
 
@@ -35,7 +35,7 @@ const securityHeaders = [
   },
   {
     key: 'X-Frame-Options',
-    value: 'SAMEORIGIN',
+    value: 'DENY',
   },
   {
     key: 'X-Content-Type-Options',
@@ -65,13 +65,15 @@ const config: NextConfig = {
 export default config
 ```
 
+`preload` puts the domain on a browser list that is hard to leave. Sending the domain to that list is a separate step.
+
 ## Content Security Policy (CSP)
 
 CSP is the most important security header. It controls which resources the browser can load, preventing XSS even if injection occurs.
 
 ### Approach 1: Nonce-Based CSP (Strictest)
 
-Requires dynamic rendering — each request gets a unique nonce.
+Each request gets a unique nonce, so the page has to render dynamically. Call `connection()` from `next/server`, or read `headers()`. A nonce does not work with Partial Prerendering or a `cacheComponents` static shell.
 
 ```tsx
 // proxy.ts
@@ -129,9 +131,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 Next.js automatically applies the nonce to framework scripts, bundles, and inline styles.
 
-### Approach 2: Hash-Based CSP (Allows Static Pages)
+### Approach 2: Subresource Integrity (Static Generation)
 
-Uses Subresource Integrity (SRI) hashes — no nonce needed, compatible with static generation.
+`experimental.sri` is still experimental. It is App Router only (since Next.js 14) and adds `integrity` attributes to scripts. Those attributes are not CSP hash sources. Use `script-src 'self'`, and add `'unsafe-eval'` in development. Do not copy the hashes into the CSP header.
 
 ```tsx
 // next.config.ts
@@ -142,11 +144,9 @@ const config: NextConfig = {
 }
 ```
 
-This generates integrity hashes at build time. Set CSP to allow `'self'` plus the generated hashes. App Router only.
-
 ### Approach 3: Static CSP (Least Strict, Simplest)
 
-When you can't use nonces or hashes:
+When you can't use nonces:
 
 ```tsx
 const csp = [
@@ -160,6 +160,8 @@ const csp = [
   `upgrade-insecure-requests`,
 ].join('; ')
 ```
+
+In development, `script-src` also needs `'unsafe-eval'`.
 
 ### CSP for Common Third-Party Services
 
@@ -265,9 +267,11 @@ import { headers } from 'next/headers'
 export async function verifyCsrf(): Promise<boolean> {
   const headerList = await headers()
   const origin = headerList.get('origin')
-  const host = headerList.get('host')
+  // Server Actions compare Origin to x-forwarded-host, then host.
+  const host = headerList.get('x-forwarded-host') ?? headerList.get('host')
 
-  if (!origin) return false
+  // Missing Origin fails closed. Server Actions only warn. That is fine for Route Handlers.
+  if (!origin || !host) return false
 
   const originUrl = new URL(origin)
   return originUrl.host === host
@@ -337,7 +341,7 @@ grep -rn "Response.json" --include="route.ts" | grep -v "Cache-Control\|no-store
 ## Sources
 
 - [OWASP API8:2023 — Security Misconfiguration](https://owasp.org/API-Security/editions/2023/en/0xa8-security-misconfiguration/)
-- [OWASP A05:2021 — Security Misconfiguration](https://owasp.org/Top10/A05_2021-Security_Misconfiguration/)
+- [OWASP A02:2025 — Security Misconfiguration](https://owasp.org/Top10/2025/A02_2025-Security_Misconfiguration/)
 - [Next.js Content Security Policy Guide](https://nextjs.org/docs/app/guides/content-security-policy)
 - [Vercel Conformance — NEXTJS_MISSING_SECURITY_HEADERS](https://vercel.com/docs/workflow-collaboration/conformance/rules/NEXTJS_MISSING_SECURITY_HEADERS)
 - [MDN — Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
