@@ -1,10 +1,7 @@
+<h1 align="center">claude-skills</h1>
+
 <p align="center">
-  <h1 align="center">claude-skills</h1>
-  <p align="center">
-    Production-grade Claude Code skills verified against official specifications.
-    <br />
-    Zero dependencies. Production code examples. Complete domain coverage.
-  </p>
+  Claude Code skills checked against the spec for each domain.
 </p>
 
 <p align="center">
@@ -19,465 +16,64 @@
 ## Install
 
 ```bash
-# Accessibility — WCAG 2.2 AA compliance (50/50 criteria)
-npx skills add LeahyCC/claude-skills@wcag-accessibility
-
-# React Performance — measurement-first optimization
-npx skills add LeahyCC/claude-skills@react-performance
-
-# SEO — search + AI engine optimization with production code
-npx skills add LeahyCC/claude-skills@seo
-
-# UX Copy — UI text patterns for buttons, errors, empty states, and more
-npx skills add LeahyCC/claude-skills@ux-copy
-
-# API Security — OWASP API Top 10 with production Next.js code
-npx skills add LeahyCC/claude-skills@api-security
-
-# Product & Marketing — positioning, discovery, GTM, prioritization, metrics, copy
-npx skills add LeahyCC/claude-skills@product-marketing
-
-# Next.js App Router — Server Components, caching, routing, proxy, migration (Next.js 16)
-npx skills add LeahyCC/claude-skills@nextjs-app-router
+npx skills add LeahyCC/claude-skills@<skill>
 ```
 
-### Commands
-
-Commands are slash commands (`/command-name`) you add to your project. Copy the file into your project's `.claude/commands/` directory:
+`<skill>` is a name from the table. For example:
 
 ```bash
-# Code Review — OWASP-mapped, risk-rated, with autofix diffs
+npx skills add LeahyCC/claude-skills@wcag-accessibility
+```
+
+### Slash commands
+
+Copy the file into the project's `.claude/commands/` directory:
+
+```bash
 mkdir -p .claude/commands
 curl -sL https://raw.githubusercontent.com/LeahyCC/claude-skills/main/.claude/commands/code-review.md \
   -o .claude/commands/code-review.md
 ```
 
-Then use `/code-review` in any Claude Code session within that project.
-
-That's it. No Python runtime. No shell scripts. No npm packages to install. Pure markdown — works in any Claude Code environment.
-
----
+Then `/code-review` works in that project.
 
 ## Skills
 
-| Skill | What It Does | Coverage | Verified Against |
-|-------|-------------|----------|-----------------|
-| [wcag-accessibility](./skills/wcag-accessibility/) | WCAG 2.2 Level AA compliance for web apps | **50/50** success criteria | [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/) |
-| [react-performance](./skills/react-performance/) | Measurement-first React optimization | **8** resource files | [React docs](https://react.dev) + [Web Vitals](https://web.dev/articles/vitals) |
-| [seo](./skills/seo/) | SEO + GEO with production Next.js code | **6** resource files | [Google SEO Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) + [llmstxt.org](https://llmstxt.org/) |
-| [ux-copy](./skills/ux-copy/) | UI text — buttons, errors, empty states, tone, auditing | **8** resource files | [NN/g](https://www.nngroup.com/topic/writing-web/) + [GOV.UK](https://www.gov.uk/guidance/content-design) + [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/writing) + 3 more |
-| [api-security](./skills/api-security/) | OWASP API Security Top 10 for Next.js APIs | **8** resource files covering all 10 API + 10 Web categories | [OWASP API Security Top 10 (2023)](https://owasp.org/API-Security/editions/2023/en/0x11-t10/) + [OWASP Top 10 (2021)](https://owasp.org/Top10/) |
-| [product-marketing](./skills/product-marketing/) | Product management + marketing strategy | **8** resource files covering strategy, discovery, positioning, GTM, prioritization, metrics, copy, templates | [Cagan/SVPG](https://www.svpg.com/) + [Dunford](https://www.aprildunford.com/) + [Torres](https://www.producttalk.org/) + [Reforge](https://www.reforge.com/) + 14 more |
-| [nextjs-app-router](./skills/nextjs-app-router/) | Next.js 16 App Router — Server/Client Components, data fetching, Cache Components, routing, proxy, migration | **10** resource files | [Next.js docs](https://nextjs.org/docs/app) + [React docs](https://react.dev) |
-
-### Commands
-
-| Command | What It Does | Key Features |
-|---------|-------------|-------------|
-| [/code-review](./.claude/commands/code-review.md) | OWASP-mapped code review with risk ratings | Diff-focused, autofix diffs, risk quality (exploitability/blast radius/likelihood/detectability), pattern detection |
-
-> More skills coming — see [Roadmap](#roadmap). Each one will meet the same standard: complete coverage, verified against the official spec, production code examples.
-
----
-
-## Featured: wcag-accessibility
-
-The most comprehensive WCAG accessibility skill for Claude Code. Covers every Level A and AA success criterion in WCAG 2.2, with production React, Next.js, and Tailwind CSS code examples.
-
-### Why this skill?
-
-Most accessibility guidance covers the obvious stuff — alt text, color contrast, maybe keyboard nav. This skill covers **all 50 criteria**, including the 6 new ones added in WCAG 2.2 that most resources still miss:
-
-| New in WCAG 2.2 | What It Requires |
-|-----------------|-----------------|
-| Focus Not Obscured (2.4.11) | Focused element not fully hidden by sticky headers/footers |
-| Dragging Movements (2.5.7) | Single-pointer alternative for every drag operation |
-| Target Size (2.5.8) | 24x24 CSS pixel minimum for interactive targets |
-| Consistent Help (3.2.6) | Help mechanisms in same location across pages |
-| Redundant Entry (3.3.7) | Don't re-ask for information already provided |
-| Accessible Authentication (3.3.8) | No cognitive function tests — allow paste, password managers |
-
-### What it catches
-
-```tsx
-// BEFORE — fails WCAG 1.4.3 (contrast ratio ~2.7:1, needs 4.5:1)
-<p className="text-muted-foreground/60 text-xs">Helper text</p>
-
-// AFTER — passes WCAG 1.4.3 (contrast ratio ~5.2:1)
-<p className="text-muted-foreground text-xs">Helper text</p>
-```
-
-```tsx
-// BEFORE — fails WCAG 3.3.8 (blocks password managers)
-<input type="password" onPaste={(e) => e.preventDefault()} />
-
-// AFTER — passes WCAG 3.3.8 (allows paste + autoComplete)
-<input type="password" autoComplete="current-password" />
-```
-
-```tsx
-// BEFORE — fails WCAG 2.5.7 (drag-only reorder)
-<SortableList onDragEnd={handleReorder}>
-  {items.map(item => <SortableItem key={item.id} />)}
-</SortableList>
-
-// AFTER — passes WCAG 2.5.7 (drag + button alternatives)
-{items.map((item, i) => (
-  <li key={item.id}>
-    {item.name}
-    <button onClick={() => moveUp(i)} aria-label={`Move ${item.name} up`}>↑</button>
-    <button onClick={() => moveDown(i)} aria-label={`Move ${item.name} down`}>↓</button>
-  </li>
-))}
-```
-
-### Coverage at a glance
-
-11 resource files covering all 4 WCAG principles:
-
-| Resource | Criteria Covered | Key Topics |
-|----------|-----------------|------------|
-| [Color Contrast](./skills/wcag-accessibility/resources/color-contrast.md) | 1.4.3, 1.4.11 | Ratios, Tailwind opacity pitfalls, dark mode |
-| [Keyboard Navigation](./skills/wcag-accessibility/resources/keyboard-navigation.md) | 2.1.1, 2.1.2, 2.4.1, 2.4.3, 2.4.7, 2.4.11 | Focus management, WAI-ARIA patterns, skip links |
-| [Semantic HTML](./skills/wcag-accessibility/resources/semantic-html.md) | 1.3.1, 4.1.2 | Landmarks, headings, ARIA roles, live regions |
-| [Forms & Inputs](./skills/wcag-accessibility/resources/forms-and-inputs.md) | 1.3.5, 3.3.1, 3.3.2, 3.3.3 | Labels, errors, autocomplete, touch targets |
-| [Images & Media](./skills/wcag-accessibility/resources/images-and-media.md) | 1.1.1, 1.2.1–1.2.5, 1.4.5 | Alt text, SVG, captions, transcripts |
-| [Motion & Animation](./skills/wcag-accessibility/resources/motion-and-animation.md) | 2.2.2, 2.3.1 | prefers-reduced-motion, flash limits, auto-play |
-| [Page Structure](./skills/wcag-accessibility/resources/page-structure.md) | 1.3.2, 1.3.3, 1.3.4, 1.4.4, 1.4.10, 1.4.12, 2.4.2, 3.1.1, 3.1.2 | Language, titles, reflow, zoom, text spacing |
-| [Links & Navigation](./skills/wcag-accessibility/resources/links-and-navigation.md) | 1.4.1, 2.4.4, 2.4.5, 2.5.3, 3.2.1–3.2.4, 3.2.6 | Link purpose, predictability, consistent help |
-| [Pointer & Touch](./skills/wcag-accessibility/resources/pointer-and-touch.md) | 2.5.1, 2.5.2, 2.5.4, 2.5.7, 2.5.8 | Drag alternatives, gestures, target size |
-| [Timing & Auth](./skills/wcag-accessibility/resources/timing-and-authentication.md) | 1.4.2, 2.1.4, 2.2.1, 3.3.4, 3.3.7, 3.3.8 | Timeouts, CAPTCHAs, accessible auth |
-| [Testing & Auditing](./skills/wcag-accessibility/resources/testing-and-auditing.md) | — | axe-core, jest-axe, Playwright, Lighthouse, VoiceOver |
-
-Plus: Hover/Focus Content (1.4.13) and Status Messages (4.1.3) covered in the main SKILL.md.
-
-<details>
-<summary><strong>Full criteria mapping table (50/50)</strong></summary>
-
-#### Principle 1: Perceivable (20 criteria)
-| # | Name | Level | Resource |
-|---|------|-------|----------|
-| 1.1.1 | Non-text Content | A | images-and-media |
-| 1.2.1 | Audio-only/Video-only | A | images-and-media |
-| 1.2.2 | Captions (Prerecorded) | A | images-and-media |
-| 1.2.3 | Audio Description or Alternative | A | images-and-media |
-| 1.2.4 | Captions (Live) | AA | images-and-media |
-| 1.2.5 | Audio Description (Prerecorded) | AA | images-and-media |
-| 1.3.1 | Info and Relationships | A | semantic-html |
-| 1.3.2 | Meaningful Sequence | A | page-structure |
-| 1.3.3 | Sensory Characteristics | A | page-structure |
-| 1.3.4 | Orientation | AA | page-structure |
-| 1.3.5 | Identify Input Purpose | AA | forms-and-inputs |
-| 1.4.1 | Use of Color | A | links-and-navigation |
-| 1.4.2 | Audio Control | A | timing-and-authentication |
-| 1.4.3 | Contrast (Minimum) | AA | color-contrast |
-| 1.4.4 | Resize Text | AA | page-structure |
-| 1.4.5 | Images of Text | AA | images-and-media |
-| 1.4.10 | Reflow | AA | page-structure |
-| 1.4.11 | Non-text Contrast | AA | color-contrast |
-| 1.4.12 | Text Spacing | AA | page-structure |
-| 1.4.13 | Content on Hover or Focus | AA | SKILL.md |
-
-#### Principle 2: Operable (20 criteria)
-| # | Name | Level | Resource |
-|---|------|-------|----------|
-| 2.1.1 | Keyboard | A | keyboard-navigation |
-| 2.1.2 | No Keyboard Trap | A | keyboard-navigation |
-| 2.1.4 | Character Key Shortcuts | A | timing-and-authentication |
-| 2.2.1 | Timing Adjustable | A | timing-and-authentication |
-| 2.2.2 | Pause, Stop, Hide | A | motion-and-animation |
-| 2.3.1 | Three Flashes | A | motion-and-animation |
-| 2.4.1 | Bypass Blocks | A | keyboard-navigation |
-| 2.4.2 | Page Titled | A | page-structure |
-| 2.4.3 | Focus Order | A | keyboard-navigation |
-| 2.4.4 | Link Purpose (In Context) | A | links-and-navigation |
-| 2.4.5 | Multiple Ways | AA | links-and-navigation |
-| 2.4.6 | Headings and Labels | AA | semantic-html |
-| 2.4.7 | Focus Visible | AA | keyboard-navigation |
-| 2.4.11 | Focus Not Obscured | AA | keyboard-navigation |
-| 2.5.1 | Pointer Gestures | A | pointer-and-touch |
-| 2.5.2 | Pointer Cancellation | A | pointer-and-touch |
-| 2.5.3 | Label in Name | A | links-and-navigation |
-| 2.5.4 | Motion Actuation | A | pointer-and-touch |
-| 2.5.7 | Dragging Movements | AA | pointer-and-touch |
-| 2.5.8 | Target Size (Minimum) | AA | pointer-and-touch |
-
-#### Principle 3: Understandable (9 criteria)
-| # | Name | Level | Resource |
-|---|------|-------|----------|
-| 3.1.1 | Language of Page | A | page-structure |
-| 3.1.2 | Language of Parts | AA | page-structure |
-| 3.2.1 | On Focus | A | links-and-navigation |
-| 3.2.2 | On Input | A | links-and-navigation |
-| 3.2.3 | Consistent Navigation | AA | links-and-navigation |
-| 3.2.4 | Consistent Identification | AA | links-and-navigation |
-| 3.2.6 | Consistent Help | A | links-and-navigation |
-| 3.3.1 | Error Identification | A | forms-and-inputs |
-| 3.3.2 | Labels or Instructions | A | forms-and-inputs |
-| 3.3.3 | Error Suggestion | AA | forms-and-inputs |
-| 3.3.4 | Error Prevention | AA | timing-and-authentication |
-| 3.3.7 | Redundant Entry | A | timing-and-authentication |
-| 3.3.8 | Accessible Authentication | AA | timing-and-authentication |
-
-#### Principle 4: Robust (1 criterion)
-| # | Name | Level | Resource |
-|---|------|-------|----------|
-| 4.1.2 | Name, Role, Value | A | semantic-html |
-| 4.1.3 | Status Messages | AA | SKILL.md |
-
-> 4.1.1 Parsing was removed in WCAG 2.2.
-
-</details>
-
----
-
-## Featured: react-performance
-
-A measurement-first React performance skill. Unlike other React performance skills that say "use React.memo everywhere," this skill teaches you to **find problems before fixing them** and is **React Compiler-aware** — it won't suggest manual memoization when the compiler handles it.
-
-### What makes it different
-
-| Other React skills | react-performance |
-|---|---|
-| "Use React.memo everywhere" | "Measure first — is it actually slow?" |
-| No React Compiler awareness | Knows when the compiler handles it |
-| No profiling guidance | Starts with DevTools Profiler workflow |
-| Generic JS micro-optimizations | React-specific patterns with Web Vitals |
-| Next.js-only | Core patterns + Next.js extensions |
-
-### Coverage
-
-8 resource files covering the full optimization stack:
-
-| Resource | Topics |
-|----------|--------|
-| [Profiling](./skills/react-performance/resources/profiling.md) | DevTools Profiler, Chrome Performance, web-vitals, bundle analysis |
-| [Rendering](./skills/react-performance/resources/rendering.md) | State colocation, children pattern, useTransition, useDeferredValue, memo |
-| [Bundle](./skills/react-performance/resources/bundle.md) | Code splitting, tree shaking, dynamic imports, Server Components |
-| [Web Vitals](./skills/react-performance/resources/web-vitals.md) | LCP, INP, CLS — React-specific causes and fixes |
-| [Server Components](./skills/react-performance/resources/server-components.md) | Server vs Client decision, composition, streaming, parallel fetching |
-| [Data & Lists](./skills/react-performance/resources/data-and-lists.md) | Virtualization, pagination, infinite scroll, Web Workers |
-| [Assets](./skills/react-performance/resources/assets.md) | next/image, next/font, Script loading, preloading |
-| [React Compiler](./skills/react-performance/resources/react-compiler.md) | Setup, what it replaces, Rules of React, migration |
-
----
-
-## Featured: seo
-
-The first SEO skill that generates production code instead of just auditing. Covers traditional SEO (Google) and GEO (AI search engines like ChatGPT, Perplexity, and Google AI Overviews).
-
-### What makes it different
-
-| Other SEO skills | seo |
-|---|---|
-| Audit checklists and recommendations | **Production `generateMetadata`, `sitemap.ts`, `robots.ts`, JSON-LD code** |
-| No framework awareness | **Next.js App Router metadata API, file-based conventions** |
-| SEO myths repeated as fact | **Google's actual guidance — debunks meta keywords, E-E-A-T as ranking factor, content length** |
-| Traditional SEO only | **GEO: llms.txt generation, AI crawler management, citation-optimized content** |
-| References FID (outdated) | **INP (replaced FID in March 2024)** |
-
-### Coverage
-
-| Resource | Topics |
-|----------|--------|
-| [Metadata](./skills/seo/resources/metadata.md) | Static/dynamic metadata, title templates, canonical URLs, noindex |
-| [Crawlability](./skills/seo/resources/crawlability.md) | robots.ts with AI crawlers, dynamic sitemaps, i18n, internal linking |
-| [Structured Data](./skills/seo/resources/structured-data.md) | JSON-LD: Organization, Product, Article, BreadcrumbList, LocalBusiness |
-| [OG Images](./skills/seo/resources/og-images.md) | Dynamic OG images via ImageResponse, custom fonts |
-| [GEO](./skills/seo/resources/geo.md) | llms.txt, AI crawler control, content structure for citations |
-| [Performance](./skills/seo/resources/performance.md) | LCP/INP/CLS fixes for SEO ranking, web-vitals monitoring |
-
----
-
-## Featured: api-security
-
-The first OWASP API Security skill with production Next.js code. Covers both the **OWASP API Security Top 10 (2023)** and the **OWASP Web Top 10 (2021)**, with FAIL/PASS code examples for every vulnerability class.
-
-### Why this skill?
-
-Most security skills are checklists, audit processes, or Python-only code. This skill gives you **production Next.js App Router code** — Server Actions, Route Handlers, `proxy.ts`, and the Data Access Layer pattern — for every OWASP category.
-
-| What others do | What we do |
-|---|---|
-| "Validate input" | **Zod schema for every Server Action and Route Handler, with `.strict()` to prevent mass assignment** |
-| "Check authorization" | **`getCurrentUser()` with ownership verification — never trust client-supplied IDs** |
-| "Use rate limiting" | **Upstash patterns per endpoint type — auth (5/min), AI (budget-based), general (60/min)** |
-| "Set security headers" | **Full CSP (nonce-based, hash-based, and static), HSTS, CORS allowlist, CSRF verification** |
-
-### What it catches
-
-```tsx
-// FAIL — Server Action without auth (it's a public HTTP endpoint!)
-'use server'
-export async function deleteAccount(userId: string) {
-  await db.delete(users).where(eq(users.id, userId))
-}
-
-// PASS — auth + ownership derived from session
-'use server'
-export async function deleteAccount() {
-  const user = await getCurrentUser()
-  if (!user) throw new Error('Unauthorized')
-  await db.delete(users).where(eq(users.id, user.id))
-}
-```
-
-```tsx
-// FAIL — mass assignment via unvalidated JSON body
-export async function PATCH(request: Request) {
-  const body = await request.json()
-  await db.update(users).set(body)
-  // Attacker sends: { "role": "admin" }
-}
-
-// PASS — strict Zod schema with explicit fields
-const UpdateSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  bio: z.string().max(500).optional(),
-}).strict()
-```
-
-### Coverage
-
-8 resource files covering both OWASP standards:
-
-| Resource | OWASP API | OWASP Web | Key Topics |
-|----------|-----------|-----------|------------|
-| [Access Control](./skills/api-security/resources/access-control.md) | API1, API5 | A01 | BOLA/IDOR, RBAC, CORS, multi-tenant |
-| [Authentication](./skills/api-security/resources/authentication.md) | API2 | A07, A02 | Sessions, JWT, Clerk, CVE-2025-29927, webhooks |
-| [Input Validation](./skills/api-security/resources/input-validation.md) | API3, API8 | A03 | Zod, SQL injection, XSS, mass assignment |
-| [Rate Limiting](./skills/api-security/resources/rate-limiting.md) | API4 | A04 | Upstash, cost attacks, AI budget limiting |
-| [Security Headers](./skills/api-security/resources/security-headers.md) | API8 | A05 | CSP, HSTS, CORS, CSRF, Cache-Control |
-| [Data Exposure](./skills/api-security/resources/data-exposure.md) | API3, API6 | A04 | DAL pattern, DTOs, error sanitization |
-| [Supply Chain](./skills/api-security/resources/supply-chain.md) | API9, API10 | A06, A08 | Dependencies, env vars, CI/CD |
-| [SSRF & Logging](./skills/api-security/resources/ssrf-and-logging.md) | API7 | A09, A10 | URL validation, structured logging |
-
----
-
-## Featured: product-marketing
-
-The first PM/PMM skill that combines product management and product marketing into one skill, verified against 18 authoritative primary sources. Every framework cites its author — no opinions disguised as best practice.
-
-### Why this skill?
-
-Most PM skills are collections of prompts. Most marketing skills are copywriting-only. This skill covers the **full product lifecycle** — from discovery through launch through metrics — with the PM and PMM disciplines integrated the way they work in practice.
-
-| What others do | What we do |
-|---|---|
-| "Validate your idea" | **Teresa Torres's Opportunity Solution Trees** with interview guides, JTBD scripts, and experiment templates |
-| "Position your product" | **April Dunford's 5-component framework** with worked examples and messaging hierarchy |
-| "Write a PRD" | **Production templates** — PRD, product brief, PR/FAQ, battle card, OKR doc, roadmap |
-| "Prioritize features" | **RICE, ICE, WSJF scoring** with worked examples and anti-pattern detection |
-| "Set metrics" | **North Star + AARRR + unit economics** with benchmarks by product type |
-| "Write a landing page" | **PAS, AIDA, BAB frameworks** with full page structure and email sequences |
-
-### What it covers
-
-8 resource files across the full product lifecycle:
-
-| Resource | Key Frameworks |
-|----------|---------------|
-| [Strategy](./skills/product-marketing/resources/strategy.md) | Cagan (SVPG), Biddle (DHM), Moore (Chasm), competitive analysis |
-| [Discovery](./skills/product-marketing/resources/discovery.md) | Torres (OSTs), Christensen (JTBD), Ulwick (ODI), experiment design |
-| [Positioning & Messaging](./skills/product-marketing/resources/positioning-and-messaging.md) | Dunford, Raskin (narrative), Miller (StoryBrand), category design |
-| [Go-to-Market](./skills/product-marketing/resources/go-to-market.md) | PLG/SLG/CLG, Van Westendorp pricing, Bullseye channels, launch tiers |
-| [Prioritization & Roadmap](./skills/product-marketing/resources/prioritization-and-roadmap.md) | RICE, ICE, WSJF, Now/Next/Later, OKRs, Shape Up |
-| [Metrics & Analytics](./skills/product-marketing/resources/metrics-and-analytics.md) | North Star (Amplitude), AARRR, retention cohorts, CAC/LTV |
-| [Marketing Copy](./skills/product-marketing/resources/marketing-copy.md) | PAS, AIDA, BAB, email sequences, case studies, changelogs |
-| [Templates](./skills/product-marketing/resources/templates.md) | PRD, PR/FAQ, positioning doc, battle card, OKR, roadmap |
-
----
-
-## What's Different
-
-This repo exists because most skills are surface-level. Here's what we do differently:
-
-**Every claim is verifiable.** Our WCAG skill maps every success criterion to its resource file — audit us in 60 seconds. Our React skill cites React docs for every recommendation. Our SEO skill cites Google's official documentation. No inflated numbers.
-
-**Zero runtime dependencies.** Pure markdown files. No Python scripts, no npm packages, no shell installers. Install in one command, works everywhere Claude Code runs.
-
-**Production code examples.** Real React, Next.js, and Tailwind CSS patterns — not pseudocode. Every resource file includes FAIL and PASS examples side by side with the exact `className` and props you'd use.
-
-**Verified against official sources.** WCAG verified against [W3C WCAG 2.2](https://www.w3.org/TR/WCAG22/). React verified against [react.dev](https://react.dev). SEO verified against [Google's official guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide). We note what's outdated, experimental, or removed.
-
----
-
-## Repo Structure
-
-```
-claude-skills/
-├── skills/
-│   ├── wcag-accessibility/           # WCAG 2.2 AA — 50/50 criteria
-│   │   ├── SKILL.md
-│   │   ├── README.md
-│   │   └── resources/               # 11 deep-dive reference files
-│   ├── react-performance/           # Measurement-first React optimization
-│   │   ├── SKILL.md
-│   │   ├── README.md
-│   │   └── resources/               # 8 deep-dive reference files
-│   ├── seo/                         # SEO + GEO with production code
-│   │   ├── SKILL.md
-│   │   ├── README.md
-│   │   └── resources/               # 6 deep-dive reference files
-│   ├── ux-copy/                     # UX copy — UI text patterns
-│   │   ├── SKILL.md
-│   │   ├── README.md
-│   │   └── resources/               # 8 deep-dive reference files
-│   ├── api-security/               # OWASP API Security Top 10
-│   │   ├── SKILL.md
-│   │   ├── README.md
-│   │   └── resources/               # 8 deep-dive reference files
-│   ├── product-marketing/          # Product management + marketing strategy
-│   │   ├── SKILL.md
-│   │   ├── README.md
-│   │   └── resources/               # 8 deep-dive reference files
-│   └── nextjs-app-router/          # Next.js 16 App Router
-│       ├── SKILL.md
-│       ├── README.md
-│       └── resources/               # 10 deep-dive reference files
-├── .claude/
-│   └── commands/
-│       └── code-review.md             # /code-review slash command
-├── .claude-plugin/
-│   ├── plugin.json                    # Marketplace discovery
-│   └── marketplace.json               # Skill registry metadata
-├── CONTRIBUTING.md                     # How to add a skill
-├── LICENSE                             # MIT
-└── README.md                          # You are here
-```
-
----
-
-## Roadmap
-
-We're building a collection of skills where each one is the definitive reference for its domain. Quality over quantity.
-
-| Skill | Status | Spec Source |
-|-------|--------|-------------|
-| wcag-accessibility | **Shipped** | W3C WCAG 2.2 |
-| react-performance | **Shipped** | React docs, Web Vitals |
-| seo | **Shipped** | Google SEO Guide, llmstxt.org |
-| ux-copy | **Shipped** | NN/g, GOV.UK, Apple HIG, Microsoft, Shopify Polaris, Atlassian |
-| api-security | **Shipped** | OWASP API Security Top 10 (2023), OWASP Top 10 (2021) |
-| product-marketing | **Shipped** | Cagan/SVPG, Dunford, Torres, Reforge, JTBD, + 13 more |
-| nextjs-app-router | **Shipped** | Next.js docs, React docs |
-| typescript-strict | Planned | TypeScript handbook |
-
-Have an idea? [Open a Discussion](https://github.com/LeahyCC/claude-skills/discussions) or [create an issue](https://github.com/LeahyCC/claude-skills/issues/new).
-
----
+Each skill has its own page: install, what it covers, and the source it was checked against.
+
+| Skill | What it does |
+| --- | --- |
+| [wcag-accessibility](./skills/wcag-accessibility/) | WCAG 2.2 Level AA, with React, Next.js, and Tailwind examples |
+| [react-performance](./skills/react-performance/) | Measure before you optimize. Profiling, rendering, bundles, Web Vitals, React Compiler |
+| [seo](./skills/seo/) | Search and AI-search setup for Next.js: metadata, sitemaps, JSON-LD, llms.txt |
+| [ux-copy](./skills/ux-copy/) | UI text: buttons, errors, empty states, confirmations, tone |
+| [api-security](./skills/api-security/) | OWASP API Top 10 (2023) and Web Top 10 (2021) for Next.js APIs |
+| [product-marketing](./skills/product-marketing/) | Positioning, discovery, go-to-market, prioritization, metrics, and copy |
+| [nextjs-app-router](./skills/nextjs-app-router/) | Next.js 16 App Router: Server Components, caching, routing, proxy, migration |
+| typescript-strict | Planned. TypeScript handbook |
+
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| [/code-review](./.claude/commands/code-review.md) | Review the diff against OWASP, rate the risk, and suggest a fix |
+
+## What's different
+
+- Claims point at a file or a spec, so you can check them.
+- Skills are markdown. No Python runtime, no packages, no install scripts.
+- Examples are React, Next.js, and Tailwind you can paste. Failing code sits next to the fix.
 
 ## Contributing
 
-We hold a high quality bar — every skill must be verified against its official specification with complete coverage and production code examples. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide.
+The bar is in [CONTRIBUTING.md](./CONTRIBUTING.md): cite the spec, cover the domain, include production examples.
 
-The short version:
-1. Open an issue with your skill proposal
-2. Get scope approved
-3. Write the skill following the structure above
-4. Submit a PR — we'll review for completeness and accuracy
+1. Open an issue with the proposal.
+2. Agree the scope.
+3. Add `skills/<name>/` with `SKILL.md`, `README.md`, and any `resources/`.
+4. Open a PR. Add a row to the table above.
 
----
+[Open a discussion](https://github.com/LeahyCC/claude-skills/discussions) or [create an issue](https://github.com/LeahyCC/claude-skills/issues/new).
 
 ## License
 

@@ -1,6 +1,6 @@
 # wcag-accessibility
 
-Complete WCAG 2.2 Level AA compliance guidance for Claude Code — **50/50 success criteria covered** across 11 resource files with production React, Next.js, and Tailwind CSS code examples.
+WCAG 2.2 Level AA for Claude Code. 11 resource files, with React, Next.js, and Tailwind examples.
 
 ## Install
 
@@ -10,7 +10,7 @@ npx skills add LeahyCC/claude-skills@wcag-accessibility
 
 ## What It Does
 
-When you edit `.tsx` or `.jsx` component files, this skill auto-activates and provides WCAG 2.2 compliance guidance. It covers every Level A and AA success criterion — including the 6 criteria new in WCAG 2.2 that most resources miss.
+When you edit `.tsx` or `.jsx` component files, this skill auto-activates and provides WCAG 2.2 compliance guidance. It covers every Level A and AA success criterion, including the 6 added in WCAG 2.2.
 
 **Auto-triggers on:**
 - Component files: `src/components/**/*.tsx`, `src/app/**/*.tsx`, `app/**/*.tsx`
@@ -30,15 +30,138 @@ When you edit `.tsx` or `.jsx` component files, this skill auto-activates and pr
 | [links-and-navigation.md](./resources/links-and-navigation.md) | 1.4.1, 2.4.4, 2.4.5, 2.5.3, 3.2.1–3.2.4, 3.2.6 | Link purpose, predictability |
 | [pointer-and-touch.md](./resources/pointer-and-touch.md) | 2.5.1, 2.5.2, 2.5.4, 2.5.7, 2.5.8 | Drag alternatives, target size |
 | [timing-and-authentication.md](./resources/timing-and-authentication.md) | 1.4.2, 2.1.4, 2.2.1, 3.3.4, 3.3.7, 3.3.8 | Timeouts, accessible auth |
-| [testing-and-auditing.md](./resources/testing-and-auditing.md) | — | axe, jest-axe, Playwright, Lighthouse |
+| [testing-and-auditing.md](./resources/testing-and-auditing.md) |  | axe, jest-axe, Playwright, Lighthouse |
 
 Plus: Hover/Focus Content (1.4.13) and Status Messages (4.1.3) in the main [SKILL.md](./SKILL.md).
 
 ### New in WCAG 2.2
 
-All 6 criteria added in WCAG 2.2 are covered: Focus Not Obscured (2.4.11), Dragging Movements (2.5.7), Target Size (2.5.8), Consistent Help (3.2.6), Redundant Entry (3.3.7), and Accessible Authentication (3.3.8).
+| Criterion | What it requires |
+| --- | --- |
+| Focus Not Obscured (2.4.11) | The focused element is not fully hidden by sticky headers or footers |
+| Dragging Movements (2.5.7) | A single-pointer alternative for every drag operation |
+| Target Size (2.5.8) | 24×24 CSS pixel minimum for interactive targets |
+| Consistent Help (3.2.6) | Help stays in the same place across pages |
+| Redundant Entry (3.3.7) | Do not ask again for information the user already gave |
+| Accessible Authentication (3.3.8) | No cognitive tests. Allow paste and password managers |
 
-4.1.1 Parsing was removed in WCAG 2.2 — documented accordingly.
+4.1.1 Parsing was removed in WCAG 2.2.
+
+## What it catches
+
+```tsx
+// Fails 1.4.3. Contrast is about 2.7:1. AA needs 4.5:1.
+<p className="text-muted-foreground/60 text-xs">Helper text</p>
+
+// Passes 1.4.3. Contrast is about 5.2:1.
+<p className="text-muted-foreground text-xs">Helper text</p>
+```
+
+```tsx
+// Fails 3.3.8. Blocks password managers.
+<input type="password" onPaste={(e) => e.preventDefault()} />
+
+// Passes 3.3.8. Allows paste and autoComplete.
+<input type="password" autoComplete="current-password" />
+```
+
+```tsx
+// Fails 2.5.7. Reorder is drag-only.
+<SortableList onDragEnd={handleReorder}>
+  {items.map(item => <SortableItem key={item.id} />)}
+</SortableList>
+
+// Passes 2.5.7. Drag, plus buttons.
+{items.map((item, i) => (
+  <li key={item.id}>
+    {item.name}
+    <button onClick={() => moveUp(i)} aria-label={`Move ${item.name} up`}>↑</button>
+    <button onClick={() => moveDown(i)} aria-label={`Move ${item.name} down`}>↓</button>
+  </li>
+))}
+```
+
+## Criteria map
+
+<details>
+<summary>Every Level A and AA criterion in the tables above</summary>
+
+#### Principle 1: Perceivable (20 criteria)
+
+| # | Name | Level | Resource |
+| --- | --- | --- | --- |
+| 1.1.1 | Non-text Content | A | images-and-media |
+| 1.2.1 | Audio-only/Video-only | A | images-and-media |
+| 1.2.2 | Captions (Prerecorded) | A | images-and-media |
+| 1.2.3 | Audio Description or Alternative | A | images-and-media |
+| 1.2.4 | Captions (Live) | AA | images-and-media |
+| 1.2.5 | Audio Description (Prerecorded) | AA | images-and-media |
+| 1.3.1 | Info and Relationships | A | semantic-html |
+| 1.3.2 | Meaningful Sequence | A | page-structure |
+| 1.3.3 | Sensory Characteristics | A | page-structure |
+| 1.3.4 | Orientation | AA | page-structure |
+| 1.3.5 | Identify Input Purpose | AA | forms-and-inputs |
+| 1.4.1 | Use of Color | A | links-and-navigation |
+| 1.4.2 | Audio Control | A | timing-and-authentication |
+| 1.4.3 | Contrast (Minimum) | AA | color-contrast |
+| 1.4.4 | Resize Text | AA | page-structure |
+| 1.4.5 | Images of Text | AA | images-and-media |
+| 1.4.10 | Reflow | AA | page-structure |
+| 1.4.11 | Non-text Contrast | AA | color-contrast |
+| 1.4.12 | Text Spacing | AA | page-structure |
+| 1.4.13 | Content on Hover or Focus | AA | SKILL.md |
+
+#### Principle 2: Operable (20 criteria)
+
+| # | Name | Level | Resource |
+| --- | --- | --- | --- |
+| 2.1.1 | Keyboard | A | keyboard-navigation |
+| 2.1.2 | No Keyboard Trap | A | keyboard-navigation |
+| 2.1.4 | Character Key Shortcuts | A | timing-and-authentication |
+| 2.2.1 | Timing Adjustable | A | timing-and-authentication |
+| 2.2.2 | Pause, Stop, Hide | A | motion-and-animation |
+| 2.3.1 | Three Flashes | A | motion-and-animation |
+| 2.4.1 | Bypass Blocks | A | keyboard-navigation |
+| 2.4.2 | Page Titled | A | page-structure |
+| 2.4.3 | Focus Order | A | keyboard-navigation |
+| 2.4.4 | Link Purpose (In Context) | A | links-and-navigation |
+| 2.4.5 | Multiple Ways | AA | links-and-navigation |
+| 2.4.6 | Headings and Labels | AA | semantic-html |
+| 2.4.7 | Focus Visible | AA | keyboard-navigation |
+| 2.4.11 | Focus Not Obscured | AA | keyboard-navigation |
+| 2.5.1 | Pointer Gestures | A | pointer-and-touch |
+| 2.5.2 | Pointer Cancellation | A | pointer-and-touch |
+| 2.5.3 | Label in Name | A | links-and-navigation |
+| 2.5.4 | Motion Actuation | A | pointer-and-touch |
+| 2.5.7 | Dragging Movements | AA | pointer-and-touch |
+| 2.5.8 | Target Size (Minimum) | AA | pointer-and-touch |
+
+#### Principle 3: Understandable (13 criteria)
+
+| # | Name | Level | Resource |
+| --- | --- | --- | --- |
+| 3.1.1 | Language of Page | A | page-structure |
+| 3.1.2 | Language of Parts | AA | page-structure |
+| 3.2.1 | On Focus | A | links-and-navigation |
+| 3.2.2 | On Input | A | links-and-navigation |
+| 3.2.3 | Consistent Navigation | AA | links-and-navigation |
+| 3.2.4 | Consistent Identification | AA | links-and-navigation |
+| 3.2.6 | Consistent Help | A | links-and-navigation |
+| 3.3.1 | Error Identification | A | forms-and-inputs |
+| 3.3.2 | Labels or Instructions | A | forms-and-inputs |
+| 3.3.3 | Error Suggestion | AA | forms-and-inputs |
+| 3.3.4 | Error Prevention | AA | timing-and-authentication |
+| 3.3.7 | Redundant Entry | A | timing-and-authentication |
+| 3.3.8 | Accessible Authentication | AA | timing-and-authentication |
+
+#### Principle 4: Robust (2 criteria)
+
+| # | Name | Level | Resource |
+| --- | --- | --- | --- |
+| 4.1.2 | Name, Role, Value | A | semantic-html |
+| 4.1.3 | Status Messages | AA | SKILL.md |
+
+</details>
 
 ## Verified Against
 
