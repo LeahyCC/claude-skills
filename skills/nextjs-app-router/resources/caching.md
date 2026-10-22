@@ -1,571 +1,87 @@
-# Caching
+# Caching and freshness
 
-> **Core Principle:** Cache intentionally. Match cache lifetime and invalidation strategy to how often data changes and how fresh users need it to be.
+## Establish the mode first
 
-## Introduction
+Cache Components is opt-in in Next.js 16. Do not enable it as a routine fix for an app using the existing caching model. Inspect the exact installed docs, configuration and deployment. Current live config docs also request an explicit `partialPrefetching` choice; do not copy this newer option into an earlier minor without checking support. Cache Components requires Node.js and changes which route segment options are supported.
 
-Next.js 16 uses **Cache Components** — enabled with `cacheComponents: true` in `next.config.ts`. The `'use cache'` directive marks routes, components, or functions as cacheable. **Partial Prerendering (PPR)** is the default rendering model with Cache Components: a static shell streams immediately; dynamic sections fill in at request time.
+| Existing mode / need | Choice |
+| --- | --- |
+| Cache Components off: cached HTTP data | `fetch(url, { next: { revalidate: 3600, tags: ['products'] } })` or `cache: 'force-cache'` |
+| Cache Components off: uncached HTTP read | `cache: 'no-store'`; don't combine with positive revalidate |
+| Existing persistent ORM cache | Preserve supported `unstable_cache` or project cache; migration is separate |
+| Cache Components on: reusable public result | `'use cache'`, optional `cacheLife`, `cacheTag` for invalidation |
+| Personal/session data, either mode | Start with authenticated request-time reads; Suspense where required |
+| Private cache deliberately needed | Confirm installed support and Cache Components; see private semantics below |
+| Durable shared cache needed | Check platform/`cacheHandlers` support for `'use cache: remote'`; measure cost/latency |
 
-This resource covers cache configuration, tagging, invalidation, and production patterns. For data-fetching mechanics, see [data-fetching.md](data-fetching.md). For Server Component boundaries, see [server-components.md](server-components.md).
+The invalidation APIs below also work with supported tagged fetch caches when Cache Components is off; do not gate all of `next/cache` on that flag.
 
-## Architecture
+A missing fetch cache option does not guarantee a request-time page: static route prerender can still produce cached HTML. Check the route's rendering mode and build output. Fetch cache tags alone don't opt the request into caching.
 
-```
-next.config.ts
-  cacheComponents: true
-        │
-        ▼
-Build / Request
-        │
-        ├──────────────────────────────────────┐
-        │                                      │
-        ▼                                      ▼
-'use cache' + cacheLife()              No 'use cache'
-(cacheTag optional)                    (runtime data)
-        │                                      │
-        ▼                                      ▼
-Static Shell (prerendered)            Suspense boundary
-        │                              streams at request
-        ▼                                      │
-Cached output in shell ◄───────────────────────┘
-        │
-        ▼
-Mutation (Server Action)
-        │
-        ├──────────────┬──────────────┐
-        ▼              ▼              ▼
-   updateTag()   revalidateTag()  revalidatePath()
-   (immediate)   (stale-while-     (path-based)
-                  revalidate)
-```
+## Shared Cache Components example
 
-### Cache Layers
-
-| Layer | Controlled By | Purpose |
-|-------|--------------|---------|
-| Build-time prerender | `'use cache'`, `generateStaticParams` | Static shell, PPR |
-| Server runtime cache | `'use cache'`, `cacheLife` | In-memory LRU (or `use cache: remote`) |
-| Client router cache | `cacheLife` `stale` profile | Instant client navigations |
-| Fetch cache tags | `next: { tags }` on `fetch()` | Tag-based invalidation |
-
-## Decision Matrix
-
-### "Should I cache this?"
-
-| Data | Cache? | Profile | Invalidation |
-|------|--------|---------|--------------|
-| Legal pages, docs | Yes | `max` | Rare manual `revalidateTag` |
-| Blog posts, articles | Yes | `days` | `revalidateTag('posts', 'max')` on publish |
-| Product catalog | Yes | `hours` | Tag per category + `updateTag` on edit |
-| User dashboard | Yes (`'use cache: private'`) | `minutes` | Browser-only — never shared server cache |
-| Cart, session secrets | No shared `'use cache'` | — | Suspense or `'use cache: private'` |
-| Stock prices | Yes | `seconds` | Short TTL + Suspense fallback |
-| Admin-only data | No | — | Auth-gated, request-time only |
-
-### "Which invalidation API?"
-
-| Scenario | API | Context |
-|----------|-----|---------|
-| User edits own post, must see it immediately | `updateTag()` | Server Actions only |
-| Background webhook, stale OK briefly | `revalidateTag(tag, 'max')` | Server Actions, Route Handlers |
-| Webhook needs immediate expiry | `revalidateTag(tag, { expire: 0 })` | Route Handlers |
-| Layout or page path must refresh | `revalidatePath('/blog')` | After mutations |
-| Read-your-own-writes after form submit | `updateTag()` | Server Actions |
-| Invalidate all pages using a tag | `revalidateTag(tag, 'max')` | Prefer over multiple `revalidatePath` calls |
-
-### "Which `use cache` variant?"
-
-| Need | Directive |
-|------|-----------|
-| Default server caching | `'use cache'` |
-| Per-user / runtime APIs (`cookies`, `headers`) | `'use cache: private'` — browser memory only; not in static shell |
-| Compliance / cannot pass runtime data as args | `'use cache: private'` |
-| Serverless / shared durable cache (Redis, KV) | `'use cache: remote'` |
-| Per-request dynamic data | No directive — wrap in `<Suspense>` |
-
-## Production Workflow
-
-```
-1. Enable cacheComponents in next.config.ts
-2. Identify static vs dynamic route segments
-3. Mark cacheable data/functions with 'use cache'
-4. Set cacheLife profile (explicit — never rely on implicit defaults in production)
-5. Assign cacheTag for anything you will invalidate
-6. Wrap runtime-only sections in Suspense
-7. On mutation: updateTag (user-facing) or revalidateTag (background)
-8. Verify build output — confirm PPR static shell
-```
-
-### Enable Cache Components
+Requires `cacheComponents: true`. In this illustrative data module the DB helper is application-owned. Category is part of the function arguments and therefore the cache key. Do not read `cookies()`/`headers()` inside shared `'use cache'`; pass approved non-secret values from an authorized boundary or keep the data uncached. Arguments and captured values affect keys; audit cross-user isolation before sharing personal results.
 
 ```ts
-// next.config.ts
-import type { NextConfig } from 'next'
-
-const nextConfig: NextConfig = {
-  cacheComponents: true,
-  cacheLife: {
-    editorial: {
-      stale: 600,
-      revalidate: 3600,
-      expire: 86400,
-    },
-  },
-}
-
-export default nextConfig
-```
-
-### Data-Level Caching
-
-```tsx
 // lib/products.ts
+import 'server-only'
 import { cacheLife, cacheTag } from 'next/cache'
 import { db } from '@/lib/db'
 
 export async function getProducts(category: string) {
   'use cache'
   cacheLife('hours')
-  cacheTag('products', `products-${category}`)
-
+  cacheTag('products', `products:${category}`)
   return db.product.findMany({
     where: { category, published: true },
-    select: { id: true, name: true, price: true, slug: true },
+    select: { id: true, name: true, price: true },
   })
 }
 ```
 
-### UI-Level Caching
+The default cache lifetime is valid. Choose an explicit profile when freshness needs differ or clarity helps; don't override defaults as a ritual. Account for nested lifetimes and short-lived entries' effects on prerendering using the installed `cacheLife` docs. Regular cache is in-memory by default; don't promise durability across deployments/instances.
 
-```tsx
-// app/blog/page.tsx
-import { cacheLife, cacheTag } from 'next/cache'
-import { Suspense } from 'react'
-import { getFeaturedPosts } from '@/lib/posts'
-import { PersonalizedFeed } from './PersonalizedFeed'
+## Private cache is a feature choice
 
-export default async function BlogPage() {
-  return (
-    <>
-      <FeaturedPosts />
-      <Suspense fallback={<FeedSkeleton />}>
-        <PersonalizedFeed />
-      </Suspense>
-    </>
-  )
-}
+The current official directive page lists support with Cache Components from v16.0.0; it is not marked experimental there. Still check the installed version's docs/config, especially older prereleases. Do not prescribe it when Cache Components is off or adopt experimental flags from old tutorials.
 
-async function FeaturedPosts() {
-  'use cache'
-  cacheLife('days')
-  cacheTag('posts')
+In production it deduplicates matching work within a request and permits request APIs; it does not persist the result in a server cache across requests. Rendered output can stay in browser router memory until its client stale time and does not survive a reload. Development also uses server memory keyed by request cookies/headers, so “never stored on the server” is inaccurate. It runs at request time outside the static shell. `connection()` is disallowed inside both private and shared caches. It is not a compliance guarantee.
 
-  const posts = await getFeaturedPosts()
-  return (
-    <section>
-      {posts.map((post) => (
-        <article key={post.id}>
-          <h2>{post.title}</h2>
-        </article>
-      ))}
-    </section>
-  )
-}
-```
+Use an uncached authorized read as the simple default. If private caching materially helps, select a deliberate browser stale time and test sign-out, identity switching and freshness. Never use session tokens in tags or return them to the UI. `cacheLife({ stale: 60 })` is a possible policy, not a universal recommendation.
 
-### Runtime Data with `connection()`
+## Match invalidation to the contract
 
-Non-deterministic values (`Date.now()`, `crypto.randomUUID()`) require `connection()` before execution, wrapped in Suspense:
+| Contract | API / context |
+| --- | --- |
+| User must see their write immediately | `updateTag(tag)` in a Server Action; expires tagged cached data |
+| Stale briefly is acceptable | `revalidateTag(tag, 'max')` in an action or Route Handler |
+| Webhook must expire data immediately | `revalidateTag(tag, { expire: 0 })` where supported |
+| Specific page/layout depends on changed data | `revalidatePath(path, type?)`; not a global tag replacement |
 
-```tsx
-// app/dashboard/RequestId.tsx
-import { connection } from 'next/server'
+Single-argument `revalidateTag` is deprecated in Next.js 16. Do not replace it with stale-while-revalidate when immediate visibility is required. `router.refresh()` refreshes the current client route but does not invalidate server data caches. Invalidate only if the changed data was cached; uncached reads don't need token invalidation by habit.
 
-export async function RequestId() {
-  await connection()
-  const id = crypto.randomUUID()
-  return <p className="text-muted-foreground text-sm">Request: {id}</p>
-}
-```
+For UI action authorization/validation see [data fetching](data-fetching.md). A minimal fixed-tag webhook can avoid caller-selected tags entirely:
 
-```tsx
-// app/dashboard/page.tsx
-import { Suspense } from 'react'
-import { RequestId } from './RequestId'
-import { CachedStats } from './CachedStats'
-
-export default function DashboardPage() {
-  return (
-    <>
-      <CachedStats />
-      <Suspense fallback={null}>
-        <RequestId />
-      </Suspense>
-    </>
-  )
-}
-```
-
-### Passing Runtime Values to Cached Functions
-
-```tsx
-// app/account/page.tsx
-import { Suspense } from 'react'
-import { getAccountSummary } from '@/lib/account'
-
-export default function AccountPage() {
-  return (
-    <Suspense fallback={<AccountSkeleton />}>
-      <AccountContent />
-    </Suspense>
-  )
-}
-
-async function AccountContent() {
-  const summary = await getAccountSummary()
-  if (!summary) return <p>Sign in to view your account.</p>
-
-  return <AccountDashboard summary={summary} />
-}
-```
-
-```tsx
-// lib/account.ts
-import { cacheLife, cacheTag } from 'next/cache'
-import { cookies } from 'next/headers'
-import { db } from '@/lib/db'
-
-// Per-user data: 'use cache: private' may read cookies(); results stay in
-// browser memory only — never stored on the server or shared across users.
-export async function getAccountSummary() {
-  'use cache: private'
-  cacheLife('minutes')
-
-  const sessionId = (await cookies()).get('session')?.value
-  if (!sessionId) return null
-
-  cacheTag(`account-${sessionId}`)
-  return db.account.findUnique({ where: { sessionId } })
-}
-```
-
-## Partial Prerendering
-
-With Cache Components enabled, PPR is automatic:
-
-```
-Request
-  │
-  ▼
-Static Shell (header, cached sections, Suspense fallbacks)
-  │
-  ▼
-Stream dynamic holes (runtime data, short-lived caches)
-  │
-  ▼
-Full page interactive
-```
-
-| Content Type | Mechanism | In Static Shell? |
-|--------------|-----------|------------------|
-| Static JSX | Automatic | Yes |
-| `'use cache'` + `cacheLife` | Cached at build/revalidate | Yes |
-| `cookies()`, `headers()`, `searchParams` | Runtime | No — Suspense |
-| Short-lived cache (`seconds` profile) | Dynamic hole | Fallback only |
-| `connection()` + random values | Request-time | No — Suspense |
-
-Verify PPR in build output or view page source to confirm static shell content.
-
-## Cache Invalidation Patterns
-
-### Server Action — Read-Your-Own-Writes
-
-```tsx
-// app/actions/posts.ts
-'use server'
-
-import { updateTag } from 'next/cache'
-import { redirect } from 'next/navigation'
-import { db } from '@/lib/db'
-import { requireUser } from '@/lib/auth'
-
-export async function publishPost(formData: FormData) {
-  const user = await requireUser()
-  const title = formData.get('title') as string
-  const content = formData.get('content') as string
-
-  const post = await db.post.create({
-    data: { title, content, authorId: user.id, published: true },
-  })
-
-  updateTag('posts')
-  updateTag(`post-${post.slug}`)
-
-  redirect(`/blog/${post.slug}`)
-}
-```
-
-### Route Handler — Webhook Revalidation
-
-```tsx
-// app/api/revalidate/route.ts
+```ts
+// app/api/catalog-changed/route.ts
 import { revalidateTag } from 'next/cache'
-import type { NextRequest } from 'next/server'
+import { verifyCmsSignature } from '@/lib/cms'
 
-export async function POST(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get('secret')
-  if (secret !== process.env.REVALIDATE_SECRET) {
+export async function POST(request: Request) {
+  const rawBody = await request.text()
+  // Project helper verifies the raw body, signature, timestamp/replay policy.
+  if (!await verifyCmsSignature(rawBody, request.headers)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  const { tag } = await request.json()
-  revalidateTag(tag, 'max')
-
-  return Response.json({ revalidated: true, tag })
-}
-```
-
-### Path-Based Revalidation
-
-```tsx
-'use server'
-
-import { revalidatePath } from 'next/cache'
-import { db } from '@/lib/db'
-
-export async function updateSiteSettings() {
-  await db.settings.update({ data: { maintenanceMode: false } })
-  revalidatePath('/', 'layout')
-}
-```
-
-## PASS Examples
-
-### Tagged cache with explicit lifetime
-
-```tsx
-import { cacheLife, cacheTag } from 'next/cache'
-import { db } from '@/lib/db'
-
-export async function getCategories() {
-  'use cache'
-  cacheLife('days')
-  cacheTag('categories')
-
-  return db.category.findMany({ orderBy: { name: 'asc' } })
-}
-```
-
-### Fetch with cache tags
-
-```tsx
-export async function getExternalPosts() {
-  const res = await fetch('https://cms.example.com/api/posts', {
-    next: { tags: ['cms-posts'] },
-  })
-  return res.json()
-}
-```
-
-### Nested cache with explicit outer `cacheLife`
-
-```tsx
-import { cacheLife } from 'next/cache'
-import { ShortLivedWidget } from '@/components/ShortLivedWidget'
-
-export default async function CatalogPage() {
-  'use cache'
-  cacheLife('hours')
-
-  return (
-    <div>
-      <h1>Catalog</h1>
-      <ShortLivedWidget />
-    </div>
-  )
-}
-```
-
-### Per-user dashboard with `'use cache: private'`
-
-```tsx
-import { cacheLife, cacheTag } from 'next/cache'
-import { cookies } from 'next/headers'
-import { db } from '@/lib/db'
-
-async function PrivateDashboard() {
-  'use cache: private'
-  cacheLife('minutes')
-
-  const sessionId = (await cookies()).get('session')?.value
-  if (!sessionId) return null
-
-  cacheTag(`dashboard-${sessionId}`)
-  const data = await db.dashboard.findUnique({ where: { sessionId } })
-  return <Dashboard data={data} />
-}
-```
-
-## FAIL Examples
-
-### Caching per-user data with shared `'use cache'`
-
-```tsx
-// FAIL — shared server cache keyed incorrectly / cookies inside 'use cache'
-import { cookies } from 'next/headers'
-
-export default async function Page() {
-  'use cache'
-  const session = (await cookies()).get('session')?.value
-  return <Dashboard session={session} />
-}
-```
-
-```tsx
-// PASS — 'use cache: private' may read cookies(); never stored on the server
-import { cacheLife, cacheTag } from 'next/cache'
-import { cookies } from 'next/headers'
-import { db } from '@/lib/db'
-
-async function CachedDashboard() {
-  'use cache: private'
-  cacheLife('minutes')
-
-  const sessionId = (await cookies()).get('session')?.value
-  if (!sessionId) return null
-
-  cacheTag(`dashboard-${sessionId}`)
-  const data = await db.dashboard.findUnique({ where: { sessionId } })
-  return <Dashboard data={data} />
-}
-```
-
-### Forgetting invalidation after mutation
-
-```tsx
-// FAIL — stale UI after write
-'use server'
-export async function deleteProduct(id: string) {
-  await db.product.delete({ where: { id } })
-  // Missing updateTag / revalidateTag
-}
-```
-
-```tsx
-'use server'
-import { updateTag } from 'next/cache'
-import { db } from '@/lib/db'
-
-export async function deleteProduct(id: string) {
-  await db.product.delete({ where: { id } })
-  updateTag('products')
-}
-```
-
-### `updateTag` in Route Handler
-
-```tsx
-// FAIL — updateTag only works in Server Actions
-import { updateTag } from 'next/cache'
-
-export async function POST() {
-  updateTag('products') // Throws at runtime
-  return Response.json({ ok: true })
-}
-```
-
-```tsx
-// PASS — use revalidateTag in Route Handlers
-import { revalidateTag } from 'next/cache'
-
-export async function POST() {
   revalidateTag('products', 'max')
   return Response.json({ ok: true })
 }
 ```
 
-### Nested short-lived cache without explicit outer `cacheLife`
+This is an integration sketch, not a provider signature implementation. Follow the provider's official verification protocol; keep secrets out of URLs/logs. If selecting tags from input is needed, validate and authorize that selection.
 
-```tsx
-// FAIL — build error during prerendering
-export default async function Page() {
-  'use cache'
-  // No cacheLife — inner 'seconds' cache propagates and errors
-  return <ShortLivedWidget />
-}
-```
+## Validate
 
-## Common Mistakes
+Check build output and streaming with the chosen flags. Test cache hits/misses and expiry in production mode, not just HMR. Exercise two users, sign-out, post-write immediate reads and webhook stale behavior. Test deployment persistence if relying on it. Avoid enabling caches merely to improve an isolated benchmark.
 
-- Enabling `'use cache'` on components that read `cookies()`, `headers()`, or `searchParams` directly — use `'use cache: private'` or pass values as arguments.
-- Using `revalidatePath` when `revalidateTag` would invalidate fewer, more precise entries.
-- Calling `revalidateTag(tag)` without the second argument — deprecated; use `revalidateTag(tag, 'max')`.
-- Caching user-specific data with shared `'use cache'` — use `'use cache: private'` so results are never stored on the server.
-- Omitting `cacheLife` on outer `'use cache'` when nesting short-lived inner caches.
-- Expecting `use cache: remote` to work without platform cache handler configuration.
-- Using `updateTag` in Route Handlers — it is Server Actions only.
-- Placing `<Suspense fallback={null}>` around `<body>` in root layout — blocks entire static shell.
-
-## Best Practices
-
-- Always set an explicit `cacheLife` profile in production code.
-- Use descriptive, hierarchical tags: `products`, `product-{slug}`, `category-{id}`.
-- Prefer `updateTag` in Server Actions for user-initiated mutations.
-- Prefer `revalidateTag(tag, 'max')` for webhooks and background jobs.
-- Pass runtime values as arguments into shared `'use cache'` scopes — or use `'use cache: private'` for per-user data that must read `cookies()` / `headers()`.
-- Wrap dynamic sections in `<Suspense>` with meaningful skeleton UI.
-- Use `'use cache: remote'` on serverless when cross-request persistence is required.
-- Reserve `'use cache: private'` for per-user dashboards and compliance cases — browser memory only; not part of the static shell.
-- Audit build output to confirm expected routes are prerendered.
-- Keep cached return values serializable and minimal — avoid returning full ORM graphs.
-
-## Production Checklist
-
-### Configuration
-
-- [ ] `cacheComponents: true` in `next.config.ts`
-- [ ] Custom `cacheLife` profiles defined for domain-specific TTLs
-- [ ] `REVALIDATE_SECRET` set for webhook endpoints
-
-### Caching
-
-- [ ] Every `'use cache'` scope has explicit `cacheLife`
-- [ ] Cacheable data tagged with `cacheTag` or `fetch` `next.tags`
-- [ ] No `cookies()` / `headers()` / `searchParams` inside shared `'use cache'` scopes
-- [ ] Per-user data uses `'use cache: private'` (browser-only) — never shared server cache
-- [ ] Short-lived nested caches have explicit outer `cacheLife`
-
-### Invalidation
-
-- [ ] Server Actions call `updateTag` after user mutations
-- [ ] Webhooks use `revalidateTag(tag, 'max')` or `{ expire: 0 }`
-- [ ] `revalidatePath` used only when path-level refresh is required
-- [ ] Tags are documented in a central constants file
-
-### PPR / Streaming
-
-- [ ] Dynamic sections wrapped in `<Suspense>` with skeleton fallbacks
-- [ ] `connection()` used before non-deterministic operations at request time
-- [ ] Build output reviewed for static shell coverage
-- [ ] No root-level Suspense with empty fallback blocking static shell
-
-## References
-
-### Verified Against
-
-- [Caching](https://nextjs.org/docs/app/getting-started/caching)
-- [Partial Prerendering](https://nextjs.org/docs/app/getting-started/partial-prerendering)
-- [`use cache` directive](https://nextjs.org/docs/app/api-reference/directives/use-cache)
-- [`use cache: private`](https://nextjs.org/docs/app/api-reference/directives/use-cache-private)
-- [`cacheComponents` config](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents)
-- [`cacheLife`](https://nextjs.org/docs/app/api-reference/functions/cacheLife)
-- [`cacheTag`](https://nextjs.org/docs/app/api-reference/functions/cacheTag)
-- [`revalidateTag`](https://nextjs.org/docs/app/api-reference/functions/revalidateTag)
-- [`updateTag`](https://nextjs.org/docs/app/api-reference/functions/updateTag)
-- [`revalidatePath`](https://nextjs.org/docs/app/api-reference/functions/revalidatePath)
-- [`connection`](https://nextjs.org/docs/app/api-reference/functions/connection)
-- [Revalidating](https://nextjs.org/docs/app/getting-started/revalidating)
-
-**Framework:** Next.js 16 App Router
-
-**Last verified:** July 2026
+Sources: [Cache Components config](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheComponents), [Migration](https://nextjs.org/docs/app/guides/migrating-to-cache-components), [use cache](https://nextjs.org/docs/app/api-reference/directives/use-cache), [private](https://nextjs.org/docs/app/api-reference/directives/use-cache-private), [remote](https://nextjs.org/docs/app/api-reference/directives/use-cache-remote), [cacheLife](https://nextjs.org/docs/app/api-reference/functions/cacheLife), [cacheTag](https://nextjs.org/docs/app/api-reference/functions/cacheTag), [fetch](https://nextjs.org/docs/app/api-reference/functions/fetch), [updateTag](https://nextjs.org/docs/app/api-reference/functions/updateTag), [revalidateTag](https://nextjs.org/docs/app/api-reference/functions/revalidateTag), [revalidatePath](https://nextjs.org/docs/app/api-reference/functions/revalidatePath). Scoped dates: [ledger](../SOURCES.md).
