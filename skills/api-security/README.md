@@ -97,4 +97,4 @@ const UpdateSchema = z.strictObject({
 - [Next.js Security Blog — Server Components and Actions](https://nextjs.org/blog/security-nextjs-server-components-actions)
 - [Vercel Conformance — Security Headers](https://vercel.com/docs/workflow-collaboration/conformance/rules/NEXTJS_MISSING_SECURITY_HEADERS)
 
-Last verified: October 2026
+Earlier targeted review: October 2026. [Scoped deployment/GraphQL follow-up](SOURCES.md) checked 2026-10-21; this does not certify every security example.

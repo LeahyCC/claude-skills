@@ -132,7 +132,7 @@ vercel env add DATABASE_URL production preview
 vercel env ls
 ```
 
-**Rule:** On Vercel, use the Marketplace to provision databases and services — env vars are auto-injected, no manual secrets management.
+Vercel Marketplace integrations can provision supported services and credentials. Check their environment/project scope and the provider's rotation/revocation behavior; provisioning does not eliminate secrets management. Use the project's chosen provisioning method rather than requiring Marketplace.
 
 ## CI/CD Security
 
@@ -272,17 +272,20 @@ export async function GET() {
 
 ## Server Actions Encryption Key
 
-When deploying to multiple servers (not Vercel — Vercel handles this automatically):
+Check the installed Next version and deployment platform before configuring keys. The default key is generated per build, not per server process. Replicas of the same build should share that artifact; separately built instances need a consistent key where they must interoperate.
+
+For supported Next.js self-hosting, provide NEXT_SERVER_ACTIONS_ENCRYPTION_KEY **during next build** through secret management. The key is embedded into build output and used at runtime; setting it only on next start does not rewrite the built artifact. The documented format is base64 of 16, 24 or 32 bytes; 32 random bytes is a suitable default.
 
 ```bash
-# Generate encryption key for Server Action closures
+# Generate once through secure provisioning, not separately in each replica.
+# Do not commit or print the resulting secret into build logs.
 openssl rand -base64 32
-
-# Set as environment variable
-NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=<base64-encoded-key>
+# Supply NEXT_SERVER_ACTIONS_ENCRYPTION_KEY from the CI secret store to next build.
 ```
 
-Without this, each server generates its own key and Server Action calls may fail when hitting a different server than the one that rendered the page.
+Plan rotation and rolling-deployment/version-skew handling; a shared key alone does not keep old action IDs valid. Encryption is not authorization and does not make secret closure capture a safe design. For managed hosting use its documented behavior rather than assuming every platform handles this identically.
+
+Sources: [Next multi-server key/build guidance](https://nextjs.org/docs/app/guides/self-hosting#server-functions-encryption-key), [data security](https://nextjs.org/docs/app/guides/data-security#overwriting-encryption-keys-advanced). Scoped review: [SOURCES.md](../SOURCES.md).
 
 ## Audit Patterns
 

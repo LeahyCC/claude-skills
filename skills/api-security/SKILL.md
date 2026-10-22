@@ -163,3 +163,5 @@ When reviewing API code in Next.js, verify:
 - [ ] No `fetch()` to user-controlled URLs without allowlist
 - [ ] Dependencies audited — no known vulnerabilities
 - [ ] `.env*.local` in `.gitignore`
+
+For deployment-key, GraphQL enforcement and optional provider guidance, see the scoped [source review](SOURCES.md); use the target application's installed versions and configuration.
