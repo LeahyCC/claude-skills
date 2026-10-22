@@ -291,25 +291,19 @@ function rateLimitHeaders(result: { limit: number; remaining: number; reset: num
 
 ## GraphQL Rate Limiting
 
-GraphQL queries can be arbitrarily expensive. Limit by query complexity, not just request count.
+Count request cost as well as HTTP requests. Depth alone misses wide queries, large lists, aliases and batched operations. Enforce controls in the actual server validation/execution path; an unused validationRules array provides no protection.
 
-```tsx
-// FAIL — one request with expensive nested query
-// query { users { posts { comments { author { posts { comments } } } } } }
+| Control | Integration decision |
+| --- | --- |
+| Depth and amount | Bound nesting, pagination and returned list sizes |
+| Cost | Reject expensive operations before costly execution |
+| Batching/aliases | Limit aggregate operations/object requests, including sensitive mutations |
+| Identity budget | Apply per-user/IP limits across batches |
+| Timeout/concurrency | Bound resolver/downstream work with cancellation where supported |
 
-// PASS — limit query depth and complexity
-import depthLimit from 'graphql-depth-limit'
-import { createComplexityLimitRule } from 'graphql-validation-complexity'
+Select rules supported by the installed GraphQL server and tune limits to legitimate operations. The former depth 5 / score 1000 values were examples, not OWASP requirements. Verify high-depth, wide, aliased, batched and oversized-page requests are rejected while normal queries pass. Field/object authorization remains necessary. This is an enforcement checklist, not a drop-in server implementation.
 
-const validationRules = [
-  depthLimit(5),                        // max 5 levels deep
-  createComplexityLimitRule(1000, {      // max complexity score 1000
-    scalarCost: 1,
-    objectCost: 10,
-    listFactor: 10,
-  }),
-]
-```
+Source: [OWASP GraphQL Cheat Sheet: DoS and batching](https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html). Scoped dates/limits: [SOURCES.md](../SOURCES.md).
 
 ## Audit Patterns
 
@@ -332,4 +326,5 @@ grep -rn "generateText\|streamText\|openai\|anthropic" --include="route.ts" -l |
 - [OWASP API4:2023 — Unrestricted Resource Consumption](https://owasp.org/API-Security/editions/2023/en/0xa4-unrestricted-resource-consumption/)
 - [OWASP A06:2025 — Insecure Design](https://owasp.org/Top10/2025/A06_2025-Insecure_Design/)
 - [Upstash Rate Limiting Documentation](https://upstash.com/docs/oss/sdks/ts/ratelimit/overview)
-- [Next.js Weekly — Rate Limiting Server Actions](https://nextjsweekly.com/blog/rate-limiting-server-actions)
+- [Next.js data security: Server Actions](https://nextjs.org/docs/app/guides/data-security)
+- [OWASP GraphQL security](https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html)

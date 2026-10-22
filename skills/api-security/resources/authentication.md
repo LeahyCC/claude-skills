@@ -198,49 +198,45 @@ const token = await new SignJWT({
   .sign(SECRET)
 ```
 
-## Auth with Clerk (Marketplace Integration)
+## Auth with Clerk (Optional Provider)
 
-Clerk is the native Vercel Marketplace auth provider. It handles session management, JWT verification, and middleware.
+For a project already using Clerk, follow its installed SDK and framework integration. The examples below are optional provider patterns, not a requirement to choose Clerk or install it through a marketplace. Provider authentication still needs application-specific object and role authorization.
 
-```tsx
-// proxy.ts with Clerk
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+The current Core 3 docs deprecate createRouteMatcher for auth gating and prefer checks near the resource. Do not apply that migration blindly to older SDKs; inspect the installed version. For Next.js 16 use proxy.ts; Next.js 15 and earlier use middleware.ts.
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/login(.*)',
-  '/signup(.*)',
-  '/api/webhooks(.*)',
-])
-
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect()
-  }
-})
+```ts
+// Minimal Clerk integration; configure production matcher per provider docs.
+// It must run for every route/action that uses auth().
+import { clerkMiddleware } from '@clerk/nextjs/server'
+export default clerkMiddleware()
 ```
 
-```tsx
-// Server Action with Clerk
+This action sketch targets Core 3 and an **admin-only organization post policy**. Organizations must be enabled and membership mode chosen for the product. A personal-account app should not require an organization merely because this example does. db/posts below are application-owned Drizzle helpers; enforce additional resource policy as needed.
+
+```ts
 'use server'
 import { auth } from '@clerk/nextjs/server'
+import { db, posts } from '@/lib/db'
 
 export async function createPost(data: FormData) {
-  const { userId, orgId } = await auth()
-  if (!userId) throw new Error('Unauthorized')
-
-  // orgId may be null if user has no org — handle explicitly
+  const { isAuthenticated, userId, orgId, has } = await auth()
+  if (!isAuthenticated || !userId) throw new Error('Unauthorized')
   if (!orgId) throw new Error('Select an organization first')
-
+  if (!has({ role: 'org:admin' })) throw new Error('Forbidden')
+  const title = data.get('title')
+  if (typeof title !== 'string' || !title.trim() || title.length > 200) {
+    return { error: 'Enter a title of 1 to 200 characters.' }
+  }
   await db.insert(posts).values({
-    title: data.get('title') as string,
-    authorId: userId,
-    organizationId: orgId,
+    title: title.trim(), authorId: userId, organizationId: orgId,
   })
+  return { ok: true }
 }
 ```
 
-**Clerk gotcha:** After sign-in, if the user has no organization, `auth()` returns `{ userId, orgSlug: null }`. Handle this explicitly or the app may loop.
+Core 2 lacks isAuthenticated; follow its auth/session guidance instead of copying the Core 3 check. An active organization can be absent; do not depend on an exact orgSlug null/undefined sentinel or redirect every signed-in user into an organization loop. Check current verified session context and the app's membership policy.
+
+Sources: [Clerk middleware](https://clerk.com/docs/reference/nextjs/clerk-middleware), [App Router auth](https://clerk.com/docs/reference/nextjs/app-router/auth). Scope and untested integration limits: [SOURCES.md](../SOURCES.md).
 
 ## Password Security
 
