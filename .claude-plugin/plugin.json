@@ -115,7 +115,7 @@
     {
       "name": "product-marketing",
       "path": "skills/product-marketing",
-      "description": "Product management and marketing strategy — positioning, discovery, go-to-market, prioritization, metrics, copywriting, and artifact generation. Verified against Cagan, Dunford, Torres, Reforge, and 14 more authoritative sources.",
+      "description": "Product management and marketing strategy — positioning, discovery, go-to-market, prioritization, metrics, copywriting, and artifact generation. Verified against Cagan, Dunford, Torres, Reforge, and 15 more named sources.",
       "categories": ["product-management", "marketing", "strategy", "go-to-market"],
       "triggers": {
         "filePatterns": [

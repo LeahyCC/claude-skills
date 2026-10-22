@@ -117,11 +117,7 @@ Frameworks and production patterns for product management and product marketing.
 
 ## The #1 Mistake: Building Before Positioning
 
-Most builders skip positioning and go straight to "what features should we build?" This is backwards. If you can't complete this sentence, you don't have positioning:
-
-> For **[target customer]** who **[key need/problem]**, **[product name]** is a **[market category]** that **[key benefit]**. Unlike **[competitive alternative]**, we **[primary differentiator]**.
-
-If that sentence feels forced or generic, start with [Positioning & Messaging](resources/positioning-and-messaging.md) before anything else.
+Most builders skip positioning and go straight to "what features should we build?" This is backwards. If the five components are still blank (alternatives, attributes, value, target, category), start with [Positioning & Messaging](resources/positioning-and-messaging.md) before anything else.
 
 ## Common Anti-Patterns
 
@@ -160,4 +156,4 @@ This skill synthesizes frameworks from authoritative, primary sources:
 | Patrick Campbell | SaaS pricing strategy | ProfitWell / Paddle content archive |
 | Donald Miller | StoryBrand narrative framework | "Building a StoryBrand" (2017) |
 
-Last verified: March 2026
+Scoped review: 2026-10-21. See [REVIEW.md](REVIEW.md) for the changed sections, source dates and checks. This date does not certify the entire skill.

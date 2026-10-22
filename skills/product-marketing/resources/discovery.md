@@ -189,8 +189,8 @@ Plot each assumption on a 2x2:
                     │
          ┌──────────┼──────────┐
          │          │          │
-         │  Monitor │ TEST     │
-         │          │ FIRST    │
+         │  TEST    │ Monitor  │
+         │  FIRST   │          │
          │          │          │
 Weak ────┼──────────┼──────────┼──── Strong
 evidence │          │          │    evidence
@@ -256,7 +256,7 @@ for [target user segment].
 
 | Rule | Why | FAIL → PASS |
 |---|---|---|
-| **5-10 minutes max** | Completion rates drop 20% for each additional minute past 5 | 30-question survey → 8-question survey |
+| **5-10 minutes max** | Keep the survey short so people finish it | 30-question survey → 8-question survey |
 | **No leading questions** | Biased input = useless data | "Don't you think X is important?" → "How important is X to you?" (1-5 scale) |
 | **One concept per question** | Double-barreled questions confuse respondents | "How satisfied are you with speed and reliability?" → Two separate questions |
 | **Specific timeframe** | "Usually" means different things to different people | "How often do you exercise?" → "How many times did you exercise last week?" |

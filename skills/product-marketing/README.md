@@ -45,7 +45,7 @@ npx skills add LeahyCC/claude-skills@product-marketing
 
 ## Verified Against
 
-This skill synthesizes frameworks from 18 authoritative, primary sources:
+This skill synthesizes frameworks from 19 authoritative, primary sources:
 
 | Source | What We Cite |
 |---|---|
@@ -67,5 +67,6 @@ This skill synthesizes frameworks from 18 authoritative, primary sources:
 | Gabriel Weinberg | Traction channels, Bullseye framework (2015) |
 | David Skok | SaaS unit economics (ForEntrepreneurs, 2010–2026) |
 | Patrick Campbell | SaaS pricing strategy (ProfitWell, 2016–2023) |
+| Donald Miller | StoryBrand ("Building a StoryBrand", 2017) |
 
-Last verified: March 2026
+Scoped review: 2026-10-21. See [REVIEW.md](REVIEW.md) for the changed sections, source dates and checks. This date does not certify the entire skill.

@@ -50,7 +50,7 @@
     {
       "name": "product-marketing",
       "display_name": "Product & Marketing Strategy",
-      "description": "Product management and marketing strategy — positioning, discovery, go-to-market, prioritization, metrics, copywriting, and production templates. Verified against 18 authoritative sources including Cagan, Dunford, Torres, and Reforge.",
+      "description": "Product management and marketing strategy — positioning, discovery, go-to-market, prioritization, metrics, copywriting, and production templates. Verified against 19 named sources including Cagan, Dunford, Torres, and Reforge.",
       "version": "1.0.0",
       "categories": ["product-management", "marketing", "strategy", "go-to-market"],
       "resource_files": 8,
