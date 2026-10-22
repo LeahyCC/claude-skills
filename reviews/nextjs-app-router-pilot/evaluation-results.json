@@ -1,0 +1,379 @@
+[
+  {
+    "run": "baseline-T1",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router"
+      }
+    ],
+    "reads": [
+      "resources/caching.md",
+      "resources/data-fetching.md",
+      "resources/proxy.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "**Short answer:** no config change is needed. Keep `cacheComponents` off. Account data reads go in a Server Component behind `cookies()` plus session verification. Polling goes in a leaf Client Component that hits a small authenticated Route Handler.\n\n```\nproxy.ts (coarse gate: verifySession on cookie, matcher /account/*)\n   \u2502\n   \u25bc\napp/account/page.tsx  (Server Component)\n   \u251c\u2500 cookies() \u2192 verifySession() \u2192 redirect('/login') if none   \u2190 re-verify, never trust proxy alone\n   \u251c\u2500 <Suspense> AccountSummary (server read, DB/ORM via lib/, server-only)\n   \u2514\u2500 <JobStatus jobId=\u2026/>  ('use client', SWR/React Query, refreshInterval)\n                                  \u2502\n                                  \u25bc\n                        app/api/jobs/[id]/route.ts  (GET, re-verifies cookie, checks job belongs to user)\n```\n\n**Where reads belong**\n\n- Account data is a server read. Query it in a Server Component under `app/account/`, in a repository function marked `server-only`. No Route Handler hop for first paint.\n- Reading `cookies()` already makes the route dynamic when Cache Components are off, so you get per-request data with no extra flag. Do not add `force-dynamic`.\n- Wrap the account section in `<Suspense>` so the shell streams while the DB call runs. Use `React.cache()` if `generateMetadata` also needs the user.\n\n**Where auth belongs**\n\n- Add or extend `proxy.ts` at project root with a matcher for `/account/:path*` and `/api/jobs/:path*`. Verify the session token, do not just check the cookie exists. No DB lookup there.\n- Re-verify in the page and in the Route Handler. Proxy can be bypassed by direct requests. Fail closed with `redirect('/login')` or a 401.\n- In the handler, also check the job's owner matches the session user. That is authorization, which proxy cannot do.\n\n**Where polling belongs**\n\n- Polling is the one legitimate client-fetch case here. Put it in a leaf `'use client'` component, not on the page.\n- Use SWR `refreshInterval` or React Query `refetchInterval`. Stop polling once status is terminal to avoid hammering the server.\n- Seed it with the initial status from the Server Component as a prop so first paint is correct before the first poll.\n\n```tsx\n'use client'\nimport useSWR from 'swr'\n\nexport function JobStatus({ jobId, initial }: { jobId: string; initial: { status: string } }) {\n  const { data } = useSWR(`/api/jobs/${jobId}`, (u) => fetch(u).then((r) => r.json()), {\n    fallbackData: initial,\n    refreshInterval: (d) => (d?.status === 'done' || d?.status === 'failed' ? 0 : 2000),\n  })\n  return <p>Status: {data.status}</p>\n}\n```\n\n**Config**\n\n- Nothing required. Do not enable `cacheComponents` for this task. It changes the whole rendering model and would force Suspense boundaries and `generateStaticParams` changes across the app.\n- Consequence to note: with it off, `'use cache'`, `cacheLife`, `cacheTag` and `updateTag` are unavailable. You do not need them. Per-user data should not sit in a shared server cache anyway.\n- If a `middleware.ts` exists, rename to `proxy.ts` and export `proxy`. The deprecated name still works in 16.0 but new auth code should land in the new file.\n\n**Version uncertainty**\n\n- The skill was verified against Next.js 16 docs in July 2026. Your project is 16.0, and point releases since then may have adjusted the `'use cache'` gating and `revalidateTag` deprecation details. Confirm against your installed version's docs before relying on exact behaviour.\n- Whether `middleware.ts` still runs without a warning in 16.0 specifically is not stated in the skill resources.",
+    "durationMs": 33367,
+    "estimatedUsageUsd": 0.8393025000000001,
+    "includedInComparison": true
+  },
+  {
+    "run": "baseline-T2",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router"
+      }
+    ],
+    "reads": [
+      "resources/caching.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "**Version note:** the skill is verified against Next.js 16 docs generally, not 16.4 specifically. The APIs below (`'use cache'`, `cacheTag`, `cacheLife`, `updateTag`, `revalidateTag(tag, 'max')`) are stable in 16, but check the 16.4 changelog for any renames before relying on this.\n\n## Boundaries\n\n```\nPUBLIC READ                         WRITES\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500              \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n/catalog/[category]                 Server Action  (editor, logged in)\n  \u2514 <CategoryGrid>                    requireUser + role check\n      'use cache'                     validate input (zod)\n      cacheLife('hours')              db.update\n      cacheTag('products',            updateTag(`products-${cat}`)  \u2190 immediate\n               `products-${cat}`)\n                                    Route Handler  (CMS webhook)\n  per-user bits (cart, \"edit\"        verify HMAC signature + timestamp\n  button) \u2192 <Suspense>, no cache      validate body (category slug)\n                                      revalidateTag(tag, 'max')     \u2190 stale-while-revalidate\n```\n\n## Recommendations\n\n1. **Cache at the data function, not the page.** One `getProducts(category)` with `'use cache'`. The page stays a thin Server Component so cart and auth-aware chrome can stream in Suspense without poisoning the shared cache.\n\n2. **Two tags per entry.** `products` (nuke everything) and `products-${category}` (surgical). Keep tag builders in one `lib/cache-tags.ts` so the action and webhook can't drift.\n\n3. **Editor path uses `updateTag`.** It is Server Action only and gives read-your-own-writes: the editor's redirect back to the category sees the new row. Authorize inside the action, not just in `proxy.ts`. Actions are public endpoints.\n\n4. **Webhook path uses `revalidateTag(tag, 'max')`.** Route Handlers cannot call `updateTag`. The 'max' form serves stale while refreshing, which matches your tolerance. If a CMS event ever needs hard expiry, use `{ expire: 0 }` instead.\n\n5. **Webhook auth: signature, not query secret.** The skill's example uses `?secret=`. For a CMS, verify an HMAC over the raw body with `crypto.timingSafeEqual`, and reject timestamps older than a few minutes. Validate the category slug against your known set before building a tag from it, or an attacker with a leaked key can only ever bust tags you expected.\n\n6. **Keep the cached return small.** Select `id, name, price, slug`, not the whole ORM row. It is serialized into the static shell.\n\n7. **Explicit `cacheLife` always.** `'hours'` for catalog is a sane default. If you want a custom profile, define it in `next.config.ts`.\n\n## Example (editor action)\n\n```ts\n// app/actions/products.ts\n'use server'\nimport { updateTag } from 'next/cache'\nimport { z } from 'zod'\nimport { requireRole } from '@/lib/auth'\nimport { productTag } from '@/lib/cache-tags'\nimport { db } from '@/lib/db'\n\nconst Input = z.object({\n  id: z.string().uuid(),\n  category: z.string().min(1),\n  price: z.number().nonnegative(),\n})\n\nexport async function updateProduct(raw: unknown) {\n  await requireRole('editor')            // re-check here, not only in proxy.ts\n  const data = Input.parse(raw)          // never trust FormData shape\n\n  await db.product.update({ where: { id: data.id }, data: { price: data.price } })\n\n  updateTag('products')\n  updateTag(productTag(data.category))  // editor sees new price on redirect\n}\n```\n\n## Watch for\n\n- **Category moves.** If an edit changes `category`, bust both old and new tags.\n- **Serverless hosts.** The default `'use cache'` store is per-instance memory. If invalidation seems flaky across regions, you need `'use cache: remote'` plus a platform cache handler.\n- **Build check.** Confirm `/catalog/[category]` shows as PPR with a static shell in the build output. If it went fully dynamic, something inside the cached scope is reading `cookies()` or `headers()`.",
+    "durationMs": 57722,
+    "estimatedUsageUsd": 0.46622800000000003,
+    "includedInComparison": true
+  },
+  {
+    "run": "baseline-T3",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router"
+      }
+    ],
+    "reads": [
+      "resources/migration.md",
+      "resources/caching.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "**Version caveat first.** The skill is verified against Next.js 16, where ISR becomes `'use cache'` + `cacheLife`. On Next.js 15 that is experimental (`dynamicIO`) and I would not use it for a one-route pilot. The stable Next.js 15 equivalent of `revalidate: 3600` is the segment export `revalidate = 3600`. Everything below assumes you stay on 15. If you upgrade to 16 later, swap that export for `'use cache'` + `cacheLife('hours')`.\n\n**Shape of the change**\n\n```\npages/                          app/\n  _app.tsx        keep            layout.tsx     new (minimal shell)\n  _document.tsx   keep            blog/\n  index.tsx       keep              [slug]/\n  blog/                               page.tsx   new\n    [slug].tsx    DELETE               loading.tsx  optional\n  api/*           keep\n```\n\n**Steps**\n\n1. **Add `app/layout.tsx`.** Required for any `app/` route. Import global CSS and render `<html><body>`. Do not delete `_app.tsx` or `_document.tsx`; they still drive every Pages route. Both routers coexist.\n2. **Create `app/blog/[slug]/page.tsx`.** Move the fetch from `getStaticProps` into the async component. Replace `getStaticPaths` with `generateStaticParams`. Add `export const revalidate = 3600` to keep hourly ISR. Map `fallback`: `false` becomes `dynamicParams = false`; `'blocking'` is the default behaviour, so omit it.\n3. **Await `params`.** In Next.js 15 it is a Promise. Sync access logs a warning and will break in 16.\n4. **Port `<Head>` to `generateMetadata`.** `next/head` does not work in `app/`. Set `metadataBase` in the root layout or canonical and OG URLs will be wrong.\n5. **Delete `pages/blog/[slug].tsx`.** Same route in both directories is a build error, so delete it in the same commit the new page lands.\n6. **Check shared components.** Anything the post page imports that uses hooks or `next/router` needs `'use client'` or a swap to `next/navigation`. Leave components that only render props as Server Components.\n7. **Check the revalidate hook.** If an API route calls `res.revalidate('/blog/x')`, that only touches Pages Router ISR. Switch it to `revalidatePath` from `next/cache`, or add a tag. (Second-arg `revalidateTag(tag, 'max')` is 16-only. In 15 call `revalidateTag(tag)`.)\n8. **Run `next build`** and confirm the route shows as ISR with a 1h revalidate in the output.\n\n**Minimal page**\n\n```tsx\n// app/blog/[slug]/page.tsx\nimport { notFound } from 'next/navigation'\nimport { getPost, getAllSlugs } from '@/lib/posts'\n\nexport const revalidate = 3600\n\nexport async function generateStaticParams() {\n  return (await getAllSlugs()).map((slug) => ({ slug }))\n}\n\nexport default async function BlogPost({\n  params,\n}: {\n  params: Promise<{ slug: string }>\n}) {\n  const { slug } = await params\n  const post = await getPost(slug)\n  if (!post) notFound()\n  return <article><h1>{post.title}</h1>{post.content}</article>\n}\n```\n\n**Files to retain**\n\n- `pages/_app.tsx`, `pages/_document.tsx`: all other routes depend on them.\n- `pages/api/*`: untouched. Route Handlers can wait.\n- `middleware.ts`: stays as `middleware.ts` on 15. The `proxy.ts` rename is 16.\n- `lib/` data helpers: reuse directly.\n- `next.config.*`: no change needed. Do not enable `dynamicIO` for this.\n\n**Two things to watch**\n\n- The root layout now wraps only `/blog/[slug]`, so the header and footer from `_app.tsx` need to be rendered in both places until more routes move. Extract them to a shared component rather than copying.\n- Client-side navigation between a Pages route and the App route is a full page load. Expected, not a bug.",
+    "durationMs": 26685,
+    "estimatedUsageUsd": 0.6070575,
+    "includedInComparison": true
+  },
+  {
+    "run": "baseline-T4",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router",
+        "args": "review intercepting + parallel route photo modal"
+      }
+    ],
+    "reads": [
+      "resources/routing.md",
+      "resources/error-handling.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "The app code isn't in this directory (only the skill is), so this review is against the structure you described, checked against the skill's routing and error-handling notes.\n\n**Version note.** The skill is verified against Next.js 16. Intercepting and parallel routes behave the same from 13.3 onward, but the `params` Promise shape and `proxy.ts` naming are 15/16 only. Confirm your `next` version in package.json before applying the typing below.\n\n**Target structure**\n\n```\napp/\n\u251c\u2500\u2500 photo/[id]/page.tsx            full page (direct load, refresh, share)\n\u2514\u2500\u2500 feed/\n    \u251c\u2500\u2500 layout.tsx                  renders {children} and {modal}\n    \u251c\u2500\u2500 page.tsx                    /feed, links to /photo/123\n    \u251c\u2500\u2500 @modal/\n    \u2502   \u251c\u2500\u2500 default.tsx             MUST exist, returns null\n    \u2502   \u2514\u2500\u2500 (.)photo/[id]/page.tsx  modal on soft nav\n    \u2514\u2500\u2500 default.tsx                 optional, for children slot\n```\n\n**Findings**\n\n1. **`@modal/default.tsx` is the usual missing piece.** Without it, a hard refresh on `/feed` 404s, because Next can't work out what the slot should render. It should return `null`.\n\n2. **`(.)` is segment-level, not folder depth.** `/photo` is a sibling of `/feed` at the app root, so from `app/feed/@modal/` the correct prefix is `(.)`. Slots don't count as a segment. If the modal lives one level deeper, switch to `(..)`. Getting this wrong fails silently: the link just does a full navigation.\n\n3. **Layout must render the slot.** `app/feed/layout.tsx` needs a `modal` prop and must output it. If the prop is missing from the layout, the slot is never mounted.\n\n4. **Closing the modal.** Use `router.back()` in a Client Component. Don't `router.push('/feed')`, that leaves the slot showing the stale modal on later navigations. If users can arrive via a link with no history, fall back to a `Link` to `/feed`.\n\n5. **Share the data layer, not the page.** Both pages should call the same `getPhoto(id)` and both should `notFound()` on a miss. Wrap the modal page's lookup so a 404 doesn't throw inside the slot; add `app/feed/@modal/(.)photo/[id]/not-found.tsx` or render a small \"photo not found\" state inside the modal.\n\n6. **Params are a Promise** in 15/16. Await them in both pages.\n\n7. **Mind the layout.tsx checklist item on `searchParams`.** Don't read them in `feed/layout.tsx` to drive the modal. Use the intercepted page.\n\n```tsx\n// app/feed/@modal/default.tsx\nexport default function Default() {\n  return null\n}\n```\n\n**Verification steps**\n\n- `/feed`, click a photo: URL becomes `/photo/123`, modal overlays feed, feed scroll position holds.\n- Browser back: modal closes, URL returns to `/feed`, no reload.\n- Refresh while modal is open: full `/photo/123` page renders, no modal.\n- Paste `/photo/123` into a new tab: full page.\n- Refresh on `/feed`: no 404 (proves `default.tsx`).\n- Navigate `/feed` to `/photo/999` (missing): 404 UI in modal, feed still visible.\n- Check `next build` output lists both `/photo/[id]` and `/feed/@modal/(.)photo/[id]` routes.\n- Inspect Network on the soft nav: an RSC payload fetch only, no document request.\n\nOpen question for you: does `/feed/page.tsx` link with `<Link>`? A plain `<a>` always does a full load and the modal never shows.",
+    "durationMs": 31810,
+    "estimatedUsageUsd": 0.62921875,
+    "includedInComparison": true
+  },
+  {
+    "run": "baseline-T5",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router"
+      }
+    ],
+    "reads": [
+      "resources/error-handling.md",
+      "resources/assets.md",
+      "resources/version-changes.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "**Version uncertainty first.** Both resources here are verified against Next.js 16 docs, but one API matters by minor: `unstable_retry` in `error.tsx` is marked unstable and did not exist in every 16.x. `priority` on `next/image` has been stable since v10 and is safe on any 16 minor. Pin the exact minor in `package.json` before merging, then re-check the two notes below.\n\n**Error boundary (`app/<segment>/error.tsx`)**\n\n- Must be a Client Component. `'use client'` at the top, no data fetching inside.\n- Wire `reset` as the primary button. It is stable across 13 to 16. Treat `unstable_retry` as optional: type it `?: () => void` and call it only when present.\n- `reset()` alone re-renders the client tree but does not re-fetch Server Component data, so a DB outage error reappears. Pair it with `router.refresh()` inside `startTransition`. That is the version-safe equivalent of `unstable_retry`.\n- Log `error.digest`, never render `error.message` in production.\n- Put the boundary at the feature segment, not only at root, so nav and layout survive. Add `global-error.tsx` with `<html>` and `<body>` for root layout crashes.\n\n```tsx\n'use client'\nimport { useEffect, startTransition } from 'react'\nimport { useRouter } from 'next/navigation'\n\nexport default function SegmentError({ error, reset, unstable_retry }: {\n  error: Error & { digest?: string }\n  reset: () => void\n  unstable_retry?: () => void\n}) {\n  const router = useRouter()\n  useEffect(() => { console.error(error.digest, error) }, [error])\n\n  function retry() {\n    if (unstable_retry) return unstable_retry()\n    startTransition(() => { router.refresh(); reset() })\n  }\n\n  return (\n    <div role=\"alert\">\n      <h2>Something went wrong</h2>\n      {error.digest && <p>Reference: {error.digest}</p>}\n      <button type=\"button\" onClick={retry}>Try again</button>\n    </div>\n  )\n}\n```\n\n**Responsive hero (`next/image`)**\n\n- Keep the hero a Server Component. No `'use client'` needed.\n- Use a static import for the hero file. You get dimensions and `placeholder=\"blur\"` for free, no CLS.\n- For a full-bleed hero, use `fill` on a `relative` parent with a fixed height or aspect ratio, `className=\"object-cover\"`, and `sizes=\"100vw\"`. For a constrained hero, give `width`/`height` and a `sizes` string that matches your breakpoints.\n- `priority` only on this one image per page. It sets eager loading, `fetchpriority=\"high\"` and a preload link. Do not also pass `loading=\"lazy\"`, the two conflict. Do not pass `loading=\"eager\"` without `priority`, it loads early but skips the preload.\n- Everything below the fold keeps the default lazy loading. Remove any stray `priority` from cards or galleries.\n- Different crops for mobile vs desktop: use `getImageProps` inside a `<picture>` with `<source media>`. Stable since 14.1.\n\n**Next.js 16 config gotchas** that bite a hero specifically:\n\n- `images.qualities` defaults to `[75]`. A `quality={90}` prop silently coerces to 75. Add `qualities: [75, 90]` if you want it.\n- `minimumCacheTTL` is now 4 hours, so a swapped hero file without a new filename can stay stale on the optimizer.\n- Remote hero? `remotePatterns` is required, `domains` is gone.\n\n**Check after pinning the minor:** whether `unstable_retry` is present in your version's `error.tsx` props, and whether your `next.config.ts` still sets `experimental.dynamicIO` or `useCache` (both removed in 16, replaced by `cacheComponents: true`).",
+    "durationMs": 50970,
+    "estimatedUsageUsd": 0.798039,
+    "includedInComparison": true
+  },
+  {
+    "run": "baseline-activation-copy",
+    "toolCalls": [],
+    "reads": [
+      "/Users/cookies/Documents/Codex/2026-10-21/clone-the-public-github-repository-https/work/nextjs-pilot/eval/baseline/app/page.tsx"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "`app/page.tsx` isn't in this folder (only the skill docs are), so I can't make the edit. Here are the three headlines to drop in:\n\n1. **Get paid on time, without chasing**\n2. **Automatic reminders for overdue invoices**\n3. **Stop chasing late invoices**\n\nSwap one in for \"Unlock your potential\" in the `<h1>` and nothing else changes. If you point me at the real file I'll apply it.",
+    "durationMs": 16577,
+    "estimatedUsageUsd": 0.24634775000000003,
+    "includedInComparison": true
+  },
+  {
+    "run": "baseline-activation-pages",
+    "toolCalls": [],
+    "reads": [],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "Not in this folder, so here is the patch against your snippet:\n\n```diff\n-  const post = await getPost(ctx.params.slug);\n-  return { props: { title: post.title } };\n+  const slug = ctx.params?.slug;\n+  if (typeof slug !== 'string') return { notFound: true };\n+\n+  const post = await getPost(slug);\n+  if (!post) return { notFound: true };\n+\n+  return { props: { title: post.title } };\n```\n\nTwo guards: `ctx.params` can be undefined (and `slug` can be a string array), and `getPost` can return null. Both cases send a 404 instead of crashing.",
+    "durationMs": 10849,
+    "estimatedUsageUsd": 0.17103775,
+    "includedInComparison": true
+  },
+  {
+    "run": "baseline-activation-positive",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router"
+      }
+    ],
+    "reads": [
+      "resources/caching.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "There is no app code in this directory, only the skill. So I can give you the guidance, but not a line-by-line review.\n\n**Skill I need:** `nextjs-app-router`, the `caching.md` resource. Loaded.\n\n**What the guidance says for your case**\n\n```\ncatalog read                      product update (server action)\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500                    \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n'use cache'                       await db.product.update(...)\ncacheLife('hours')                updateTag('products')        \u2190 missing?\ncacheTag('products',              updateTag(`product-${slug}`)\n         `product-${slug}`)\n```\n\nThe usual causes, in order of likelihood:\n\n- **No invalidation call at all.** The action writes to the DB and returns. The skill lists this as the top FAIL case.\n- **Read side has no tag.** `updateTag` can only hit a `cacheTag` that exists. If the catalog function has `'use cache'` but no `cacheTag('products')`, nothing matches.\n- **Wrong API for a server action.** Use `updateTag('products')`, not `revalidateTag`. `updateTag` is immediate and gives read-your-own-writes. `revalidateTag` is stale-while-revalidate, so the next request still sees old data.\n- **Old-style `revalidateTag(tag)` with no second arg.** Deprecated in 16. Use `updateTag` in actions, `revalidateTag(tag, 'max')` in route handlers.\n- **Tag mismatch.** Read tags `catalog`, action updates `products`. Skill recommends a central constants file for tags.\n- **`revalidatePath` on the wrong path.** It refreshes one path, not every page that renders the catalog.\n- **Cache Components off.** `'use cache'` does nothing without `cacheComponents: true` in `next.config.ts`.\n\n**What I need from you:** point me at the repo, or paste the server action, the catalog read function, and `next.config.ts`. Then I can say which of the above it is.",
+    "durationMs": 18538,
+    "estimatedUsageUsd": 0.46285750000000003,
+    "includedInComparison": true
+  },
+  {
+    "run": "baseline-activation-vite",
+    "toolCalls": [],
+    "reads": [],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "No source files here, so this is the general plan.\n\n```\nclick \u2192 setCount \u2192 parent rerenders\n                     \u2514\u2500\u2500 Costly sibling rerenders too  \u2190 the bug\n```\n\n1. **Prove it.** React DevTools Profiler, \"record why each component rendered\". Click once, confirm the sibling shows \"parent rendered\".\n2. **Find the cause.** In the parent, check what the sibling receives. One of these:\n   - no `React.memo` on the sibling\n   - a new object, array, or inline function prop each render\n   - the sibling reads the counter from context\n3. **Pick the fix**, cheapest first:\n   - move the counter state into its own small component, so the parent never rerenders\n   - or wrap the sibling in `memo` and stabilise its props with `useMemo` / `useCallback`\n4. **Re-profile.** Click again, sibling should not appear.\n\nShare the parent file and I'll point at the exact line.",
+    "durationMs": 9475,
+    "estimatedUsageUsd": 0.17362149999999998,
+    "includedInComparison": true
+  },
+  {
+    "run": "baseline-technical",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router"
+      }
+    ],
+    "reads": [
+      "resources/caching.md",
+      "resources/data-fetching.md",
+      "resources/migration.md",
+      "resources/routing.md",
+      "resources/error-handling.md",
+      "resources/assets.md",
+      "resources/version-changes.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "error_max_budget_usd",
+    "output": "",
+    "durationMs": 120156,
+    "estimatedUsageUsd": 1.89765725,
+    "includedInComparison": false
+  },
+  {
+    "run": "revised-T1",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router",
+        "args": "Review maintenance task: Next.js 16.0 App Router, cacheComponents off. Add authenticated account data and live job-status polling widget. No upgrade."
+      }
+    ],
+    "reads": [
+      "resources/data-fetching.md",
+      "resources/caching.md",
+      "resources/server-components.md",
+      "resources/proxy.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "Reviewed against the skill's data-fetching, caching, server-components and proxy notes. There is no repo here to inspect, so this is a design review of the stated task.\n\n**Where things go**\n\n```\nrequest\n  \u2502\n  \u251c\u2500\u25ba proxy.ts (optional)      redirect if no session cookie. UX only, not auth.\n  \u2502\n  \u2514\u2500\u25ba app/account/page.tsx    Server Component\n        \u251c\u2500 const user = await requireUser()     auth next to the read\n        \u251c\u2500 db.account.findUnique({ where:{ userId:user.id }, select:{\u2026} })\n        \u2514\u2500 <JobStatus jobId={job.id} initial={job.status} />\n                \u2502  'use client', setInterval / app's data lib\n                \u2514\u2500\u25ba GET app/api/jobs/[id]/route.ts\n                      requireUser() again + ownership check\n```\n\n**Recommendations**\n\n1. **Account data: read it in the Server Component, uncached.** Call the session helper first, then query the DB directly with an explicit `select`. Don't fetch your own Route Handler from the page. Calling `cookies()` (async in 16) makes the route dynamic, so no caching opt-out is needed and no personal data lands in a shared cache.\n\n2. **Polling: Client Component plus a Route Handler.** Polling is the one case where browser fetching is the right transport. The handler must authenticate and check the job belongs to the caller. \"It's only called from our own page\" is not trust. Seed the widget with the server-rendered status so first paint isn't empty, then poll. Stop polling on a terminal state and when the tab is hidden.\n\n3. **Auth lives in three places, and Proxy is not one of them.** The page read, the Route Handler, and any Server Action each call the auth helper. Proxy may add an optimistic redirect from a verified cookie if the app already has it. Don't add Proxy just for this.\n\n4. **Config change: none required.** Leave `cacheComponents` off. Don't add `'use cache'`, `'use cache: private'`, or `partialPrefetching` (that option appears in newer docs and may not exist in 16.0). Don't add `revalidateTag`/`updateTag` calls unless something is actually cached.\n\n5. **Isolate the widget's failure.** The handler returning 401/500 should not take down the page. Handle the error in the client and show a stale badge.\n\n**Minimal handler sketch** (helpers are the project's own, not drop-in):\n\n```ts\n// app/api/jobs/[id]/route.ts\nimport { requireUser } from '@/lib/auth'\nimport { db } from '@/lib/db'\n\nexport async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {\n  const user = await requireUser()           // throws / 401 on no session\n  const { id } = await params                // params is a Promise in 16\n  const job = await db.job.findFirst({\n    where: { id, ownerId: user.id },         // ownership in the query\n    select: { status: true, updatedAt: true },\n  })\n  if (!job) return Response.json({ error: 'Not found' }, { status: 404 })\n  return Response.json(job, { headers: { 'cache-control': 'no-store' } })\n}\n```\n\n**Version uncertainty**\n\n- The bundled docs at `node_modules/next/dist/docs/` only exist from 16.2. On 16.0 check the live docs' version history before trusting a newer option.\n- `proxy.ts` is the 16 name; if the app still has `middleware.ts`, leave it unless the task says otherwise.\n- Two-argument `revalidateTag` and `updateTag` ship in 16, but neither applies here since nothing is cached.\n\n**Verify before calling it done**\n\n- Direct unauthenticated hit on the handler returns 401.\n- User A cannot poll user B's job id.\n- Sign out, then reload: account page redirects, widget stops.\n- Build output shows the account route as dynamic, not static.",
+    "durationMs": 35149,
+    "estimatedUsageUsd": 0.46863675,
+    "includedInComparison": true
+  },
+  {
+    "run": "revised-T2",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router",
+        "args": "review maintenance task: Next.js 16.4 cacheComponents product catalog caching with authenticated edits and webhook invalidation"
+      }
+    ],
+    "reads": [
+      "resources/caching.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "Review done. Here is the design.\n\n**Boundaries**\n\n```\npublic catalog read \u2500\u2500\u25ba 'use cache' fn (key = category)   tags: products, products:<cat>\n                              \u25b2                 \u25b2\n   admin edit (Server Action) \u2500\u2518 updateTag      \u2502\n   auth + validate + authz        (immediate)   \u2502\n                                                \u2502\n   CMS webhook (Route Handler) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 revalidateTag(tag, 'max')\n   verify signature on raw body                   (stale-while-revalidate)\n```\n\n**Recommendations**\n\n1. **Cache only the public read.** Put the catalog query in a `'use cache'` data module with the category as a function argument, so it becomes part of the cache key. Tag it with both a broad tag and a per-category tag. Do not call `cookies()` or `headers()` inside it. Anything personal (draft products, admin-only fields) stays as an uncached request-time read behind auth.\n\n2. **Authenticated edit uses `updateTag`, not `revalidateTag`.** `updateTag` runs only in a Server Action and expires the tagged entries immediately, which is what \"read your own write\" needs. The two-argument `revalidateTag(tag, 'max')` is stale-while-revalidate, so the editor could still see old values for one request. Single-argument `revalidateTag` is deprecated in 16.\n\n3. **Webhook uses `revalidateTag(tag, 'max')`.** Brief staleness is allowed, so take the cheaper path. Do not let the caller pick tags from the body unless you validate against an allowlist. A fixed tag is simplest.\n\n4. **Authorization sits next to the data, in the action.** Verify the session, check the user may edit this product (owner or role), validate the form fields with the app's schema library, then write, then invalidate. Proxy and hidden buttons are not authorization. Treat FormData as untrusted.\n\n5. **Webhook validation.** Read the raw body with `request.text()` before parsing. Verify the HMAC against the raw bytes with a timing-safe compare, check the timestamp for replay, return 401 on failure, and keep the secret out of URLs and logs. Follow the CMS provider's own verification protocol.\n\n6. **Lifetime.** The default `cacheLife` is fine. Pick `'hours'` only if that matches your freshness contract, not as a ritual. Regular cache is in-memory per instance, so do not promise durability across deploys or replicas without a `cacheHandlers` setup.\n\n**Edit action**\n\n```ts\n// app/admin/actions.ts\n'use server'\nimport { updateTag } from 'next/cache'\nimport { requireUser } from '@/lib/auth'\nimport { productSchema } from '@/lib/schemas'\nimport { db } from '@/lib/db'\n\nexport async function updateProduct(formData: FormData) {\n  const user = await requireUser()                 // throws/redirects\n  const parsed = productSchema.safeParse(Object.fromEntries(formData))\n  if (!parsed.success) return { error: 'Invalid input.' }\n  const { id, category, ...data } = parsed.data\n  const result = await db.product.updateMany({\n    where: { id, ownerId: user.id },               // authz near the data\n    data,\n  })\n  if (result.count !== 1) return { error: 'Product unavailable.' }\n  updateTag(`products:${category}`)\n  return { ok: true }\n}\n```\n\nIf the edit moves a product between categories, tag both the old and new category or fall back to the broad `products` tag.\n\n**Verification to run**\n\n- Production build, not dev. Dev caches behave differently.\n- Two sessions: editor sees new values on the very next request, anonymous reader also sees them.\n- Fire a signed webhook, confirm one stale serve then fresh data. Fire an unsigned one, confirm 401 and no invalidation.\n- Call the action directly with a tampered id, confirm the ownership check blocks it.\n\n**Version uncertainty**\n\nI could not inspect the installed app. The skill's sources were checked against live docs reporting 16.4.2 on 2026-10-21. `updateTag` and two-argument `revalidateTag` are Next 16 APIs, and `'use cache'` needs `cacheComponents: true` and Node runtime. If your 16.4 patch predates those doc dates, or if `next.config` also needs an explicit `partialPrefetching` choice, confirm in `node_modules/next/dist/docs/` before relying on this. The auth, schema, and db helpers above are placeholders your project must supply.",
+    "durationMs": 32365,
+    "estimatedUsageUsd": 0.47533,
+    "includedInComparison": true
+  },
+  {
+    "run": "revised-T3",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router",
+        "args": "Review maintenance task: Next.js 15 Pages Router site, migrate only /blog/[slug] to App Router, preserve hourly ISR and all other pages. No edits, no network."
+      }
+    ],
+    "reads": [
+      "resources/migration.md",
+      "resources/caching.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "**Scope check:** Next.js 15 Pages Router, no Cache Components (it's a 16 opt-in). Version uncertainty: I could not see your `package.json`, so I assume 15.x with the default cache mode. In 15, `params` is already a Promise and should be awaited. If you are on 15.0 or earlier, `await params` still works but the sync form is still tolerated with a warning.\n\n**Migration steps**\n\n1. **Add `app/layout.tsx`** with `<html>` and `<body>`, importing the same global CSS and any providers the blog page needs. This does not wrap Pages routes, so `_app.tsx` and `_document.tsx` stay.\n2. **Create `app/blog/[slug]/page.tsx`** and delete `pages/blog/[slug].tsx` in the same commit. Both routers owning one URL is a build error.\n3. **Replace `getStaticProps` + `revalidate: 3600`** with `export const revalidate = 3600` and a cached read (fetch with `next.revalidate`, or `unstable_cache` for ORM reads).\n4. **Replace `getStaticPaths` with `generateStaticParams`**, matching the old fallback behavior, not just the name:\n   - `fallback: 'blocking'` \u2192 return the known slugs (or `[]`), leave `dynamicParams` at its default `true`.\n   - `fallback: false` \u2192 return all slugs and add `export const dynamicParams = false`.\n   - `fallback: true` \u2192 there is no loading-state equivalent; blocking render is the closest. Confirm that is acceptable.\n5. **Move `next/head` tags to `generateMetadata`.** Any client code in the moved tree switches from `next/router` to `next/navigation`. Wrap existing interactive components in a `'use client'` file first, then tidy boundaries later.\n6. **Add `app/blog/[slug]/not-found.tsx`** if the old page returned `notFound: true`, and call `notFound()` on 404 from the data source.\n7. **Build and verify:** direct URL, client link from a Pages route into the blog (full navigation across routers is expected), refresh, unknown slug, ISR expiry after an hour in `next start`, and the build output showing the route as ISR.\n\n**Files to retain**\n\n- `pages/_app.tsx`, `pages/_document.tsx`, `pages/404.tsx`, `pages/_error.tsx`: still serve every other page.\n- `pages/api/**`: untouched. Any on-demand revalidation handler there calling `res.revalidate('/blog/x')` must change to `revalidatePath` from `next/cache`, since `res.revalidate` only targets Pages routes.\n- `next.config.*`: no change needed. Do not enable experimental flags to fit an example.\n- Shared `components/`, `lib/`, and CSS: keep as is.\n\n**Example page**\n\n```tsx\n// app/blog/[slug]/page.tsx\nimport { notFound } from 'next/navigation'\n\nexport const revalidate = 3600\nexport async function generateStaticParams() {\n  return [] // or the known slugs; keep dynamicParams default (true) for fallback: 'blocking'\n}\n\nexport default async function Page({ params }: { params: Promise<{ slug: string }> }) {\n  const { slug } = await params\n  const res = await fetch(`${process.env.CMS_URL}/posts/${encodeURIComponent(slug)}`, {\n    next: { revalidate: 3600, tags: [`post:${slug}`] },\n  })\n  if (res.status === 404) notFound()\n  if (!res.ok) throw new Error('Unable to load article')\n  const post = await res.json()\n  return <article><h1>{post.title}</h1></article>\n}\n```\n\n**Watch for**\n\n- If the old page read from an ORM instead of fetch, `revalidate = 3600` alone still caches the page HTML. The data call does not need a fetch wrapper.\n- Keep `revalidateTag` single-argument on 15. The two-argument form is a 16 change.\n- If anything in the blog page reads cookies or headers, it becomes dynamic and loses ISR. Check before moving.\n\nUntested here: no repo files were opened and nothing was built, so confirm the installed version and fallback mode before applying.",
+    "durationMs": 24467,
+    "estimatedUsageUsd": 0.368672,
+    "includedInComparison": true
+  },
+  {
+    "run": "revised-T4",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router",
+        "args": "review intercepting/parallel route photo modal in app/feed/@modal/(.)photo/[id]/page.tsx"
+      }
+    ],
+    "reads": [
+      "resources/routing.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "**Finding first:** there is no app code in this directory (no `package.json`, no `app/`), so I reviewed the route structure as described against the skill's routing resource. Installed Next.js version is unconfirmed. The advice below holds for Next 15 and 16 (async `params`); the skill's docs were checked against live Next 16.4.2 on 2026-10-21.\n\n**The current path is wrong.** Interception counts URL segments, not folders. `@modal` does not count. So `app/feed/@modal/(.)photo/[id]` intercepts `/feed/photo/123`, not `/photo/123`. Clicking the feed link does a plain navigation to the full page every time. No modal.\n\n**Fix: move the slot to root**, next to `photo/`, so `(.)` means \"sibling\".\n\n```text\napp/\n  layout.tsx                 renders {children}{modal}\n  page.tsx                   /\n  feed/page.tsx              Link href=\"/photo/123\"\n  photo/[id]/page.tsx        direct load, reload, share: full page\n  @modal/\n    default.tsx              return null  (hard load of any route)\n    page.tsx                 return null  (at /)\n    (.)photo/[id]/page.tsx   soft nav: modal\n    [...catchAll]/page.tsx   return null  (soft nav elsewhere closes modal)\n```\n\n```tsx\n// app/layout.tsx\nexport default function Layout({ children, modal }: {\n  children: React.ReactNode; modal: React.ReactNode\n}) {\n  return <html lang=\"en\"><body>{children}{modal}</body></html>\n}\n```\n\nThe alternative is keeping the slot under `feed/` and using `(..)photo` (one URL level up). Only do that if `feed/layout.tsx` is where you want the modal to live. Don't mix the two.\n\n**Fallbacks you need, and why each one exists:**\n\n- `@modal/default.tsx` returning null. Without it, a hard load of `/feed` or `/` 404s because the slot has no match.\n- `@modal/page.tsx` returning null. Covers `/` itself.\n- `@modal/[...catchAll]/page.tsx` returning null. `default.tsx` only runs on hard loads. On soft navigation away from the photo, the slot keeps its last state and the modal stays open. The catch-all clears it.\n- If `feed/` has its own layout with slots, give those slots defaults too.\n\n**Inside the modal page:**\n\n- `params` is a Promise: `const { id } = await params`. Sync access warns in 15 and breaks in 16.\n- Close button calls `router.back()` so the feed scroll position survives. Give the dialog focus trapping and Escape handling.\n- Unknown id: call `notFound()` in both the modal and full page. Both share the same lookup, so share the function.\n- The full page at `photo/[id]/page.tsx` should be real content with metadata, not a redirect, because that is what search and shared links get.\n\n**Verify, in a production build (`next build && next start`), not just dev:**\n\n1. Feed, click a photo. Modal opens, URL shows `/photo/123`.\n2. Reload on that URL. Full page, no modal.\n3. Close. Back on feed, same scroll.\n4. Browser back then forward. Modal reopens.\n5. Modal open, click a nav link to another route. Modal clears.\n6. Hard load `/feed` and `/`. No 404.\n7. `/photo/does-not-exist` both ways. 404, not a crash.\n8. If routes use `loading.tsx` or Suspense, check the modal does not flash the full page first.\n\n**Open item for Colin:** point me at the actual repo and I'll check the real files, the installed Next version, and whether `feed/` has a layout that changes the `(.)` vs `(..)` decision.",
+    "durationMs": 31956,
+    "estimatedUsageUsd": 0.46350074999999996,
+    "includedInComparison": true
+  },
+  {
+    "run": "revised-T5-first",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router",
+        "args": "Review maintenance task: Next.js 16 app, exact minor unspecified. Add recoverable error.tsx and optimize responsive hero. Version-safe advice for error recovery and image priority/loading props."
+      }
+    ],
+    "reads": [
+      "resources/error-handling.md",
+      "resources/assets.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "**Version uncertainty first.** \"Next.js 16\" without a minor matters here. The recovery prop in `error.tsx` and the preferred image hint both changed inside 16. Read the installed version from `package.json` and the lockfile before writing code. On 16.2+ the bundled docs at `node_modules/next/dist/docs/` match the installed version. Don't bump the package to make an example work.\n\n```\ninstalled minor   error.tsx recovery        hero image hint\n16.0 / 16.1       reset()                   loading=\"eager\" + fetchPriority=\"high\"\n16.2              reset(), unstable_retry() same\n16.3+             reset(), retry()          same (preload replaces deprecated priority)\n```\n\n## error.tsx\n\n- **Place it one level above the failing segment.** An `error.tsx` does not catch its own segment's layout. Put the hero's boundary at the route segment, not inside the hero component.\n- **Use `reset()` as the safe default.** It exists in every 16.x. It clears the boundary and re-renders. It does not promise a fresh server fetch, so don't word the button as \"reload data\" unless you have `retry()`.\n- **Only destructure `retry` on 16.3+.** On 16.2 it is `unstable_retry`. On 16.0/16.1 neither exists and destructuring gives `undefined`, so the button silently does nothing.\n- **Type `error` as `unknown` and narrow.** Client code can throw non-Errors. Show `digest` for support correlation, never the raw message in production.\n- **Mark it `'use client'`.** It must be a Client Component.\n\n```tsx\n// app/(marketing)/error.tsx, safe on any 16.x\n'use client'\n\nexport default function MarketingError({\n  error,\n  reset,\n}: {\n  error: unknown\n  reset: () => void\n}) {\n  const digest =\n    typeof error === 'object' && error !== null && 'digest' in error\n      ? String((error as { digest?: unknown }).digest)\n      : undefined\n  return (\n    <section>\n      <h2>Something went wrong</h2>\n      {digest && <p>Reference: {digest}</p>}\n      <button onClick={() => reset()}>Try again</button>\n    </section>\n  )\n}\n```\n\nIf you confirm 16.3+, swap `reset` for `retry` to get refetch plus re-render.\n\n## Responsive hero\n\n- **Drop `priority`.** It is deprecated in 16 in favour of `preload`. But preload is not the automatic replacement.\n- **Prefer `loading=\"eager\"` and `fetchPriority=\"high\"`.** The hero is already in the HTML, so the browser finds it early. Preload mainly helps when the image is not discoverable in markup.\n- **Don't preload several viewport variants.** If mobile and desktop show different hero images, preloading both wastes bytes. Pick the one that measures as LCP, or use one image with a real `sizes`.\n- **Give `sizes` the real rendered width.** `100vw` everywhere over-fetches on desktop. Something like `(max-width: 800px) 100vw, 800px` matches a capped hero.\n- **Reserve space.** Intrinsic `width`/`height` with `height: auto`, or a sized parent with `fill`. This is what stops layout shift, not the loading hint.\n- **Check `qualities`.** 16 defaults to `[75]`. A `quality={90}` on the hero either maps down or 400s on direct optimizer hits, depending on config. Set the allowed list on purpose.\n- **Remote hero?** Tighten `remotePatterns` to the exact host and path. No wildcard CDN.\n\n## Verify\n\nRun the app's typecheck and build. Then test: hero error then \"Try again\" recovers, hard and soft navigation into the route, and LCP under a throttled mobile profile versus the desktop one. I did not run anything, so none of this is confirmed against the actual repo.",
+    "durationMs": 29533,
+    "estimatedUsageUsd": 0.34019625,
+    "includedInComparison": false
+  },
+  {
+    "run": "revised-T5",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router",
+        "args": "review maintenance task: Next.js 16 error.tsx recovery and responsive hero image props"
+      }
+    ],
+    "reads": [
+      "resources/error-handling.md",
+      "resources/assets.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "**Version first.** The exact 16.x minor decides the error prop. Check `package.json` and the lockfile before writing the file. The split, from the skill's error-handling resource:\n\n| Installed | Recovery prop |\n| --- | --- |\n| 16.0 / 16.1 | `reset()` only. Clears boundary state and re-renders. Does not refetch server data. |\n| 16.2 | `unstable_retry()` added. Experimental, verify against that version's docs. |\n| 16.3+ | Stable `retry()` refetches and re-renders. `reset()` still exists for clear-only. |\n\n**Error boundary recommendations**\n\n- **Place it in the segment that fails**, next to the page. Only move it up a level if a sibling layout can throw. Don't put every boundary at the root.\n- **Use `reset()` as the safe default** if the minor is unknown. It is supported on every 16.x. Switch to `retry()` once you confirm 16.3 or later, since a transient data failure needs a refetch, and `reset()` alone will often re-throw.\n- **Never destructure `retry` or `unstable_retry` on an unverified version.** It will be undefined and the button does nothing.\n- **Type `error` as `unknown`** and narrow before reading `.message`. Client code can throw non-Errors.\n- **Show `digest`, not the raw message**, in production UI. Server errors are sanitised; correlate the digest with your logs.\n- **Root layout failures need `global-error.tsx`** with its own `<html>` and `<body>`. The page-level file won't catch them.\n- **Event handler errors aren't caught** by either file. Handle them locally.\n\nVersion-safe version, works on all 16.x:\n\n```tsx\n// app/(marketing)/error.tsx\n'use client'\n\nexport default function MarketingError({\n  error,\n  reset,\n}: {\n  error: unknown\n  reset: () => void\n}) {\n  const digest =\n    typeof error === 'object' && error && 'digest' in error\n      ? String((error as { digest?: string }).digest)\n      : undefined\n  return (\n    <section>\n      <h2>Something went wrong</h2>\n      {digest && <p>Reference: {digest}</p>}\n      <button onClick={() => reset()}>Try again</button>\n    </section>\n  )\n}\n```\n\nOn 16.3+, add `retry` to the props and call it instead of `reset` for the button.\n\n**Hero image recommendations**\n\n- **`priority` is deprecated on all of 16.x**, replaced by `preload`. This changed in 16.0, so it does not depend on the minor. Expect a dev warning if you keep `priority`.\n- **Don't reach for `preload` by default.** A hero that is already in the server-rendered markup is discovered early. `loading=\"eager\"` plus `fetchPriority=\"high\"` usually does the job without an extra preload tag.\n- **Use `preload` only when you've measured** that the browser finds the image late. Treat it and `fetchPriority` as different tools, not interchangeable.\n- **Responsive hero means a real `sizes` value.** Match it to the rendered width per breakpoint. A blanket `100vw` over-downloads on desktop.\n- **Reserve space.** Either `width`/`height` with `height: auto`, or `fill` inside a sized positioned parent. Otherwise you trade LCP for CLS.\n- **If the hero swaps per viewport** (different art on mobile vs desktop), don't preload both. Only one is the LCP candidate at any size.\n- **Check the 16 image config defaults** before overriding: `qualities` defaults to `[75]`, and the optimiser returns 400 for an unapproved quality. Remote heroes need a tight `remotePatterns` entry, not a wildcard.\n\n**What I could not verify**\n\n- No network, so I did not confirm the current docs for `retry()` stability or whether 16.2's `unstable_retry` was renamed in place. The skill's resource ledger is my source.\n- I did not inspect the actual app, so the segment path, image dimensions and whether the hero is local or remote are assumptions.\n\n**Next step.** Read the installed version, then pick the prop from the table. If it's 16.2, either stay on `reset()` or upgrade to 16.3 and use stable `retry()`. Don't ship `unstable_retry`.",
+    "durationMs": 36602,
+    "estimatedUsageUsd": 0.20696799999999999,
+    "includedInComparison": true
+  },
+  {
+    "run": "revised-activation-copy",
+    "toolCalls": [],
+    "reads": [
+      "/Users/cookies/Documents/Codex/2026-10-21/clone-the-public-github-repository-https/work/nextjs-pilot/eval/revised/app/page.tsx"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "The file `app/page.tsx` is not in this directory, and nothing here contains \"Unlock your potential\". The folder appears empty of that page, so I could not make the edit.\n\nHere are three headlines ready to drop in once the file is in place:\n\n1. **Get paid on time, every time.**\n2. **Invoice reminders that chase payments for you.**\n3. **Stop chasing late invoices.**\n\nMy pick is the first. It leads with the outcome the customer wants rather than the mechanism.\n\nPoint me at the right directory and I'll swap the headline in.",
+    "durationMs": 9728,
+    "estimatedUsageUsd": 0.18737525,
+    "includedInComparison": true
+  },
+  {
+    "run": "revised-activation-pages",
+    "toolCalls": [],
+    "reads": [],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "Not in this directory, so here is the patch against your snippet.\n\n```diff\n export const getServerSideProps: GetServerSideProps = async (ctx) => {\n-  const post = await getPost(ctx.params.slug);\n-  return { props: { title: post.title } };\n+  const slug = ctx.params?.slug;\n+  if (typeof slug !== \"string\") {\n+    return { notFound: true };\n+  }\n+\n+  const post = await getPost(slug);\n+  if (!post) {\n+    return { notFound: true };\n+  }\n+\n+  return { props: { title: post.title } };\n };\n```\n\nTwo gaps covered:\n\n- **Params can be undefined**, and `slug` can be a string array on catch-all routes. The type check handles both.\n- **Missing post** returns Next's built-in 404 instead of throwing on `post.title`.\n\nIf your `getPost` throws rather than returning null, wrap it in try/catch and return `notFound` there instead.",
+    "durationMs": 9544,
+    "estimatedUsageUsd": 0.17691225,
+    "includedInComparison": true
+  },
+  {
+    "run": "revised-activation-positive",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router"
+      }
+    ],
+    "reads": [
+      "resources/caching.md",
+      "resources/data-fetching.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "There is no app code in this directory. It holds only the skill files, so I can't review your actual action or catalog read. Here is what the skill says and what I need from you.\n\n**Skill guidance used:** `nextjs-app-router`, resources \"Caching\" and \"Data fetching\" (mutation example).\n\n**Why a catalog usually stays stale**\n\n```\naction writes DB  \u2500\u2500\u25ba  nothing expires the cached read  \u2500\u2500\u25ba  page serves old entry\n                        (or wrong tool: router.refresh, revalidateTag with one arg)\n```\n\nThe skill's rules for this case:\n\n- **Invalidate only what was cached.** If the catalog read is a tagged fetch, `unstable_cache`, or a `'use cache'` function, the action must expire that tag. If the read is uncached but the route is statically prerendered, the stale thing is the HTML, so you need `revalidatePath`.\n- **Read-your-writes needs `updateTag(tag)`** inside the Server Action. Single-argument `revalidateTag` is deprecated in Next 16, and `revalidateTag(tag, 'max')` is stale-while-revalidate, so the user can still see the old value once.\n- **`router.refresh()` does not clear server caches.** It only re-renders the current route.\n- **Tags must match end to end.** The tag on the read and the tag in the action must be the same string.\n- **Mode matters.** Cache Components off: tags go on `fetch` or `unstable_cache`. Cache Components on: `cacheTag` inside the `'use cache'` function.\n\n**What I need to finish the review**\n\n1. Path to the project, or paste `package.json` and `next.config.*` so I can confirm the Next version and whether Cache Components is on.\n2. The server action file.\n3. The catalog read (the fetch, `unstable_cache`, or `'use cache'` function) and the page that renders it.\n\nWith those I'll point to the exact line that is missing or mismatched.",
+    "durationMs": 21343,
+    "estimatedUsageUsd": 0.41055150000000007,
+    "includedInComparison": true
+  },
+  {
+    "run": "revised-activation-vite",
+    "toolCalls": [],
+    "reads": [],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "No React source in this directory, so the plan is general.\n\n```\n<App>                     \u2190 count state lives here\n \u251c\u2500 <Counter />           \u2190 click \u2192 setCount\n \u2514\u2500 <Costly />           \u2190 re-renders because parent did\n```\n\n**Plan**\n\n1. **Confirm it.** React DevTools Profiler, tick \"Record why each component rendered\". Click once. If Costly says \"parent rendered\", that's the whole story.\n2. **Find the state.** Where does `count` live? If it sits above Costly, every click re-renders the subtree.\n3. **Check Costly's props.** New object, array, or inline function each render means `React.memo` alone would not help.\n4. **Pick the fix.** In order of preference:\n   - Move the count state down into Counter so App never re-renders.\n   - Or pass Costly as `children` to the stateful component.\n   - Only then `React.memo` on Costly, with `useMemo`/`useCallback` on any unstable props.\n5. **Re-profile** to prove Costly no longer renders on click.",
+    "durationMs": 25423,
+    "estimatedUsageUsd": 0.19368200000000002,
+    "includedInComparison": true
+  },
+  {
+    "run": "revised-technical",
+    "toolCalls": [
+      {
+        "skill": "nextjs-app-router"
+      }
+    ],
+    "reads": [
+      "resources/data-fetching.md",
+      "resources/caching.md",
+      "resources/migration.md",
+      "resources/routing.md",
+      "resources/error-handling.md",
+      "resources/assets.md"
+    ],
+    "model": null,
+    "claudeCodeVersion": null,
+    "status": "success",
+    "output": "All five answers below use the skill's bundled resources. Nothing was edited and no network was used.\n\n## 1. Next.js 16.0, cacheComponents off: account data + job polling\n\n**Where things go**\n\n```\napp/account/page.tsx          server: auth + direct DB read\napp/account/JobStatus.tsx      client: polls\napp/api/jobs/[id]/route.ts     route handler: auth again, returns status\n```\n\nNo config change is needed. Keep cacheComponents off. Do not add `'use cache'`, `cacheLife` or `cacheTag` here, since they need that flag.\n\n```tsx\n// app/account/page.tsx\nimport { requireUser } from '@/lib/auth'\nimport { db } from '@/lib/db'\nimport { JobStatus } from './JobStatus'\n\nexport default async function AccountPage() {\n  const user = await requireUser() // reads cookies -> request-time render\n  const account = await db.account.findUnique({\n    where: { userId: user.id },\n    select: { email: true, plan: true, activeJobId: true },\n  })\n  return (\n    <main>\n      <h1>{account?.email}</h1>\n      {account?.activeJobId && <JobStatus jobId={account.activeJobId} />}\n    </main>\n  )\n}\n```\n\n```tsx\n// app/account/JobStatus.tsx\n'use client'\nimport { useEffect, useState } from 'react'\n\ntype Status = { state: 'queued' | 'running' | 'done' | 'failed' }\n\nexport function JobStatus({ jobId }: { jobId: string }) {\n  const [status, setStatus] = useState<Status | null>(null)\n  useEffect(() => {\n    let active = true\n    const tick = async () => {\n      const res = await fetch(`/api/jobs/${encodeURIComponent(jobId)}`, { cache: 'no-store' })\n      if (res.ok && active) setStatus((await res.json()) as Status)\n    }\n    tick()\n    const id = setInterval(tick, 3000)\n    return () => { active = false; clearInterval(id) }\n  }, [jobId])\n  return <p>Job: {status?.state ?? 'checking\u2026'}</p>\n}\n```\n\n```ts\n// app/api/jobs/[id]/route.ts\nimport { requireUser } from '@/lib/auth'\nimport { db } from '@/lib/db'\n\nexport async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {\n  const user = await requireUser()\n  const { id } = await params\n  const job = await db.job.findFirst({\n    where: { id, ownerId: user.id }, select: { state: true },\n  })\n  if (!job) return Response.json({ error: 'Not found' }, { status: 404 })\n  return Response.json(job)\n}\n```\n\n**Why this split**\n\n- Account data is personal, so it is an uncached authorized read in the Server Component. Fetch cache or route segment caching would risk cross-user leaks.\n- Polling is live browser behavior, so it stays client-side. Use the app's existing data library (SWR or React Query) instead of raw `useEffect` if one exists.\n- The route handler re-checks auth and ownership. The page gate does not protect the endpoint.\n- Casting the JSON is not validation. Use the project's schema library if the shape matters.\n\n**Version note:** `params` is a Promise in 16.0 and must be awaited. Private cache (`'use cache: private'`) is not available with cacheComponents off, so do not reach for it.\n\n## 2. Next.js 16.4, cacheComponents on: catalog by category\n\n**Boundaries**\n\n```\nlib/products.ts                shared 'use cache', key = category, tags\napp/products/[category]/page.tsx   Suspense around the cached read\napp/actions.ts                 authorized edit -> updateTag (immediate)\napp/api/catalog-changed/route.ts   signed webhook -> revalidateTag 'max' (stale ok)\n```\n\n```ts\n// lib/products.ts\nimport 'server-only'\nimport { cacheLife, cacheTag } from 'next/cache'\nimport { db } from '@/lib/db'\n\nexport async function getProducts(category: string) {\n  'use cache'\n  cacheLife('hours')\n  cacheTag('products', `products:${category}`)\n  return db.product.findMany({\n    where: { category, published: true },\n    select: { id: true, name: true, price: true },\n  })\n}\n```\n\nOnly public, published fields go in. Never read `cookies()` or `headers()` inside this function. Category comes in as an argument so it forms the cache key.\n\n```tsx\n// app/products/[category]/page.tsx\nimport { Suspense } from 'react'\nimport { getProducts } from '@/lib/products'\n\nexport default async function Page({ params }: { params: Promise<{ category: string }> }) {\n  return (\n    <Suspense fallback={<p>Loading\u2026</p>}>\n      <Catalog params={params} />\n    </Suspense>\n  )\n}\n\nasync function Catalog({ params }: { params: Promise<{ category: string }> }) {\n  const { category } = await params\n  const products = await getProducts(category)\n  return <ul>{products.map(p => <li key={p.id}>{p.name} {p.price}</li>)}</ul>\n}\n```\n\nAwait params below the Suspense boundary, not above it. Do not add `revalidate` or `dynamicParams` segment exports; they are unsupported in this mode.\n\n```ts\n// app/actions.ts\n'use server'\nimport { updateTag } from 'next/cache'\nimport { requireUser } from '@/lib/auth'\nimport { db } from '@/lib/db'\n\nexport async function updatePrice(id: string, formData: FormData) {\n  const user = await requireUser()\n  if (!user.roles.includes('catalog-editor')) return { error: 'Forbidden' }\n  const raw = formData.get('price')\n  const price = typeof raw === 'string' ? Number(raw) : NaN\n  if (!id || !Number.isFinite(price) || price < 0) return { error: 'Enter a valid price.' }\n  const result = await db.product.updateMany({ where: { id }, data: { price } })\n  if (result.count !== 1) return { error: 'Product unavailable.' }\n  const product = await db.product.findUnique({ where: { id }, select: { category: true } })\n  updateTag(`products:${product?.category ?? ''}`)\n  updateTag('products')\n  return { ok: true }\n}\n```\n\n`updateTag` expires the entries so the editor's next read is fresh. Do not swap it for `revalidateTag(tag, 'max')` here, since that serves stale once.\n\n```ts\n// app/api/catalog-changed/route.ts\nimport { revalidateTag } from 'next/cache'\nimport { verifyCmsSignature } from '@/lib/cms'\n\nexport async function POST(request: Request) {\n  const rawBody = await request.text()\n  if (!(await verifyCmsSignature(rawBody, request.headers))) {\n    return Response.json({ error: 'Unauthorized' }, { status: 401 })\n  }\n  revalidateTag('products', 'max')\n  return Response.json({ ok: true })\n}\n```\n\nVerify the raw body before parsing, and follow the provider's replay or timestamp rules. A fixed tag avoids caller-chosen tags. If the CMS must name a category, validate it against a known list first.\n\n**Version notes**\n\n- Single-argument `revalidateTag` is deprecated in 16. Both snippets use the two-argument form.\n- Default cache is in-memory. Do not promise persistence across instances or deploys without checking `cacheHandlers` or `'use cache: remote'` on the platform.\n- Current config docs mention `partialPrefetching`. I cannot confirm from the installed docs whether 16.4 requires it. Check `node_modules/next/dist/docs/` before adding it.\n\n**Verify:** two edits by two users, sign-out, webhook then read within the stale window, production build output showing the static shell.\n\n## 3. Next.js 15 Pages Router: migrate only /blog/[slug]\n\n**Steps**\n\n1. Add `app/layout.tsx` with `<html>` and `<body>`, plus the global CSS and providers the blog page needs. `pages/_app.tsx` and `pages/_document.tsx` keep serving the other pages.\n2. Create `app/blog/[slug]/page.tsx`. Delete `pages/blog/[slug].tsx` in the same commit so both routers never own one URL.\n3. Replace `getStaticProps` with a fetch inside the page using `next: { revalidate: 3600 }`. Replace `getStaticPaths` with `generateStaticParams`. Match the old fallback behavior: `fallback: 'blocking'` or `true` maps to the empty array below. If the old page had `fallback: false`, return the real slugs and add `export const dynamicParams = false`.\n4. Move `next/head` tags to a `generateMetadata` export. Any client code in the moved tree switches from `next/router` to `next/navigation`.\n5. Build, then compare direct load, soft navigation from a Pages page, unknown slug, and expiry after an hour.\n\n```tsx\n// app/blog/[slug]/page.tsx\nimport { notFound } from 'next/navigation'\n\ntype Post = { title: string; summary: string }\nexport const revalidate = 3600\nexport async function generateStaticParams() { return [] }\n\nexport default async function Page({ params }: { params: Promise<{ slug: string }> }) {\n  const { slug } = await params\n  const res = await fetch(`https://cms.example.com/posts/${encodeURIComponent(slug)}`, {\n    next: { revalidate: 3600 },\n  })\n  if (res.status === 404) notFound()\n  if (!res.ok) throw new Error('Unable to load article')\n  const post: Post = await res.json()\n  return <article><h1>{post.title}</h1><p>{post.summary}</p></article>\n}\n```\n\n**Retain**\n\n- `pages/_app.tsx`, `pages/_document.tsx`, every other `pages/**` file.\n- `pages/api/**` as is. Only port a handler when it is useful, and preserve method, status and headers when you do.\n- `next.config.*` unchanged. No upgrade, no cacheComponents.\n\n**Notes:** async `params` works in 15 and is required in 16, so this code carries forward. Providers in the App layout do not wrap Pages routes. The notFound status may be 200 if streaming has started; check the real response if a 404 code matters.\n\n## 4. Photo modal: review\n\n**The structure is wrong.** `app/feed/@modal/(.)photo/[id]` intercepts `/feed/photo/[id]`, a sibling of `/feed`'s children. `/photo/123` is a sibling of `/feed`, not inside it. Interception counts URL segments, and `@modal` does not count.\n\nTwo fixes. Pick one, do not mix them.\n\n**Option A (recommended): root-level slot**\n\n```\napp/\n  layout.tsx              renders {children}{modal}\n  page.tsx\n  feed/page.tsx           <Link href=\"/photo/123\">\n  photo/[id]/page.tsx     direct load: full page\n  @modal/\n    default.tsx           return null\n    page.tsx              return null  (slot at /)\n    (.)photo/[id]/page.tsx   modal on soft nav\n    [...catchAll]/page.tsx   return null, clears modal on other soft navs\n```\n\n```tsx\n// app/layout.tsx\nimport type { ReactNode } from 'react'\nexport default function Layout({ children, modal }: { children: ReactNode; modal: ReactNode }) {\n  return <html lang=\"en\"><body>{children}{modal}</body></html>\n}\n```\n\n**Option B: keep the slot under feed**, but intercept one level up with `app/feed/@modal/(..)photo/[id]/page.tsx`. Then the modal only works from `/feed`, and `app/feed/layout.tsx` must render the slot. Also add `app/feed/@modal/default.tsx`.\n\n**Fallbacks**\n\n- `default.tsx` handles hard navigation to an unmatched slot. It does not clear an open modal during soft navigation.\n- The catch-all and root `page.tsx` in the slot do the clearing.\n- `photo/[id]/page.tsx` must be a complete page with its own `notFound()` for unknown ids. The modal page can reuse the same data helper.\n- The modal needs a close control, usually `router.back()`, plus focus trapping and Escape handling. That is app code, not framework.\n\n**Verify**\n\n1. Click from /feed: modal opens, URL is /photo/123.\n2. Reload at /photo/123: full page, no modal.\n3. Close or back: modal gone, feed still mounted.\n4. Forward: modal reopens.\n5. Soft navigate from the modal to another route: slot clears.\n6. Production build, not only dev, since slot mismatches surface there.\n\n## 5. Next.js 16, minor unknown: error.tsx and hero image\n\n**Error recovery.** The prop depends on the minor:\n\n| Installed | Prop |\n| --- | --- |\n| 16.0, 16.1 | `reset()` only. Clears boundary state and re-renders. No server refetch promised. |\n| 16.2 | `unstable_retry()` added. Verify in that version's docs. |\n| 16.3+ | Stable `retry()` refetches and re-renders. `reset()` remains. |\n\nCheck `package.json` and `node_modules/next/dist/docs/` first. Until then, this is safe on every 16.x:\n\n```tsx\n// app/dashboard/error.tsx\n'use client'\n\nexport default function DashboardError({ error, reset }: {\n  error: unknown; reset: () => void\n}) {\n  const digest = error instanceof Error && 'digest' in error\n    ? String((error as { digest?: unknown }).digest ?? '') : ''\n  return (\n    <section>\n      <h2>Unable to load your dashboard</h2>\n      {digest && <p>Reference: {digest}</p>}\n      <button onClick={() => reset()}>Try again</button>\n    </section>\n  )\n}\n```\n\nOnce you confirm 16.3+, switch the prop to `retry` if a real refetch is wanted. Do not destructure `retry` or `unstable_retry` on an unconfirmed minor; it will be undefined. `error` is typed `unknown` because client code can throw non-Errors, so narrow before reading. Production errors are sanitized, so correlate `digest` with server logs rather than showing raw messages. This file does not catch errors in its own segment's layout; use a parent boundary or `global-error.tsx` for that.\n\n**Responsive hero.** In 16, `priority` is deprecated in favor of `preload`. For a hero that is already in the markup, eager loading with high fetch priority is usually the better choice and avoids the deprecation entirely:\n\n```tsx\nimport Image from 'next/image'\n\n<Image\n  src=\"/hero.jpg\"\n  alt=\"Describe the hero\"\n  width={1600} height={900}\n  sizes=\"(max-width: 800px) 100vw, 800px\"\n  style={{ width: '100%', maxWidth: 800, height: 'auto' }}\n  loading=\"eager\"\n  fetchPriority=\"high\"\n/>\n```\n\n- Match `sizes` to the rendered width, not a blanket 100vw.\n- Use `preload` only if measurement shows the preload helps. Do not combine it with `loading` or `fetchPriority` as if they were interchangeable.\n- If the hero source is remote, restrict `remotePatterns` to the exact host and path.\n- 16 changed image defaults: qualities `[75]`, size presets, minimum cache TTL. Read the installed docs before overriding.\n\n**Verify:** throw in a child, confirm the boundary shows and the button recovers. Check the rendered `srcset` and `sizes`, and measure LCP at mobile and desktop widths.\n\n**Open items needing you**\n\n- Tasks 2 and 5: the exact installed minor decides `partialPrefetching` and `retry`. Check the lockfile and bundled docs before applying those two snippets.\n- All snippets use placeholder `requireUser`, `db` and `verifyCmsSignature`. They are not drop-in until wired to the project's own helpers.",
+    "durationMs": 86230,
+    "estimatedUsageUsd": 0.81156775,
+    "includedInComparison": false
+  }
+]

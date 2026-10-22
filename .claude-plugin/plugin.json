@@ -142,7 +142,7 @@
     {
       "name": "nextjs-app-router",
       "path": "skills/nextjs-app-router",
-      "description": "Next.js 16 App Router — Server vs Client Components, data fetching, Server Actions, Route Handlers, Cache Components, routing, proxy.ts, error handling, metadata, assets, and migration",
+      "description": "Version-aware Next.js App Router guidance: component boundaries, data, caching, routing, proxy, errors, metadata, assets and migration. Scoped source review in skills/nextjs-app-router/SOURCES.md.",
       "categories": ["nextjs", "web-development", "react"],
       "triggers": {
         "filePatterns": [
