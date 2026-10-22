@@ -23,6 +23,23 @@
       }
     },
     {
+      "name": "spa-performance",
+      "path": "skills/spa-performance",
+      "description": "Main thread, frame time, and memory for SPAs. Measure, draw less, workers, OffscreenCanvas, hosted editors, typing, grids, streams, and audio.",
+      "categories": ["performance", "web-development"],
+      "triggers": {
+        "filePatterns": [
+          "**/*.worker.ts",
+          "**/*.worker.js",
+          "**/*.worker.mjs",
+          "**/*frame-sampler*",
+          "**/*scheduler.ts",
+          "**/measure.ts"
+        ],
+        "bashPatterns": ["pnpm measure", "npm run measure", "--enable-precise-memory-info"]
+      }
+    },
+    {
       "name": "react-performance",
       "path": "skills/react-performance",
       "description": "Measurement-first React performance optimization — Core Web Vitals, rendering, bundle size, React Compiler, Server Components",
