@@ -241,7 +241,7 @@ function Comment({ markdown }: { markdown: string }) {
 
 ### URL Injection
 
-React rewrites a `javascript:` href to a URL that throws, so this does not run the script. `data:` URLs are not rewritten, and neither is `window.location`. Keep an http(s) check.
+In React DOM 19.2.4, React rewrites a `javascript:` href to a URL that throws, so that href does not execute the supplied script. Its URL sanitizer does not reject `data:` URLs. Imperative assignments such as `window.location = value` are outside this React check. Keep an http(s) allowlist for untrusted link destinations.
 
 ```tsx
 function SafeLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -347,4 +347,4 @@ grep -rn "request.json()" --include="*.ts" -A5 | grep -v "safeParse\|parse(\|Sch
 - [OWASP A05:2025 — Injection](https://owasp.org/Top10/2025/A05_2025-Injection/)
 - [Next.js Data Security Guide](https://nextjs.org/docs/app/guides/data-security)
 - [Zod Documentation](https://zod.dev)
-- [React `sanitizeURL`](https://github.com/facebook/react/blob/v19.2.4/packages/react-dom-bindings/src/shared/sanitizeURL.js)
+- [React DOM 19.2.4 `sanitizeURL`](https://github.com/facebook/react/blob/v19.2.4/packages/react-dom-bindings/src/shared/sanitizeURL.js) (checked 2026-10-21; URL Injection section only)
