@@ -40,7 +40,7 @@ List concrete capabilities, not benefits. Benefits come in step 3.
 
 ```
 Unique attributes:
-- Covers all 55 WCAG 2.2 AA criteria
+- Covers all 55 WCAG 2.2 Level A and AA criteria
 - Works inside the IDE/CLI at coding time (not post-deploy)
 - Production code examples, not just warnings
 - Zero dependencies (pure markdown, no runtime)
@@ -54,7 +54,7 @@ Map each attribute to a value that matters to the target customer:
 
 | Attribute | Value (capability enabled) |
 |---|---|
-| All 55 WCAG 2.2 AA criteria | Ship fully accessible products, not "partially compliant" |
+| All 55 WCAG 2.2 Level A and AA criteria | Review Level A and AA requirements during implementation |
 | Works at coding time | Catch issues before they reach production or audit |
 | Production code examples | Fix issues immediately instead of researching how |
 | Zero dependencies | Install in seconds, no security review needed |
@@ -118,7 +118,7 @@ who need to ship accessible products without dedicated accessibility engineers,
 claude-skills is a collection of AI coding skills
 that provides production-ready code for every WCAG 2.2 AA criterion.
 Unlike manual audits or linting tools,
-we cover all 55 WCAG 2.2 AA criteria with real code examples that fix issues at coding time.
+we cover all 55 WCAG 2.2 Level A and AA criteria with real code examples that fix issues at coding time.
 ```
 
 Keep this internal. It can guide external copy. Do not paste it on a website.
@@ -137,7 +137,7 @@ Level 2: Value Proposition (1-2 sentences)
 
 Level 3: Messaging Pillars (3-4 themes, each with proof)
     ├── Pillar 1: Complete coverage
-    │     Proof: All 55 WCAG 2.2 AA criteria mapped and verified
+    │     Proof: All 55 WCAG 2.2 Level A and AA criteria mapped and verified
     │
     ├── Pillar 2: Production code, not checklists
     │     Proof: Real React/Next.js/Tailwind FAIL→PASS examples
@@ -174,7 +174,7 @@ Andy Raskin's framework for B2B storytelling. Use for your website hero section,
 
 4. **Introduce features as 'magic gifts' that enable the promised land**
    NOW you talk about your product. Each feature is a tool that gets them to the promised land.
-   "All 55 WCAG 2.2 AA criteria covered. Production code examples. One-command install."
+   "All 55 WCAG 2.2 Level A and AA criteria covered. Production code examples. One-command install."
 
 5. **Present evidence you can deliver**
    Social proof, data, case studies.
@@ -184,7 +184,7 @@ Andy Raskin's framework for B2B storytelling. Use for your website hero section,
 
 FAIL — leading with features:
 ```
-"We built an accessibility skill for Claude Code. It covers 55 WCAG 2.2 AA criteria
+"We built an accessibility skill for Claude Code. It covers 55 WCAG 2.2 Level A and AA criteria
 and has production code examples."
 ```
 
@@ -193,7 +193,7 @@ PASS — leading with the shift:
 "AI is writing more code than ever. But AI doesn't check for accessibility
 by default. Seyfarth counted 3,117 federal website accessibility lawsuits in 2025.
 The teams that win enterprise deals are the ones shipping accessible products
-from day one. [Product] makes that happen: all 55 WCAG 2.2 AA criteria, production
+from day one. [Product] makes that happen: all 55 WCAG 2.2 Level A and AA criteria, production
 React code, one-command install."
 ```
 

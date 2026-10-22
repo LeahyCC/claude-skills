@@ -156,4 +156,4 @@ This skill synthesizes frameworks from authoritative, primary sources:
 | Patrick Campbell | SaaS pricing strategy | ProfitWell / Paddle content archive |
 | Donald Miller | StoryBrand narrative framework | "Building a StoryBrand" (2017) |
 
-Last verified: October 2026
+Scoped review: 2026-10-21. See [REVIEW.md](REVIEW.md) for the changed sections, source dates and checks. This date does not certify the entire skill.

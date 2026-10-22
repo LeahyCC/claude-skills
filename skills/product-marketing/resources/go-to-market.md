@@ -42,14 +42,14 @@ Expansion (more users, more usage, upgrade trigger)
 Conversion (free → paid, triggered by limit or team need)
 ```
 
-Key PLG metrics:
+Key PLG metrics (benchmarks describe their source cohorts, not universal targets):
 | Metric | Good | Great | Source |
 |---|---|---|---|
 | Free → paid conversion (freemium, self-serve) | 3-5% | 6-8% | Lenny Rachitsky and Kyle Poyar, 2023 (1,000+ products) |
 | Time to activation | < 1 day | < 1 hour | Wes Bush |
 | Net revenue retention (bottom-up SaaS) | ~100% | ~120% | Lenny Rachitsky, 2020 |
 
-Free-trial conversion depends on whether a card is required up front, so it is not one band (Lenny Rachitsky and Kyle Poyar, 2023).
+The 2023 conversion study measures new accounts that start paying within six months, at account level, primarily in B2B SaaS. Its self-serve freemium bands are not first-day conversion targets. Free-trial results depend on trial/card and sales-assist setup; compare like cohorts. See [the original study](https://www.lennysnewsletter.com/p/what-is-a-good-free-to-paid-conversion).
 
 ### PLG Anti-Patterns
 

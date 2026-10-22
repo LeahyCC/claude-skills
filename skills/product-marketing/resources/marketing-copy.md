@@ -14,7 +14,7 @@ Best for: short-form, pain-driven products, ads, email subject lines.
 Problem:  Your AI-generated code isn't accessible.
 Agitate:  Every inaccessible component is a potential lawsuit, a lost
           enterprise deal, and a user who can't use your product.
-Solution: claude-skills covers all 55 WCAG 2.2 AA criteria with
+Solution: claude-skills covers all 55 WCAG 2.2 Level A and AA criteria with
           production React code. Install in one command.
 ```
 
@@ -71,7 +71,7 @@ CTA: "Learn more"
 PASS — clear and specific:
 ```
 Headline: "Ship accessible products without accessibility experts"
-Subheadline: "All 55 WCAG 2.2 AA criteria. Production React code.
+Subheadline: "All 55 WCAG 2.2 Level A and AA criteria. Production React code.
 One-command install for Claude Code."
 CTA: "Install the skill"
 Secondary CTA: "See the coverage" (transitional — for those not ready to commit)
@@ -139,7 +139,7 @@ CTA: [Verb] + [object] (specific action, not "Learn more")
 | Rule | Why | FAIL → PASS |
 |---|---|---|
 | **Headline = benefit, not feature** | People care about outcomes | "AI-powered analysis" → "Find accessibility issues before your users do" |
-| **Specific > vague** | Specificity builds trust | "Comprehensive coverage" → "All 55 WCAG 2.2 AA criteria" |
+| **Specific > vague** | Specificity builds trust | "Comprehensive coverage" → "All 55 WCAG 2.2 Level A and AA criteria" |
 | **One CTA per section** | Multiple choices = no choice | "Sign up / Book demo / Read docs / Contact us" → "Install the skill" |
 | **Address objections near CTA** | Reduce friction at decision point | CTA alone → CTA + "Free forever. No credit card." |
 | **Use customer language** | If they call it "a11y audit", don't say "accessibility assessment" | Pull exact phrases from interview transcripts |
@@ -294,7 +294,7 @@ The 3 criteria most teams miss:
 2. Dragging Movements (2.5.7) — drag-only reorder with no keyboard alternative
 3. Accessible Auth (3.3.8) — blocking paste in password fields
 
-We built a skill that covers all 55 WCAG 2.2 AA criteria.
+We built a skill that covers all 55 WCAG 2.2 Level A and AA criteria.
 
 [optional link for those who want more]"
 ```
