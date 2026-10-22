@@ -257,7 +257,7 @@ async function getClientIp(): Promise<string> {
 export async function login(email: string, password: string) {
   const ip = await getClientIp()
 
-  const user = await db.select().from(users).where(eq(users.email, email))
+  const [user] = await db.select().from(users).where(eq(users.email, email))
   if (!user || !await verifyPassword(password, user.passwordHash)) {
     securityLog('auth.login.failed', {
       ip,
@@ -293,7 +293,7 @@ export async function deleteProject(projectId: string) {
     throw new Error('Unauthorized')
   }
 
-  const project = await db.select().from(projects)
+  const [project] = await db.select().from(projects)
     .where(and(eq(projects.id, projectId), eq(projects.ownerId, user.id)))
 
   if (!project) {
@@ -383,3 +383,5 @@ grep -rn "console.log\|console.error" --include="*.ts" | grep -i "password\|toke
 - [OWASP A01:2025 — Broken Access Control](https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/)
 - [OWASP A09:2025 — Security Logging and Alerting Failures](https://owasp.org/Top10/2025/A09_2025-Security_Logging_and_Alerting_Failures/)
 - [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)
+
+Review note (2026-10-21): login and deleteProject select-result handling checked against [Drizzle select result examples](https://orm.drizzle.team/docs/select#partial-select). A select returns an array; destructuring its first row makes an empty result undefined. This check does not verify the whole logging resource.
