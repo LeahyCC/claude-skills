@@ -17,7 +17,7 @@ Choose the right notification component based on urgency, persistence, and conte
 
 | Type | Never use for |
 |------|--------------|
-| **Toast** | Errors (auto-dismisses before user can read), critical info, complex messages |
+| **Toast** | Errors the user must act on, critical info, complex messages |
 | **Banner** | Success confirmations (too prominent), single-field errors (too far from context) |
 | **Inline** | System-wide issues (too localized), success for unrelated actions |
 | **Modal** | Routine confirmations, non-blocking info, success messages |
@@ -51,11 +51,11 @@ Choose the right notification component based on urgency, persistence, and conte
 | Deleted | "Project deleted" | "The project has been successfully removed" |
 | Updated | "Settings updated" | "Your settings have been updated" |
 
-**Rule**: Success toasts should be 2-4 words. Name what happened. No exclamation marks.
+**Rule**: Success toasts are about 3 words. Name what happened. No exclamation marks. Polaris keeps them to 3 words, in the shape noun + verb ("Product updated").
 
 ### Error Messages
 
-**Tone**: Specific, helpful. Always include a next step. Never use toast for errors — they auto-dismiss before users can process them.
+**Tone**: Specific, helpful. Always include a next step. An error the user must act on stays on the page. A 3-word status ("You're offline") can be a toast.
 
 ```tsx
 // FAIL — toast disappears before user can act
@@ -189,7 +189,8 @@ The best notifications include a direct action that resolves the situation:
 | Success confirmation | Yes | 3-5 seconds | User already saw the result in UI |
 | Undo opportunity | Yes | 5-8 seconds | Enough time to undo, not so long it clutters |
 | Non-critical info | Yes | 5-8 seconds | Optional reading |
-| Error | Never | — | User needs time to read and act |
+| Error the user must act on | Never | — | User needs time to read and act |
+| Short status ("You're offline") | Yes | 3-5 seconds | Nothing to do. Keep it to about 3 words. |
 | Warning | Never | — | Condition persists until resolved |
 | Action required | Never | — | User must take action |
 
@@ -256,15 +257,15 @@ When requesting system permissions (notifications, location, camera):
 
 1. Choose a toast library (Sonner is common with shadcn)
 2. Define auto-dismiss duration per severity (success: 3-5s, undo: 5-8s)
-3. Write success toast templates as 2-4 word confirmations
-4. Use Alert (not toast) for all error notifications
+3. Write success toast templates at about 3 words
+4. Use Alert for errors the user must act on. A 3-word status can be a toast.
 5. Add actions to notifications where possible
 6. Implement pause-on-hover for auto-dismissing notifications
 
 ## Mature Codebase Checklist
 
 ```bash
-# Find errors shown as toasts (should be persistent Alerts instead)
+# Find error toasts. An error the user must act on should be a persistent Alert. A 3-word status can stay a toast.
 grep -rn 'toast.*error\|toast.*fail\|toast.*destructive' src/ --include="*.tsx" -i
 
 # Find generic notification text

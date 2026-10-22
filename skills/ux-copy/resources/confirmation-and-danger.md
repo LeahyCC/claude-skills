@@ -113,7 +113,7 @@ Examples: archiving, moving to trash, removing from a list (not deleting), dismi
 </Toast>
 ```
 
-**Why undo beats confirmation**: Undo is zero-friction for the 99% of cases where the action was intentional. Confirmation dialogs add friction to every single action.
+**Why undo beats confirmation**: Undo stays out of the way when the action was intentional. A confirmation dialog adds friction every time.
 
 ### Tier 2: Medium Severity (Hard to Reverse)
 

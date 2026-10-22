@@ -51,8 +51,8 @@ grep -rn '"[Uu]ser\|"[Mm]ember\|"[Aa]ccount' src/ --include="*.tsx" | sort
 # Generic buttons
 grep -rn '>[Ss]ubmit<\|>[Oo][Kk]<\|>[Yy]es<\|>[Nn]o<\|>[Cc]lick [Hh]ere' src/ --include="*.tsx"
 
-# Generic errors
-grep -rn '"[Ii]nvalid\|"[Ee]rror"\|"[Ff]ailed"\|"Something went wrong"\|"An error occurred"' src/ --include="*.tsx"
+# Vague errors. "Save failed" is fine if it names what happened. "Error" alone is not.
+grep -rn '"[Ii]nvalid\|"[Ii]llegal\|"[Ii]ncorrect\|"Something went wrong"\|"An error occurred"\|"Error!"' src/ --include="*.tsx"
 
 # Generic empty states
 grep -rn '"No data"\|"No results"\|"Nothing here"\|"Empty"' src/ --include="*.tsx"
@@ -116,7 +116,7 @@ Fix by category, not by file. This ensures consistency across the fix.
 **Round 1 — Error messages** (highest user impact)
 1. Search for all error display patterns (`text-destructive`, `variant="destructive"`, `role="alert"`)
 2. For each, check: Does it say what happened? Does it say what to do?
-3. Replace banned words ("invalid", "error", "failed") with specific descriptions
+3. Replace "invalid", "illegal", and "incorrect" with a specific description. "Save failed" can stay when it names what happened.
 4. Add `aria-invalid` and `aria-describedby` where missing
 
 **Round 2 — Empty states** (users think the app is broken)

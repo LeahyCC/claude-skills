@@ -65,7 +65,7 @@ Different error types need different copy approaches:
 | Password | "Password too short" | "Choose a password with at least 8 characters" |
 | Phone | "Invalid phone number" | "Phone number must be 10 digits" |
 | URL | "Invalid URL" | "Enter a full URL starting with https://" |
-| Required field | "This field is required" | "Enter your [field name] to continue" or "Add a [field name]" |
+| Required field | "This field is required" | "Store name is required" or "Enter a store name" |
 | Number range | "Value out of range" | "Enter a number between 1 and 100" |
 | Date | "Invalid date" | "Enter a date in MM/DD/YYYY format" |
 | File upload | "Invalid file type" | "Upload a PNG, JPG, or SVG file (max 5 MB)" |
@@ -73,7 +73,7 @@ Different error types need different copy approaches:
 
 ### 2. System Errors (application/server failures)
 
-**Placement**: Toast, banner, or modal depending on severity.
+**Placement**: Banner, inline alert, or modal when the user has to act. A 3-word status can be a toast.
 **Tone**: Honest, calm. Acknowledge the failure.
 **Structure**: What happened + what to try + optional explanation.
 
@@ -165,8 +165,8 @@ When a form has multiple errors, tell the user how many and list them:
   <AlertDescription>There are errors on this page.</AlertDescription>
 </Alert>
 
-// PASS — specific count with actionable list
-<Alert variant="destructive">
+// PASS — one summary. role="alert" goes here, not on each field.
+<Alert variant="destructive" role="alert">
   <AlertTitle>Fix 2 issues to continue</AlertTitle>
   <AlertDescription>
     <ul className="list-disc pl-4">
@@ -188,11 +188,11 @@ Source: Shopify Polaris ("To save this product, make 2 changes: [list]")
 | Incorrect | Blaming | Describe the correct format |
 | Wrong | Blaming | Describe what to do instead |
 | Bad | Vague, judgmental | Describe the specific problem |
-| Failed | Robotic | Describe what didn't happen |
-| Error | Generic, adds nothing | Describe the actual problem |
 | Forbidden | Alarming | "You don't have access" + who to contact |
 | Unauthorized | Technical jargon | "Log in to continue" or "You don't have permission" |
 | Oops / Uh-oh | Trivializes frustration | Skip interjections entirely |
+
+"Error" or "Failed" on its own is vague. "Save failed" is fine when it names what happened.
 
 Source: NN/g ("avoid 'invalid', 'illegal', 'incorrect'"), Apple HIG ("interjections like 'oops!' are typically unnecessary and can sound insincere"), Shopify Polaris
 
@@ -210,7 +210,7 @@ What stays the same across all voices:
 - Always includes recovery path
 - Never blames the user
 - Never uses banned words
-- Never uses humor
+- No jokes on errors people can hit again. A full outage is the exception NN/g allows.
 
 ## Error Message Anatomy (Component Structure)
 
@@ -244,7 +244,7 @@ What stays the same across all voices:
 Key accessibility requirements:
 - Use `aria-invalid="true"` on the field
 - Use `aria-describedby` to connect the field to its error message
-- Use `role="alert"` on dynamically appearing error containers
+- Put `role="alert"` on one error summary, not on each field message. Both on the same text gets read twice.
 - Never rely on color alone — include an icon or prefix text
 
 ## Greenfield Checklist
@@ -259,7 +259,7 @@ Key accessibility requirements:
 
 ```bash
 # Find banned words in error messages
-grep -rn '"[Ii]nvalid\|"[Ii]llegal\|"[Ii]ncorrect\|"[Ee]rror"\|"[Ff]ailed\|"[Oo]ops\|"[Uu]h.oh' src/ --include="*.tsx"
+grep -rn '"[Ii]nvalid\|"[Ii]llegal\|"[Ii]ncorrect\|"[Oo]ops\|"[Uu]h.oh' src/ --include="*.tsx"
 
 # Find vague error messages
 grep -rn '"Something went wrong"\|"An error occurred"\|"Error!"\|"Please try again"' src/ --include="*.tsx"
