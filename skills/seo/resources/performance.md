@@ -10,54 +10,33 @@ Core Web Vitals are used by Google's ranking systems. Scores are judged at the 7
 | **INP** (Interaction to Next Paint) | <= 200ms | 200ms - 500ms | > 500ms |
 | **CLS** (Cumulative Layout Shift) | <= 0.1 | 0.1 - 0.25 | > 0.25 |
 
-> **Note:** INP replaced FID as a Core Web Vital in March 2024. Any reference to FID is outdated.
+> **Note:** INP replaced FID as a Core Web Vital in March 2024. Use INP for current Core Web Vitals assessment; historical FID measurements remain historical data.
 
 ## LCP Fixes (Most Common SEO Issue)
 
 ### Hero Images
 
+Next.js 16 deprecates priority in favor of preload. Do not prescribe either for every hero: inspect the installed version and actual LCP/discovery timing. For an image already in markup, eager loading/high fetch priority may suffice; avoid preloading several viewport-specific candidates or combining preload with loading/fetchPriority.
+
 ```tsx
 import Image from 'next/image'
 
-// LCP image MUST have priority prop (disables lazy loading, preloads)
-<Image
-  src="/hero.jpg"
-  alt="Featured vehicle"
-  width={1200}
-  height={630}
-  priority           // Critical for LCP
-/>
-```
-
-### Server Components for Fast Content
-
-```tsx
-// Server Component — content is in initial HTML (fast LCP)
-export default async function Page() {
-  const data = await getContent()
-  return <h1>{data.title}</h1>  // In first HTML response
-}
-
-// Client Component — content delayed by JS download + fetch (slow LCP)
-'use client'
-export default function Page() {
-  const [data, setData] = useState(null)
-  useEffect(() => { fetch('/api/content').then(...) }, [])
-  return <h1>{data?.title}</h1>  // LCP waits for JS + fetch
+export function Hero() {
+  return <Image src="/hero.jpg" alt="Featured vehicle"
+    width={1200} height={630}
+    style={{ width: '100%', maxWidth: 800, height: 'auto' }}
+    sizes="(max-width: 800px) 100vw, 800px"
+    loading="eager" fetchPriority="high" />
 }
 ```
 
-### Font Optimization
+### Server data and initial content
 
-```tsx
-// next/font eliminates font-swap delay (improves LCP + CLS)
-import { Geist } from 'next/font/google'
-const geist = Geist({ subsets: ['latin'] })
+Server reads can avoid a browser-effect fetch waterfall for initial content. Client Components can also be prerendered to HTML: the client directive alone does not establish slow LCP. Distinguish data loaded only after hydration from data already in the initial response. Retain browser fetching for live/interactive needs. Measure the response, streaming and actual LCP element.
 
-export default function RootLayout({ children }) {
-  return <html className={geist.className}><body>{children}</body></html>
-}
-```
+### Fonts
+
+next/font can reduce font-related layout shifts; it does not eliminate all swap or guarantee improved LCP. Google fonts require build-time downloads; local fonts need supplied assets. Test font display and fallback metrics rather than assuming the helper proves a performance gain.
 
 ## CLS Fixes
 
@@ -102,43 +81,37 @@ export default function RootLayout({ children }) {
 
 ## INP Fixes
 
-### Heavy Re-renders
+### Heavy re-renders versus synchronous CPU work
+
+startTransition runs its callback immediately. Calling an expensive filter inside that callback still blocks the current task; only React rendering/state priority changes. Keep the input urgent and defer the result rendering instead. This React 18+ example uses a memo boundary so unchanged deferred props can skip the slow subtree; Compiler may supply that optimization when enabled and covering the component.
 
 ```tsx
-import { useTransition } from 'react'
+'use client'
+import { memo, useDeferredValue, useState } from 'react'
 
-function Search() {
+type Item = { id: string; title: string }
+const Results = memo(function Results({ items, query }: { items: Item[]; query: string }) {
+  const matches = items.filter(item => item.title.toLowerCase().includes(query.toLowerCase()))
+  return <ul>{matches.map(item => <li key={item.id}>{item.title}</li>)}</ul>
+})
+
+export function Search({ items }: { items: Item[] }) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState(items)
-  const [isPending, startTransition] = useTransition()
-
-  function handleChange(e) {
-    setQuery(e.target.value)        // Urgent — input updates immediately
-    startTransition(() => {
-      setResults(filterItems(e.target.value))  // Deferred — doesn't block input
-    })
-  }
-
-  return (
-    <>
-      <input value={query} onChange={handleChange} />
-      <ResultsList items={results} />
-    </>
-  )
+  const deferred = useDeferredValue(query)
+  return <section>
+    <label>Search <input value={query} onChange={event => setQuery(event.target.value)} /></label>
+    <div style={{ opacity: query === deferred ? 1 : 0.7 }}>
+      <Results items={items} query={deferred} />
+    </div>
+  </section>
 }
 ```
 
-### Code Splitting
+This schedules rendering; it does not make an individual JavaScript filter interruptible. For an algorithm that still monopolizes the thread, reduce work, chunk it or use an appropriate worker. Debouncing network requests is a different concern.
 
-```tsx
-import dynamic from 'next/dynamic'
+### Code splitting
 
-// Heavy chart library loaded only when needed
-const Chart = dynamic(() => import('../components/Chart'), {
-  loading: () => <ChartSkeleton />,
-  ssr: false,
-})
-```
+Load optional heavy UI only where needed. next/dynamic defaults to supported prerendering behavior; disabling SSR is not an SEO optimization by itself. Use ssr:false only for a justified browser-only dependency in a Client Component, not from a Server Component. Confirm the installed framework's API and loading/error behavior.
 
 ## Monitoring
 
@@ -184,4 +157,6 @@ Lighthouse SEO audit checks:
 - Links have descriptive text
 - Page isn't blocked from indexing
 - Image elements have `alt` attributes
-- Document has valid structured data
+- Some SEO audit items require manual checks; Lighthouse does not certify structured-data correctness. Use Google Rich Results Test for eligible supported types, plus manual/content validation.
+
+Sources for this follow-up: [Next Image](https://nextjs.org/docs/app/api-reference/components/image), [Next components](https://nextjs.org/docs/app/getting-started/server-and-client-components), [React transitions](https://react.dev/reference/react/useTransition), [deferred rendering](https://react.dev/reference/react/useDeferredValue), [Next lazy loading](https://nextjs.org/docs/app/guides/lazy-loading). Scope/dates: [SOURCES.md](../SOURCES.md).

@@ -142,3 +142,5 @@ These are widely believed but **wrong** according to Google's official documenta
 - [ ] Canonical URLs set for pages accessible at multiple URLs
 - [ ] No `<meta name="keywords">` tag (Google ignores it)
 - [ ] OG images exist for shareable pages (social + messaging previews)
+
+Performance follow-up sources and version limits: [SOURCES.md](SOURCES.md). Read the affected resource for the task rather than treating field metrics or framework defaults as universal optimization requirements.
