@@ -4,7 +4,7 @@ React Compiler (formerly "React Forget") is a build-time tool that automatically
 
 ## Status
 
-- **Production-ready** — deployed at Meta across Facebook, Instagram, Threads, and Quest Store (100,000+ components)
+- **Stable build-time optimizer**; verify compatibility, diagnostics and rollout behavior in the target app
 - **Available for React 17-18** via `react-compiler-runtime` polyfill
 - **Native support in React 19**
 - **Next.js 16** runs `babel-plugin-react-compiler`. An SWC pass limits that plugin to files with JSX or Hooks. Set top-level `reactCompiler` (moved out of `experimental` in 16.0.0).
@@ -14,9 +14,9 @@ React Compiler (formerly "React Forget") is a build-time tool that automatically
 
 | Manual API | Compiler Equivalent | Keep Manual? |
 |-----------|-------------------|--------------|
-| `React.memo(Component)` | Auto-memoizes component output | No — remove for cleaner code |
-| `useMemo(() => value, [deps])` | Auto-memoizes values | Only for precise Effect dependency control |
-| `useCallback(fn, [deps])` | Auto-memoizes functions | Only for very specific escape hatches |
+| `React.memo(Component)` | Auto-memoizes component output | Keep existing uses during adoption; remove only after behavior/performance checks |
+| `useMemo(() => value, [deps])` | Auto-memoizes values | Can remain; inspect dependency/identity contracts before changing |
+| `useCallback(fn, [deps])` | Auto-memoizes functions | Can remain; measure need and preserve external identity contracts |
 | Inline `() => {}` props | Auto-stabilized | No — write naturally |
 | Inline `{{ style }}` props | Auto-stabilized | No — write naturally |
 
@@ -148,13 +148,10 @@ function LegacyComponent() {
 2. **Enable compiler on a single route/page** to verify behavior
 3. **Roll out incrementally** — the compiler is designed for gradual adoption
 4. **Existing memo/useMemo/useCallback can stay** — removing them may subtly change behavior, so do it gradually
-5. **For new code, write naturally** — no manual memoization needed
+5. **For compiled new code, start without routine manual memoization**. Add it only for an observed need; verify compilation coverage and behavior.
 
-## Impact
+## Verify adoption
 
-At Meta:
-- Only 8% of PRs used manual memoization
-- Those PRs took **31-46% longer** to author
-- The compiler caught subtle bugs that manual memoization missed (e.g., inline arrow functions in event handlers)
+Check compilation coverage/diagnostics, behavior and production performance for the changed paths before expanding rollout. Compiler does not remove the need to profile, fix expensive algorithms or manage external subscription identity. Avoid unsourced percentage claims about authoring speed or component coverage as a reason to enable it in every project.
 
-**Bottom line:** If you can enable React Compiler, do so. It handles memoization more precisely and consistently than humans. Manual memo/useMemo/useCallback should become escape hatches, not default patterns.
+Sources: [React Compiler introduction](https://react.dev/learn/react-compiler/introduction), [incremental adoption](https://react.dev/learn/react-compiler/incremental-adoption). Setup sections retain the earlier targeted pass; current scoped check is recorded in [SOURCES.md](../SOURCES.md).

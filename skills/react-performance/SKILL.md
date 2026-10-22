@@ -42,12 +42,14 @@ Comprehensive React performance guidance covering measurement, rendering optimiz
               ↓
 [Fix — Least Invasive First]
     ├── 1. Restructure components (children pattern, local state)
-    ├── 2. Enable React Compiler (auto-memoization)
+    ├── 2. Consider incremental Compiler adoption if supported and justified
     ├── 3. Use concurrent features (transitions, deferred values)
     ├── 4. Move work to Server Components
     ├── 5. Code split heavy dependencies
     └── 6. Manual memo/useMemo/useCallback (last resort)
 ```
+
+Before prescribing an API, inspect the app's installed React/Next versions, bundler and Compiler configuration. Preserve the project's supported setup; an optimization task is not automatic authorization to enable a compiler or change frameworks. Source checks are scoped in [SOURCES.md](SOURCES.md).
 
 ## Quick Reference
 
@@ -68,7 +70,7 @@ Comprehensive React performance guidance covering measurement, rendering optimiz
 
 | Symptom | Likely Cause | Fix | Resource |
 |---------|-------------|-----|----------|
-| LCP > 2.5s, large image | Unoptimized hero image | `next/image` with `priority` | assets |
+| LCP > 2.5s, large image | Unoptimized hero image | Measure image discovery/size; choose version-supported loading hints | assets |
 | LCP > 2.5s, text content | Render-blocking JS | Server Components, code split | server-components, bundle |
 | LCP > 2.5s, font flash | Font loading delay | `next/font` | assets |
 | TTFB > 800ms | Slow data fetching | Parallel fetches, streaming | server-components |
@@ -95,35 +97,11 @@ Comprehensive React performance guidance covering measurement, rendering optimiz
 
 ### "Should I use memo/useMemo/useCallback?"
 
-```
-Is React Compiler enabled?
-├── YES → Don't add manual memoization. Compiler handles it.
-└── NO
-    ├── Have you measured with Profiler?
-    │   ├── NO → Measure first. The problem might not be re-renders.
-    │   └── YES, renders are noticeably slow (Profiler, production build)
-    │       ├── Can you restructure? (children pattern, local state)
-    │       │   ├── YES → Do that instead. No memo needed.
-    │       │   └── NO → Use memo/useMemo/useCallback.
-    │       └── Is the child already wrapped in memo()?
-    │           ├── NO → Wrapping parent's callback in useCallback alone does nothing.
-    │           └── YES → useCallback/useMemo will help.
-    └── Can you enable React Compiler?
-        ├── YES → Enable it. Remove manual memoization later.
-        └── NO → Use memo/useMemo/useCallback where Profiler shows benefit.
-```
+Inspect whether the affected component is actually compiled. Prefer measuring and fixing state placement or repeated work first. Existing memo/useMemo/useCallback can remain; do not remove them in bulk when enabling Compiler. If the compiler covers new code, manual memoization is often unnecessary, but it can still be useful for a measured case or an external identity contract. A stable callback can matter to an Effect or subscription even when a child is not wrapped in memo.
 
-## The Optimization Hierarchy
+## Choose a proportional fix
 
-The React team's official priority order:
-
-1. **Write correct code first** — fix bugs, don't mask them with memoization
-2. **Structure components well** — local state, children pattern, avoid unnecessary Effects
-3. **Measure before optimizing** — use Profiler, console.time, CPU throttling in production builds
-4. **Adopt React Compiler** — handles memo/useMemo/useCallback automatically
-5. **Use concurrent features** (useTransition, useDeferredValue, Suspense) for responsiveness
-6. **Use Server Components** to eliminate client bundle weight and fetch waterfalls
-7. **Manual memo/useMemo/useCallback** only as escape hatches when the compiler is insufficient
+Keep code correct, identify the measured bottleneck, and choose the smallest effective change: component structure, memoization, deferred rendering, bundle splitting or server work where the framework supports it. Compiler adoption is a separate, incremental project choice with behavior/performance checks, not an official universal ordering of optimizations. Transitions schedule rendering; they do not split an expensive synchronous function into yielding work.
 
 ## Anti-Patterns Checklist
 
