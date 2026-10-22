@@ -45,7 +45,7 @@ Every existing SEO skill tells you what's wrong. This one generates the code to 
 - [Web Vitals Specification](https://web.dev/articles/vitals)
 - [llmstxt.org](https://llmstxt.org/)
 
-Last verified: October 2026
+Earlier targeted review: October 2026. [Scoped performance follow-up](SOURCES.md) checked 2026-10-21; other sections are not newly certified by that date.
 
 ## License
 
