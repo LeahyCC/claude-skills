@@ -45,6 +45,7 @@ Each skill has its own page: install, what it covers, and the source it was chec
 | --- | --- |
 | [wcag-accessibility](./skills/wcag-accessibility/) | WCAG 2.2 Level AA, with React, Next.js, and Tailwind examples |
 | [react-performance](./skills/react-performance/) | Measure before you optimize. Profiling, rendering, bundles, Web Vitals, React Compiler |
+| [spa-performance](./skills/spa-performance/) | Main thread, frame time, and memory. Measure, draw less, workers, hosted editors, typing, grids, streams, audio |
 | [seo](./skills/seo/) | Search and AI-search setup for Next.js: metadata, sitemaps, JSON-LD, llms.txt |
 | [ux-copy](./skills/ux-copy/) | UI text: buttons, errors, empty states, confirmations, tone |
 | [api-security](./skills/api-security/) | OWASP API Top 10 (2023) and Web Top 10 (2021) for Next.js APIs |

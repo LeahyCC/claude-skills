@@ -15,6 +15,17 @@
       "install": "npx skills add LeahyCC/claude-skills@wcag-accessibility"
     },
     {
+      "name": "spa-performance",
+      "display_name": "SPA Performance",
+      "description": "Main thread, frame time, and memory for SPAs. Measure, draw less, workers, OffscreenCanvas, hosted editors, typing, grids, streams, and audio.",
+      "version": "0.2.0",
+      "categories": ["performance", "web-development"],
+      "resource_files": 8,
+      "dependencies": "none",
+      "verified_against": "web.dev INP and long tasks, Chrome Long Animation Frames, MDN Scheduler and content-visibility, tldraw performance docs. Scoped in skills/spa-performance/SOURCES.md (checked 2026-10-22).",
+      "install": "npx skills add LeahyCC/claude-skills@spa-performance"
+    },
+    {
       "name": "react-performance",
       "display_name": "React Performance",
       "description": "Measurement-first React performance optimization — profiling, Core Web Vitals, rendering, bundle size, React Compiler, Server Components, virtualization",
