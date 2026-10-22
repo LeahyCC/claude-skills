@@ -48,7 +48,7 @@ Most React performance skills say "use React.memo everywhere."
 - [Web Vitals specification](https://web.dev/articles/vitals)
 - [Next.js optimization docs](https://nextjs.org/docs/app/building-your-application/optimizing)
 
-Last verified: October 2026
+Earlier targeted review: October 2026. [Scoped follow-up sources and checks](SOURCES.md) were checked on 2026-10-21; this is not blanket verification of all resources.
 
 ## License
 

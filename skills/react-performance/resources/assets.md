@@ -1,251 +1,77 @@
-# Asset Optimization
+# Asset optimization
 
-## Images — next/image
+Start with measured LCP, layout shifts and downloaded bytes. Inspect the installed Next version and router before applying framework helpers. Native images/media and custom loaders can be valid; do not convert assets solely to satisfy a checklist.
 
-### Why next/image?
+## Images
 
-| Feature | Raw `<img>` | `next/image` |
-|---------|------------|--------------|
-| Format optimization | Manual | Auto WebP/AVIF |
-| Responsive sizes | Manual srcset | Auto `sizes` |
-| Lazy loading | Manual | Default (except `priority`) |
-| CLS prevention | Must set dimensions | Auto from import or required props |
-| Blur placeholder | Must build manually | `placeholder="blur"` |
+Reserve image space with width/height or a positioned, sized parent for fill. Static imports infer dimensions and can provide a blur placeholder for supported formats. Supply meaningful alt text, or empty alt for decoration. For responsive images, sizes must match actual rendered width; it is not automatically inferred from CSS.
 
-### LCP Images (Hero, Banner)
+Next.js 16 deprecates priority in favor of preload. On older supported versions use their documented prop. A hero visible in the initial markup may need only eager loading/high fetch priority; preload is a deliberate optimization, not a requirement for every LCP candidate. Do not combine preload with loading/fetchPriority. Keep below-fold items lazy; array index zero does not establish which image is LCP.
 
 ```tsx
+// Next.js 16; the app supplies public/hero.jpg
 import Image from 'next/image'
-import heroImg from './hero.png'  // Static import = auto dimensions + blur
 
-<Image
-  src={heroImg}
-  alt="Featured vehicle"
-  priority              // Disables lazy loading, preloads
-  placeholder="blur"    // Blur-up from static import
-  sizes="100vw"         // Full-width image
-/>
-```
-
-### Responsive Images
-
-```tsx
-// Responsive with breakpoint-aware sizes
-<Image
-  src="/listing.jpg"
-  alt="Vehicle photo"
-  width={800}
-  height={600}
-  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-/>
-```
-
-### Fill Mode (Dynamic Containers)
-
-```tsx
-// Parent must have position: relative and defined dimensions
-<div className="relative aspect-video w-full overflow-hidden rounded-lg">
-  <Image
-    src={listing.imageUrl}
-    alt={listing.title}
-    fill
-    className="object-cover"
-    sizes="(max-width: 768px) 100vw, 50vw"
-  />
-</div>
-```
-
-### Remote Images Configuration
-
-```ts
-// next.config.ts
-export default {
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.example.com',  // Wildcard subdomain
-      },
-    ],
-  },
+export function Hero() {
+  return <Image src="/hero.jpg" alt="Fleet parked at a depot"
+    width={1600} height={900}
+    sizes="(max-width: 800px) 100vw, 800px"
+    style={{ width: '100%', maxWidth: 800, height: 'auto' }}
+    loading="eager" fetchPriority="high" />
 }
 ```
 
-### Gallery/List Images
+For remote images, restrict protocol/host/path/query to trusted sources rather than copying wildcard domains. Review the installed version's quality/cache defaults before overriding. Test actual srcset, rendered width and LCP at representative viewports.
+
+## Fonts
+
+next/font can self-host Google or local fonts and reduce layout shifts. Google fonts are downloaded during the build, so restricted/offline builds need supplied local assets or an appropriate build path. It does not guarantee zero CLS or eliminate all font swap. Choose subsets, weights and preload based on usage; variable fonts are not always the smallest choice for a single weight.
 
 ```tsx
-// Lazy loaded by default — good for below-fold content
-{listings.map((listing, i) => (
-  <Image
-    key={listing.id}
-    src={listing.imageUrl}
-    alt={listing.title}
-    width={400}
-    height={300}
-    // Only mark the first visible image as priority
-    priority={i === 0}
-    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-  />
-))}
-```
+// app/layout.tsx; needs build-time Google Fonts access
+import { Geist } from 'next/font/google'
+import type { ReactNode } from 'react'
 
-## Fonts — next/font
-
-### Why next/font?
-
-- **Self-hosts** all fonts — zero external requests
-- **Eliminates CLS** from font swap via CSS `size-adjust`
-- **Preloads** font files automatically
-- Use **variable fonts** for smallest file size
-
-### Google Fonts
-
-```tsx
-// app/layout.tsx
-import { Geist, Geist_Mono } from 'next/font/google'
-
-const geistSans = Geist({
-  subsets: ['latin'],
-  variable: '--font-geist-sans',
-})
-
-const geistMono = Geist_Mono({
-  subsets: ['latin'],
-  variable: '--font-geist-mono',
-})
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
-    </html>
-  )
+const font = Geist({ subsets: ['latin'], display: 'swap' })
+export default function Layout({ children }: { children: ReactNode }) {
+  return <html lang="en"><body className={font.className}>{children}</body></html>
 }
 ```
 
-```css
-/* globals.css */
-body {
-  font-family: var(--font-geist-sans);
-}
+For local licensed fonts, supply the files to next/font/local. If using a CSS variable instead of className, apply it in font-family; defining a variable alone does not select a font.
 
-code, pre {
-  font-family: var(--font-geist-mono);
-}
-```
+## Third-party scripts
 
-### Local Fonts
+Use afterInteractive for scripts needed after some hydration, and lazyOnload for low-priority scripts. beforeInteractive is for genuinely early site-wide needs and belongs in the App root layout (Pages uses its supported document integration). Prefer an owned/audited URL; a sample third-party CDN is not a deployment recommendation.
 
 ```tsx
-import localFont from 'next/font/local'
-
-const customFont = localFont({
-  src: [
-    { path: './fonts/CustomFont-Regular.woff2', weight: '400', style: 'normal' },
-    { path: './fonts/CustomFont-Bold.woff2', weight: '700', style: 'normal' },
-  ],
-  variable: '--font-custom',
-})
-```
-
-### Font Optimization Checklist
-
-- [ ] Use `next/font` (not `<link>` to Google Fonts CDN)
-- [ ] Use variable fonts when available (one file for all weights)
-- [ ] Only load the `subsets` you need (`latin`, not `latin-ext` unless needed)
-- [ ] Apply font via CSS variable for flexibility
-- [ ] Use `font-display: swap` (next/font does this by default)
-
-## Third-Party Scripts
-
-```tsx
+// Example integration; the app must supply the local script.
 import Script from 'next/script'
-
-// Analytics — load after page is interactive
-<Script
-  src="https://www.googletagmanager.com/gtag/js?id=G-XXXXX"
-  strategy="afterInteractive"
-/>
-
-// Non-critical — load when browser is idle
-<Script
-  src="https://connect.facebook.net/en_US/sdk.js"
-  strategy="lazyOnload"
-/>
-
-// Critical — load before page is interactive (rare)
-<Script
-  src="https://polyfill.io/v3/polyfill.min.js"
-  strategy="beforeInteractive"
-/>
+export function SupportWidget() {
+  return <Script src="/scripts/support-widget.js" strategy="lazyOnload" />
+}
 ```
 
-### Loading Priority
-
-| Strategy | When | Use For |
-|----------|------|---------|
-| `beforeInteractive` | Before hydration | Polyfills, critical feature detection |
-| `afterInteractive` | After hydration (default) | Analytics, tag managers |
-| `lazyOnload` | During idle time | Social widgets, chat widgets |
-| `worker` | In Web Worker (experimental) | Heavy analytics, non-DOM scripts |
+The worker strategy is experimental, requires its flag and is currently Pages Router only; it does not support App Router. Event callbacks such as onLoad/onReady need Client Components and have strategy restrictions. Measure execution cost, not just download timing.
 
 ## Video
 
+Loading video after a click can reduce initial transfer. Do not call play immediately after setting state that has not mounted the video yet. This minimal component reveals native controls, leaving playback to the user; custom auto-start needs a post-mount/ref path and rejected-play handling.
+
 ```tsx
-// Lazy load video — don't autoplay heavy content
-function VideoPlayer({ src }: { src: string }) {
+'use client'
+import { useState } from 'react'
+
+export function VideoPlayer({ src }: { src: string }) {
   const [loaded, setLoaded] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  return (
-    <div className="relative aspect-video">
-      {!loaded && (
-        <button
-          onClick={() => {
-            setLoaded(true)
-            videoRef.current?.play()
-          }}
-          className="absolute inset-0 flex items-center justify-center bg-black"
-        >
-          <PlayIcon className="size-16 text-white" />
-        </button>
-      )}
-      {loaded && (
-        <video
-          ref={videoRef}
-          src={src}
-          controls
-          className="h-full w-full"
-          preload="none"  // Don't preload video data
-        />
-      )}
-    </div>
-  )
+  return loaded
+    ? <video src={src} controls preload="none" aria-label="Product demonstration" />
+    : <button onClick={() => setLoaded(true)}>Load video</button>
 }
 ```
 
-## Preloading Critical Assets
+## Preload and navigation
 
-```tsx
-// Preload LCP image in metadata
-export const metadata = {
-  other: {
-    link: [
-      {
-        rel: 'preload',
-        href: '/hero.webp',
-        as: 'image',
-        type: 'image/webp',
-      },
-    ],
-  },
-}
+metadata.other emits meta tags, not a link element. Do not put link objects there to preload an image. Use the installed Image preload prop or ReactDOM preload/preconnect APIs where supported, with a measured reason. Link prefetch optimizes route navigation, not arbitrary assets; its defaults depend on route type, production mode and current Next features.
 
-// Prefetch next page on hover
-import Link from 'next/link'
-<Link href="/listings/123" prefetch={true}>
-  View Listing
-</Link>
-// Next.js prefetches linked routes automatically on viewport entry
-// Set prefetch={false} to disable for rarely-visited links
-```
+Sources: [Image API](https://nextjs.org/docs/app/api-reference/components/image), [Font API](https://nextjs.org/docs/app/api-reference/components/font), [Script API](https://nextjs.org/docs/app/api-reference/components/script), [Metadata resource hints](https://nextjs.org/docs/app/api-reference/functions/generate-metadata#resource-hints). Scoped dates: [SOURCES.md](../SOURCES.md).
