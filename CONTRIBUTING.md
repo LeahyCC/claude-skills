@@ -9,10 +9,10 @@ Before submitting a skill, it must meet ALL of these criteria:
 - [ ] **Cites an official specification or authoritative source** — not blog posts or opinions
 - [ ] **Complete coverage** of the domain (no "covers the basics" — cover everything or scope explicitly)
 - [ ] **Production code examples** — real React/Next.js/Tailwind/Node.js patterns, not toy snippets
-- [ ] **Zero runtime dependencies** — pure markdown, works in any Claude Code environment
-- [ ] **Auto-trigger patterns** in SKILL.md frontmatter (`filePattern` and/or `bashPattern`)
+- [ ] **Zero installed dependencies.** Markdown, plus optional scripts in `scripts/` that use only Node built-ins.
+- [ ] **A description that triggers.** The SKILL.md `description` says what the skill does, then when to use it, in under 1024 characters. It is the only field Claude reads to decide whether to load the skill.
 - [ ] **Verified numbers** — every count in the README matches actual content (we check)
-- [ ] **Tested** — install path verified with `npx skills add`
+- [ ] **Tested.** `npx skills add` installs it, `claude plugin validate .` passes, and its test prompts are written in `reviews/<skill>/tasks.md`.
 
 ## How to Propose a New Skill
 
@@ -34,6 +34,7 @@ skills/
     resources/            # Optional — deep-dive sub-topics
       topic-a.md
       topic-b.md
+    scripts/              # Optional. Node built-ins only, run by Claude for exact work such as layout maths.
 ```
 
 ### SKILL.md Frontmatter
@@ -41,15 +42,13 @@ skills/
 ```yaml
 ---
 name: your-skill-name
-description: One-line description used for search and auto-activation matching
-metadata:
-  filePattern:
-    - "src/components/**/*.tsx"    # Glob patterns that auto-trigger this skill
-  bashPattern:
-    - "some-cli-tool"              # Bash commands that auto-trigger this skill
-  priority: 50                     # 0-100, higher = injected first when multiple match
+description: >
+  Does X and Y for Z. Use when the code or request involves A, B, or C.
+  Not for D (see other-skill).
 ---
 ```
+
+New skills use only `name` and `description`. Claude Code and the skills CLI do not act on keys under `metadata`, so file and command trigger patterns there do not trigger anything. Older skills keep theirs as custom data.
 
 ### Writing Guidelines
 
@@ -57,7 +56,8 @@ metadata:
 - **Use real component code**, not pseudocode — show exact `className`, exact props, exact patterns
 - **Include FAIL and PASS examples side by side** — the contrast teaches faster than explanation
 - **Link to official spec** for every section — let users verify your claims
-- **Keep resource files focused** — one concern per file, 200-400 lines each
+- **Keep resource files focused.** One concern per file. Give any file over 100 lines a contents list under its title.
+- **Keep dates in SOURCES.md.** Resources state facts. When each fact was checked lives in the skill's SOURCES.md.
 
 ## Submitting a PR
 
@@ -65,9 +65,10 @@ metadata:
 2. Create a feature branch: `git checkout -b skill/your-skill-name`
 3. Add your skill under `skills/your-skill-name/`
 4. Update the root `README.md` skills catalog table
-5. Update `.claude-plugin/plugin.json` and `marketplace.json`
+5. Add an entry to `.claude-plugin/marketplace.json` with `"source": "./skills/your-skill-name"`, then run `claude plugin validate .`
 6. Verify: `npx skills add LeahyCC/claude-skills@your-skill-name` works
-7. Open a PR with:
+7. Write the skill's test prompts in `reviews/your-skill-name/tasks.md`
+8. Open a PR with:
    - Skill name and description
    - What spec/source it's verified against
    - Coverage summary (X of Y criteria/rules)
