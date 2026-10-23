@@ -734,5 +734,422 @@
   "pass": "selection-2 (description wording test, not kept)",
   "model": "claude-opus-5-5",
   "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T1-with",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/gpu.ts"
+  ],
+  "cost": 0.0607284,
+  "output": "**Cause:** the uniform buffer's usage flags are invalid, at `src/gpu.ts:22`:\n\n```ts\nusage: GPUBufferUsage.UNIFORM | GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,\n```\n\n`MAP_READ` can only be combined with `COPY_DST`. Adding `UNIFORM` makes `createBuffer` fail validation. It doesn't throw. It returns an invalid buffer and reports the error asynchronously. The failure then spreads:\n\n1. `createBindGroup` uses the invalid buffer, so the bind group is invalid.\n2. `pass.setBindGroup` records an invalid bind group, so the command buffer is invalid.\n3. `queue.submit` drops the work, so nothing is drawn.\n4. The canvas stays black, and nothing is ever thrown.\n\n**Fix:** remove `MAP_READ`. You don't need it, because you write the buffer with `writeBuffer`. That only needs `COPY_DST`.\n\n```ts\nconst uniforms = device.createBuffer({\n  label: 'triangle color uniforms',\n  size: 16,\n  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,\n})\n```\n\nIf you later want to read the buffer back, copy it into a separate `MAP_READ | COPY_DST` staging buffer instead of mapping the uniform buffer directly.\n\n**Make this visible next time:** add an error listener right after you create the device. Without one, the validation message only shows up in the console in some browsers, and it's easy to miss.\n\n```ts\ndevice.addEventListener('uncapturederror', e => console.error('WebGPU:', e.error.message))\ndevice.lost.then(info => console.error('Device lost:', info.reason, info.message))\n```\n\nThe rest of the file looks fine: the shader, the pipeline with `layout: 'auto'`, the bind group layout and the per-frame `getCurrentTexture()` are all correct. Two smaller things to tidy:\n\n- **Null checks:** `requestAdapter()` and `getContext('webgpu')` are non-null-asserted. On an unsupported browser they fail with a confusing error instead of a clear fallback.\n- **Canvas size:** I don't see `canvas.width` and `canvas.height` set to device pixels here. If that isn't done elsewhere, the output will be blurry.\n\nI haven't run this in a browser. The diagnosis comes from reading the code against the WebGPU buffer-usage rules.",
+  "seconds": 16,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T1-without",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/gpu.ts"
+  ],
+  "cost": 0.04657700000000001,
+  "output": "**Cause:** the uniform buffer has an invalid usage combination (`src/gpu.ts:22`).\n\n```ts\nusage: GPUBufferUsage.UNIFORM | GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,\n```\n\nWebGPU only allows `MAP_READ` together with `COPY_DST`. Adding `UNIFORM` makes `createBuffer` fail validation.\n\nWebGPU validation failures don't throw. They produce an invalid buffer and report the error asynchronously. The failure then spreads:\n\n- The bind group that uses the buffer is invalid.\n- The command buffer that uses the bind group is invalid, so `submit` silently drops it.\n- The canvas is never drawn to, so it stays black.\n\nThe only trace is a validation message in the devtools console. It's easy to miss, and it doesn't stop the code.\n\n**Fix:** remove `MAP_READ`.\n\n```ts\nconst uniforms = device.createBuffer({\n  size: 16,\n  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,\n})\n```\n\nYou only need `MAP_READ` if you want to read the buffer back on the CPU. For that, use a separate staging buffer with `MAP_READ | COPY_DST` and `copyBufferToBuffer` into it.\n\n**Make this kind of failure visible.** Add this right after you create the device:\n\n```ts\ndevice.addEventListener('uncapturederror', e => console.error((e as GPUUncapturedErrorEvent).error.message))\ndevice.lost.then(info => console.error('device lost:', info.message))\n```\n\nWrap a suspect section in `device.pushErrorScope('validation')` and `await device.popErrorScope()` if you want to catch the error at a specific call.\n\nI haven't run this in a browser. The rest of the file looks correct: the shader, the pipeline, the `auto` layout and the render pass. With the fix, you should see a red triangle on a black background.",
+  "seconds": 13,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T2-with",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/particles.wgsl",
+   "src/upload.ts"
+  ],
+  "cost": 0.0638236,
+  "output": "**Cause:** the struct layout in the shader doesn't match how `upload.ts` packs the data.\n\nIn WGSL, `vec3f` has 16-byte alignment and 12-byte size. For `struct P` that gives:\n\n| Field | Offset | Size |\n| --- | --- | --- |\n| `pos` | 0 | 12 |\n| `vel` | 16 (padded up from 12) | 12 |\n| struct total | | 32 (rounded to 16-byte alignment) |\n\n`upload.ts` packs tightly, as 6 floats (24 bytes) per particle, with `pos` at float 0 and `vel` at float 3. The shader therefore reads `vel` from float 4, and it steps through particles 32 bytes apart instead of 24:\n\n- **Particle 0:** `pos` is right, but `vel` is read as `(vel.y, vel.z, next particle's pos.x)`.\n- **Particle 1 onward:** everything is read from the wrong place, and the error grows with each index.\n- **Write-back:** `pos +=` writes to the wrong slots, so positions drift or look shifted.\n\nI didn't run `scripts/wgsl-layout.mjs`. The offsets above come from the WGSL alignment rules.\n\n**Fix, option A (pad on the CPU, keep the shader):**\n\n```ts\nconst FLOATS_PER_PARTICLE = 8 // 32-byte stride, matches WGSL\n\nexport function uploadParticles(device: GPUDevice, buffer: GPUBuffer, ps: { pos: number[]; vel: number[] }[]) {\n  const data = new Float32Array(ps.length * FLOATS_PER_PARTICLE)\n  ps.forEach((p, i) => {\n    data.set(p.pos, i * FLOATS_PER_PARTICLE)     // offset 0\n    data.set(p.vel, i * FLOATS_PER_PARTICLE + 4) // offset 16\n  })\n  device.queue.writeBuffer(buffer, 0, data)\n}\n\nexport function particleBufferSize(count: number) {\n  return count * FLOATS_PER_PARTICLE * 4\n}\n```\n\n**Fix, option B (make the shader match the 24-byte packing):** use scalar floats, which have 4-byte alignment.\n\n```wgsl\nstruct P {\n  pos: array<f32, 3>,\n  vel: array<f32, 3>,\n}\n```\n\nThis works, but you then have to index the components by hand. Another way is to put a `f32` after each `vec3f`, such as `pos`, `mass` and `vel`, `life`. That fills the padding with useful data, and the struct is still 32 bytes.\n\nI'd go with option A. It keeps the shader readable, and the `particleBufferSize` change keeps the buffer allocation in step with it. If you already allocate the buffer elsewhere, check that it uses `particleBufferSize` and not a hardcoded `6 * 4`.",
+  "seconds": 17,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T2-without",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/particles.wgsl",
+   "src/upload.ts"
+  ],
+  "cost": 0.048581,
+  "output": "**Cause:** the struct layout in WGSL doesn't match the packed layout you upload.\n\nIn WGSL, `vec3f` has 16-byte alignment and 12-byte size. So `struct P { pos: vec3f, vel: vec3f }` is laid out as:\n\n- `pos` at offset 0 (12 bytes, then 4 bytes of padding)\n- `vel` at offset 16 (12 bytes, then 4 bytes of padding)\n- The struct size is 32 bytes (8 floats).\n\n`src/upload.ts:2-5` packs particles tightly, as 6 floats (24 bytes) with `vel` at float index 3. That causes two problems:\n\n- The shader reads `vel` from floats 4–6, which are `vel.y`, `vel.z` and the next particle's `pos.x`. Velocities are wrong.\n- Particle `i` is read at byte `i*32`, but you wrote it at `i*24`. The mismatch grows with the index, so positions drift further off for later particles.\n\n`particleBufferSize` (`upload.ts:11`) is also too small. The shader's array stride is 32 bytes, so `arrayLength` is computed from a different stride than the one you sized the buffer for.\n\n**Fix (option A, recommended):** pad the upload to match the WGSL layout, with a stride of 8 floats.\n\n```ts\nexport function uploadParticles(device: GPUDevice, buffer: GPUBuffer, ps: { pos: number[]; vel: number[] }[]) {\n  const data = new Float32Array(ps.length * 8)\n  ps.forEach((p, i) => {\n    data.set(p.pos, i * 8)\n    data.set(p.vel, i * 8 + 4)\n  })\n  device.queue.writeBuffer(buffer, 0, data)\n}\n\nexport function particleBufferSize(count: number) {\n  return count * 8 * 4\n}\n```\n\n**Fix (option B):** keep the tight 24-byte packing and change the shader to use scalar-aligned types.\n\n```wgsl\nstruct P {\n  pos: array<f32, 3>,\n  vel: array<f32, 3>,\n}\n```\n\nThis makes the shader code clumsier, because you have to read and write the components individually. Option A is simpler. If you want to use the padding, you could also declare `pos: vec3f, _pad0: f32, vel: vec3f, _pad1: f32` to make the layout explicit.\n\nI haven't run this. I found the problem by reading the two files.",
+  "seconds": 14,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T3-with",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/GpuCanvas.tsx",
+   ".claude/skills/webgpu/resources/canvas.md",
+   ".claude/skills/webgpu/resources/errors-and-device-loss.md"
+  ],
+  "cost": 0.0936874,
+  "output": "I couldn't apply the fix because the Edit tool is disabled in this session, so `src/GpuCanvas.tsx` is unchanged. I haven't run or tested anything. Here is the change to make by hand.\n\n**Cause:** `init()` is async, and React Strict Mode runs the effect, then its cleanup, then the effect again in development. The first cleanup runs while `init()` is still waiting on `requestAdapter` or `requestDevice`. At that point `device` is still undefined, so `device?.destroy()` does nothing. The first `init()` then carries on and creates a device that nothing ever destroys. That device and the one from the second mount are the two you see. The leak is intermittent because it depends on whether cleanup lands before or after `device` is assigned.\n\n**Fix:** add a `cancelled` flag, check it after each `await`, and destroy a device that finishes creating after cleanup has run. Replace the effect body (lines 9–33) with this:\n\n```tsx\n  useEffect(() => {\n    const canvas = ref.current\n    if (!canvas || !navigator.gpu) return\n\n    // Strict Mode runs cleanup while init() is still awaiting.\n    let cancelled = false\n    let raf = 0\n    let device: GPUDevice | undefined\n\n    async function init() {\n      const adapter = await navigator.gpu.requestAdapter()\n      if (!adapter || cancelled) return\n      const d = await adapter.requestDevice()\n      // Cleanup already ran during the await, so it never saw this device.\n      if (cancelled) return d.destroy()\n      device = d\n      d.addEventListener('uncapturederror', (e) => console.error(e.error.message))\n\n      const context = canvas!.getContext('webgpu')\n      if (!context) return\n      const format = navigator.gpu.getPreferredCanvasFormat()\n      context.configure({ device: d, format })\n      const scene = await createScene(d, format)\n      if (cancelled) return\n      const frame = () => {\n        const encoder = d.createCommandEncoder()\n        scene.encode(encoder, context.getCurrentTexture())\n        d.queue.submit([encoder.finish()])\n        raf = requestAnimationFrame(frame)\n      }\n      raf = requestAnimationFrame(frame)\n    }\n    init().catch((e) => {\n      if (!cancelled) console.error(e)\n    })\n\n    return () => {\n      cancelled = true\n      cancelAnimationFrame(raf)\n      device?.destroy()\n    }\n  }, [])\n```\n\nBesides the leak fix, this version makes a few other changes:\n- It bails out when `navigator.gpu` is missing or the adapter is null, instead of crashing on `adapter!`.\n- It stops before starting the frame loop if cleanup ran during `createScene`.\n- It adds an `uncapturederror` listener.\n- It catches errors from `init()`.\n\nIf you let me use Edit again, I'll apply it.",
+  "seconds": 25,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T3-without",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/GpuCanvas.tsx"
+  ],
+  "cost": 0.0511744,
+  "output": "I couldn't apply the fix. The Edit tool is disabled in this session, and I have no other way to write files. I haven't changed `src/GpuCanvas.tsx`, and I haven't run the fix.\n\n**Cause:** React StrictMode runs effects as mount, cleanup, mount in development. `init()` is async, so the first cleanup runs before `requestDevice()` resolves. At that point `device` is still `undefined`, so `device?.destroy()` does nothing. The first `init()` carries on anyway. It creates a device, configures the canvas and starts a `requestAnimationFrame` loop that nothing can cancel. The second mount then creates another device. That's the two devices you see, and the first one is never destroyed.\n\n**Fix:** add a `cancelled` flag, check it after each `await`, and destroy a device that arrives after cleanup has already run. Replace the effect body in `src/GpuCanvas.tsx` with this:\n\n```tsx\nuseEffect(() => {\n  let raf = 0\n  let cancelled = false\n  let device: GPUDevice | undefined\n  const canvas = ref.current!\n\n  async function init() {\n    const adapter = await navigator.gpu.requestAdapter()\n    if (cancelled || !adapter) return\n    const dev = await adapter.requestDevice()\n    if (cancelled) {\n      // Cleanup already ran (e.g. StrictMode remount) before the device existed.\n      dev.destroy()\n      return\n    }\n    device = dev\n    const context = canvas.getContext('webgpu')!\n    const format = navigator.gpu.getPreferredCanvasFormat()\n    context.configure({ device: dev, format })\n    const scene = await createScene(dev, format)\n    if (cancelled) return\n    const frame = () => {\n      const encoder = dev.createCommandEncoder()\n      scene.encode(encoder, context.getCurrentTexture())\n      dev.queue.submit([encoder.finish()])\n      raf = requestAnimationFrame(frame)\n    }\n    raf = requestAnimationFrame(frame)\n  }\n  init().catch(console.error)\n\n  return () => {\n    cancelled = true\n    cancelAnimationFrame(raf)\n    device?.destroy()\n  }\n}, [])\n```\n\n- **Cancelled check after `createScene`:** if cleanup runs during that await, the frame loop never starts. Cleanup has already destroyed the device by then.\n- **Canvas captured up front:** the canvas is read once, so you don't touch `ref.current` after unmount.\n- **`.catch(console.error)`:** this stops a failed `init()` from becoming an unhandled rejection.\n\n`./scene` isn't in `src/`, so I couldn't check whether `createScene` holds resources that need their own cleanup. If you re-enable editing, I can apply the change.",
+  "seconds": 22,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T4-with",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/camera.ts",
+   "src/renderer.ts"
+  ],
+  "cost": 0.0411388,
+  "output": "The cause is in `src/camera.ts:6`. `mat4.perspective` from gl-matrix builds a WebGL-style projection that maps depth to -1..1. WebGPU clips depth to 0..1, so anything with NDC z below 0 is clipped. That cuts off roughly the nearest part of the view range. With near=0.1 and far=100, z=0 falls at a view distance of about 0.2, so anything closer than that disappears. Real scenes can lose more than that, because the visible near plane is effectively pushed outward.\n\n**Fix:** use gl-matrix's zero-to-one variant.\n\n```ts\nmat4.perspectiveZO(proj, Math.PI / 4, aspect, 0.1, 100)\n```\n\n`perspectiveZO` was added in gl-matrix 3.4. On an older version, build the matrix by hand or upgrade. The \"ported unchanged\" comment on that file points to the same cause.\n\nI haven't run this. I only read the two files, and `renderer.ts` has no other problem that would explain this symptom.\n\nOther things to check:\n- **Depth state:** the pipeline's `depth24plus` with `depthCompare: 'less'` is correct. Make sure the render pass has a matching depth attachment that clears to `1.0`. WebGL's default clear is also 1.0, but it's easy to miss in a port.\n- **Handedness:** both libraries use a right-handed view, so `lookAt` doesn't need to change.\n- **Culling:** `cullMode: 'back'` with the default `ccw` front face matches WebGL's default. If your WebGL code flipped the winding, carry that over.\n- **Shader:** if the vertex shader remaps z (for example `z * 0.5 + 0.5`) to compensate, remove it.",
+  "seconds": 14,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T4-without",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/camera.ts",
+   "src/renderer.ts"
+  ],
+  "cost": 0.029936,
+  "output": "**Cause:** `src/camera.ts` still builds a WebGL-style projection matrix, and WebGPU needs a different one.\n\n`mat4.perspective` in gl-matrix produces a projection that maps depth to the **-1..1** clip range, which is what WebGL uses. WebGPU clips depth to **0..1**. The comment on line 3 says the file was \"ported unchanged\", which is where the bug comes from.\n\nWith the WebGL matrix, anything closer than roughly `near + a small margin` ends up with negative clip-space z. WebGPU clips that away. The objects nearest the camera vanish, and the visible near plane ends up well beyond the 0.1 you asked for. The depth precision curve is also different, so far objects can look slightly off.\n\n**Fix:** use the zero-to-one variant in `src/camera.ts:6`:\n\n```ts\nmat4.perspectiveZO(proj, Math.PI / 4, aspect, 0.1, 100)\n```\n\n`perspectiveZO` exists in gl-matrix 3.4 and later. If you're on an older version, you can build the matrix by hand or remap the matrix with a clip-space correction. The correction multiplies the projection on the left by a matrix that scales z by 0.5 and adds 0.5 to it.\n\n**Other things I checked in `src/renderer.ts`:**\n- The pipeline uses `depthCompare: 'less'` with `depth24plus`. That's consistent with a 0..1 depth range, as long as your depth attachment clears to `1.0`. I can't see the render pass code here, so check that.\n- `cullMode: 'back'` uses the default `frontFace: 'ccw'`, which matches WebGL's default. If meshes look inside-out rather than missing, that's the next thing to check. It's not the cause of this bug.\n\nI haven't run anything. The diagnosis comes from reading these two files. I couldn't see the shader or where the matrix gets uploaded. If the shader also remaps z (some ports add `z = (z + w) / 2`), the fix would double-correct, so check for that.",
+  "seconds": 15,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T5-with",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/pipelines.ts",
+   ".claude/skills/webgpu/resources/pipelines.md"
+  ],
+  "cost": 0.0555046,
+  "output": "**Why it fails**\n\nBoth pipelines use `layout: 'auto'` (`src/pipelines.ts:3` and `:8`). With `'auto'`, each pipeline gets its own bind group layout objects, generated from the bindings its shader uses. A bind group is only valid with the layout it was created from.\n\nLine 13 builds `camera` from `mesh.getBindGroupLayout(0)`. That works for `mesh`. When you call `pass.setPipeline(p.outline)` and then `setBindGroup(0, p.camera)` at line 24, the bind group's layout isn't the outline pipeline's group 0 layout. The two layouts are separate objects even if the shader declares the same camera uniform. WebGPU doesn't compare them structurally, so it raises a validation error.\n\n**How to set it up**\n\nCreate one explicit bind group layout for the camera and a pipeline layout from it. Pass that pipeline layout to both pipelines, and build the bind group from the same bind group layout.\n\n```ts\nexport async function setup(device: GPUDevice, module: GPUShaderModule, format: GPUTextureFormat, cameraBuffer: GPUBuffer) {\n  const cameraLayout = device.createBindGroupLayout({\n    label: 'camera',\n    entries: [\n      { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: {} },\n    ],\n  })\n  const layout = device.createPipelineLayout({ label: 'scene', bindGroupLayouts: [cameraLayout] })\n\n  const [mesh, outline] = await Promise.all([\n    device.createRenderPipelineAsync({\n      label: 'mesh',\n      layout,\n      vertex: { module, entryPoint: 'vsMesh' },\n      fragment: { module, entryPoint: 'fsMesh', targets: [{ format }] },\n    }),\n    device.createRenderPipelineAsync({\n      label: 'outline',\n      layout,\n      vertex: { module, entryPoint: 'vsOutline' },\n      fragment: { module, entryPoint: 'fsOutline', targets: [{ format }] },\n    }),\n  ])\n\n  const camera = device.createBindGroup({\n    label: 'camera',\n    layout: cameraLayout,\n    entries: [{ binding: 0, resource: { buffer: cameraBuffer } }],\n  })\n  return { mesh, outline, camera }\n}\n```\n\nNotes:\n- Set `visibility` to match the shader stages that read the camera. I used VERTEX | FRAGMENT. If the camera is only read in vertex shaders, VERTEX alone is fine. A shader stage that uses the binding but isn't listed in `visibility` fails validation.\n- The camera must be `@group(0) @binding(0) var<uniform>` in both entry points' code. If one of them doesn't use it, that's fine with an explicit layout.\n- `Promise.all` starts both compilations together, so they overlap instead of running one after the other.\n- In `draw`, the second `setBindGroup(0, p.camera)` is now valid. It's also redundant: the bind group stays set across `setPipeline` calls when the layouts are compatible, so you can drop it.\n- I added labels so any later validation message names the object.\n- I haven't run this. I only read the file, so the fix is unchecked against a real device.",
+  "seconds": 17,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T5-without",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/pipelines.ts"
+  ],
+  "cost": 0.0321984,
+  "output": "**Why it fails:** both pipelines use `layout: 'auto'`. WebGPU creates a separate, unique bind group layout for each auto-layout pipeline. The `camera` bind group is built from `mesh.getBindGroupLayout(0)`, so it only matches `mesh`. Even if `outline` declares an identical `@group(0) @binding(0)` uniform, its auto layout is a different object, and the bind group isn't compatible with it. Bind groups are only interchangeable between pipelines that share an explicit `GPUBindGroupLayout` (or have identical explicit layouts). The error shows up when you draw with `outline`, not when you call `setBindGroup`.\n\n**Fix:** create the layout yourself and share it between both pipelines.\n\n```ts\nexport async function setup(device: GPUDevice, module: GPUShaderModule, format: GPUTextureFormat, cameraBuffer: GPUBuffer) {\n  const cameraLayout = device.createBindGroupLayout({\n    entries: [{\n      binding: 0,\n      visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,\n      buffer: { type: 'uniform' },\n    }],\n  })\n  const layout = device.createPipelineLayout({ bindGroupLayouts: [cameraLayout] })\n\n  const mesh = await device.createRenderPipelineAsync({\n    layout,\n    vertex: { module, entryPoint: 'vsMesh' },\n    fragment: { module, entryPoint: 'fsMesh', targets: [{ format }] },\n  })\n  const outline = await device.createRenderPipelineAsync({\n    layout,\n    vertex: { module, entryPoint: 'vsOutline' },\n    fragment: { module, entryPoint: 'fsOutline', targets: [{ format }] },\n  })\n  const camera = device.createBindGroup({\n    layout: cameraLayout,\n    entries: [{ binding: 0, resource: { buffer: cameraBuffer } }],\n  })\n  return { mesh, outline, camera }\n}\n```\n\n`draw` can stay as it is. Because the layouts are now the same, you can also drop the second `setBindGroup` call. The bind group stays bound when you switch to a pipeline with a compatible layout.\n\nI only had `pipelines.ts` to work from and haven't seen your shader. Check that:\n- `visibility` covers every stage that reads the camera uniform. If only the vertex shaders use it, `GPUShaderStage.VERTEX` is enough.\n- The `buffer.type` matches the WGSL declaration: `'uniform'` for `var<uniform>`, `'read-only-storage'` for `var<storage, read>`.\n- If either entry point doesn't use the camera binding, that's fine. An explicit layout may declare bindings a pipeline doesn't use.",
+  "seconds": 16,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T6-with",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/init.ts"
+  ],
+  "cost": 0.0424216,
+  "output": "The blank page comes from `src/init.ts`. Setup can fail on laptops that lack WebGPU, a high-performance adapter, or the requested features. Nothing catches the failure or falls back, so the page stays blank. I haven't run this on a real device.\n\n**Problems**\n\n1. **Unconditional `requiredFeatures` (line 4).** `requestDevice` rejects if the adapter lacks any listed feature. Many integrated GPUs and laptop drivers don't expose `shader-f16` or `timestamp-query`. This is the most likely cause.\n2. **`adapter!` (line 3).** `requestAdapter` returns `null` when no adapter is available. That includes blocklisted GPUs, some hybrid-GPU laptops, and browsers with WebGPU off. The `!` turns this into an unhelpful `TypeError`.\n3. **`navigator.gpu` is never checked.** Browsers without WebGPU throw immediately.\n4. **No fallback, error reporting or device-loss handling.** The caller gets a rejected promise, or an invalid device that fails quietly. The user sees a blank canvas.\n5. **`getContext('webgpu')!` (line 6).** This can also return `null`.\n\n**Suggested change**\n\n```ts\nexport async function initGpu(canvas: HTMLCanvasElement) {\n  if (!navigator.gpu) throw new Error('WebGPU not supported')\n\n  const adapter =\n    (await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' })) ??\n    (await navigator.gpu.requestAdapter())\n  if (!adapter) throw new Error('No WebGPU adapter available')\n\n  // Request only the optional features this adapter has.\n  const requiredFeatures: GPUFeatureName[] = []\n  for (const f of ['shader-f16', 'timestamp-query'] as const) {\n    if (adapter.features.has(f)) requiredFeatures.push(f)\n  }\n\n  const device = await adapter.requestDevice({ label: 'main', requiredFeatures })\n  device.addEventListener('uncapturederror', (e) =>\n    console.error('WebGPU error:', (e as GPUUncapturedErrorEvent).error.message))\n  device.lost.then((info) => console.error(`Device lost (${info.reason}): ${info.message}`))\n\n  const context = canvas.getContext('webgpu')\n  if (!context) throw new Error('Could not get a webgpu canvas context')\n  context.configure({ device, format: navigator.gpu.getPreferredCanvasFormat() })\n\n  return {\n    device,\n    context,\n    hasF16: requiredFeatures.includes('shader-f16'),\n    hasTimestamps: requiredFeatures.includes('timestamp-query'),\n  }\n}\n```\n\n**Changes needed outside this file**\n\n- **Shaders that use f16.** If any WGSL uses `f16` or `enable f16;`, it must be gated on `hasF16`. Use an f32 variant, or prepend the `enable` line only when the feature is present. Otherwise shader compilation fails on those laptops instead.\n- **Timestamp queries.** Create the query set only when `hasTimestamps` is true.\n- **Caller.** Wrap `initGpu` in a `try/catch`. On failure, show a visible message or fall back to WebGL2, and log the reason.\n- **Device loss.** If you want recovery, restart from `requestAdapter` when `device.lost` fires. Don't reuse the old adapter.\n\nI can apply this to `src/init.ts` and look through the shaders and callers for f16 and timestamp usage, if you'd like.",
+  "seconds": 16,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T6-without",
+  "model": "claude-sonnet-5-5",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/init.ts"
+  ],
+  "cost": 0.0272388,
+  "output": "Several things in `src/init.ts` can fail silently on laptops and leave a blank page:\n\n1. **Hard-required features** (line 4). `shader-f16` and `timestamp-query` aren't available on many integrated GPUs, older drivers, or Safari. If you request an unsupported feature, `requestDevice()` rejects. Nothing catches that, so init dies and the canvas stays blank. This is the most likely cause.\n2. **Non-null assertions on `adapter`** (line 3). `requestAdapter()` returns `null` when there's no suitable GPU, such as a blocklisted driver or a hybrid-graphics laptop. The `!` turns that into an opaque `TypeError`.\n3. **No `navigator.gpu` check** (line 2). Browsers without WebGPU throw immediately.\n4. **`getContext('webgpu')!`** (line 6). This can also return `null`.\n5. **`powerPreference: 'high-performance'`** (line 2). On hybrid laptops this can pick a discrete GPU that is flaky or on a blocklist. It's a hint only, so it's rarely the root cause. Consider dropping it unless you need it.\n\nHere's what I'd change. Request only the features the adapter actually supports, and fail visibly:\n\n```ts\nexport async function initGpu(canvas: HTMLCanvasElement) {\n  if (!navigator.gpu) throw new Error('WebGPU is not supported in this browser')\n\n  const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' })\n    ?? await navigator.gpu.requestAdapter()\n  if (!adapter) throw new Error('No suitable GPU adapter found')\n\n  const requiredFeatures: GPUFeatureName[] = []\n  for (const f of ['shader-f16', 'timestamp-query'] as const) {\n    if (adapter.features.has(f)) requiredFeatures.push(f)\n  }\n\n  const device = await adapter.requestDevice({ requiredFeatures })\n  const context = canvas.getContext('webgpu')\n  if (!context) throw new Error('Could not create a WebGPU canvas context')\n  context.configure({ device, format: navigator.gpu.getPreferredCanvasFormat() })\n\n  return {\n    device,\n    context,\n    hasF16: device.features.has('shader-f16'),\n    hasTimestamps: device.features.has('timestamp-query'),\n  }\n}\n```\n\nTwo follow-ups outside this file:\n\n- **Shaders that use f16.** If any WGSL has `enable f16;` or `f16` types, it will fail to compile when the feature is missing. Use `hasF16` to choose an f32 variant.\n- **Timestamp queries.** Only create timestamp query sets when `hasTimestamps` is true.\n- **Caller error handling.** Wrap the `initGpu` call in a `try/catch` that shows a message, such as \"WebGPU unavailable\", instead of leaving a blank page. Also consider listening for `device.lost`.\n\nI only read `init.ts`. I haven't checked the callers or shaders, so I can't confirm which feature is actually missing on the affected laptops. Logging `adapter.features` and `adapter.info` from an affected machine would confirm it.",
+  "seconds": 14,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T1-with",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/gpu.ts",
+   "src/gpu.ts",
+   "src/gpu.ts",
+   "src/gpu.ts",
+   "src/gpu.ts"
+  ],
+  "cost": 0.060562000000000005,
+  "output": "```typescript\nconst canvas = document.querySelector('canvas')!\nconst adapter = (await navigator.gpu.requestAdapter())!\nconst device = await adapter.requestDevice()\nconst context = canvas.getContext('webgpu')!\nconst format = navigator.gpu.getPreferredCanvasFormat()\ncontext.configure({ device, format })\n\nconst module = device.createShaderModule({\n  code: /* wgsl */ `\n    struct U { color: vec4f }\n    @group(0) @binding(0) var<uniform> u: U;\n    @vertex fn vs(@builtin(vertex_index) i: u32) -> @builtin(position) vec4f {\n      var p = array(vec2f(0, 0.5), vec2f(-0.5, -0.5), vec2f(0.5, -0.5));\n      return vec4f(p[i], 0, 1);\n    }\n    @fragment fn fs() -> @location(0) vec4f { return u.color; }\n  `,\n})\n\nconst uniforms = device.createBuffer({\n  size: 16,\n  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,\n})\ndevice.queue.writeBuffer(uniforms, 0, new Float32Array([1, 0, 0, 1]))\n\nconst pipeline = device.createRenderPipeline({\n  layout: 'auto',\n  vertex: { module, entryPoint: 'vs' },\n  fragment: { module, entryPoint: 'fs', targets: [{ format }] },\n})\nconst group = device.createBindGroup({\n  layout: pipeline.getBindGroupLayout(0),\n  entries: [{ binding: 0, resource: { buffer: uniforms } }],\n})\n\nfunction frame() {\n  const encoder = device.createCommandEncoder()\n  const pass = encoder.beginRenderPass({\n    colorAttachments: [{ view: context.getCurrentTexture().createView(), loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }],\n  })\n  pass.setPipeline(pipeline)\n  pass.setBindGroup(0, group)\n  pass.draw(3)\n  pass.end()\n  device.queue.submit([encoder.finish()])\n  requestAnimationFrame(frame)\n}\nrequestAnimationFrame(frame)\n```\n\nI've added `entryPoint: 'vs'` on line 28 and `entryPoint: 'fs'` on line 29. Without these, WebGPU looked for functions named \"main\" that don't exist, silently creating an invalid pipeline. Now it'll find your shader functions and you should see a red triangle.",
+  "seconds": 40,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T1-without",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/gpu.ts",
+   "src/gpu.ts",
+   "src/gpu.ts",
+   "src/gpu.ts",
+   "src/gpu.ts",
+   "src/gpu.ts",
+   "src/gpu.ts",
+   "src/gpu.ts"
+  ],
+  "cost": 0.058489400000000004,
+  "output": "I need to modify the file. Let me write the corrected version:\n\n```bash\ncat > <run>/src/gpu.ts << 'EOF'\nconst canvas = document.querySelector('canvas')!\nconst adapter = (await navigator.gpu.requestAdapter())!\nconst device = await adapter.requestDevice()\nconst context = canvas.getContext('webgpu')!\nconst format = navigator.gpu.getPreferredCanvasFormat()\ncontext.configure({ device, format })\n\nconst module = device.createShaderModule({\n  code: /* wgsl */ `\n    struct U { color: vec4f }\n    @group(0) @binding(0) var<uniform> u: U;\n    @vertex fn vs(@builtin(vertex_index) i: u32) -> @builtin(position) vec4f {\n      var p = array(vec2f(0, 0.5), vec2f(-0.5, -0.5), vec2f(0.5, -0.5));\n      return vec4f(p[i], 0, 1);\n    }\n    @fragment fn fs() -> @location(0) vec4f { return u.color; }\n  `,\n})\n\nconst uniforms = device.createBuffer({\n  size: 16,\n  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,\n})\ndevice.queue.writeBuffer(uniforms, 0, new Float32Array([1, 0, 0, 1]))\n\nconst pipeline = device.createRenderPipeline({\n  layout: 'auto',\n  vertex: { module, entryPoint: 'vs' },\n  fragment: { module, targets: [{ format }], entryPoint: 'fs' },\n})\nconst group = device.createBindGroup({\n  layout: pipeline.getBindGroupLayout(0),\n  entries: [{ binding: 0, resource: { buffer: uniforms } }],\n})\n\nfunction frame() {\n  const encoder = device.createCommandEncoder()\n  const pass = encoder.beginRenderPass({\n    colorAttachments: [{ view: context.getCurrentTexture().createView(), loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }],\n  })\n  pass.setPipeline(pipeline)\n  pass.setBindGroup(0, group)\n  pass.draw(3)\n  pass.end()\n  device.queue.submit([encoder.finish()])\n  requestAnimationFrame(frame)\n}\nrequestAnimationFrame(frame)\nEOF\n```\n\nThe fixes are on lines 28–29:\n- **Line 28**: Changed `vertex: { module }` → `vertex: { module, entryPoint: 'vs' }`\n- **Line 29**: Changed `fragment: { module, targets: [{ format }] }` → `fragment: { module, targets: [{ format }], entryPoint: 'fs' }`\n\nWithout entry points, WebGPU doesn't know which shader functions to call, so the pipeline silently fails to render.",
+  "seconds": 38,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T2-with",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/particles.wgsl",
+   "src/upload.ts",
+   "src/particles.wgsl",
+   "src/particles.wgsl"
+  ],
+  "cost": 0.07663800000000003,
+  "output": "Replace your shader with this—using individual floats makes the struct exactly 24 bytes (6 floats):\n\n```wgsl\nstruct P {\n  pos_x: f32,\n  pos_y: f32,\n  pos_z: f32,\n  vel_x: f32,\n  vel_y: f32,\n  vel_z: f32,\n}\n@group(0) @binding(0) var<storage, read_write> particles: array<P>;\n\n@compute @workgroup_size(64)\nfn step(@builtin(global_invocation_id) id: vec3u) {\n  let i = id.x;\n  if (i >= arrayLength(&particles)) { return; }\n  particles[i].pos_x += particles[i].vel_x * 0.016;\n  particles[i].pos_y += particles[i].vel_y * 0.016;\n  particles[i].pos_z += particles[i].vel_z * 0.016;\n}\n```\n\n**Why this works:** `f32` has 4-byte alignment, so the struct layout is now exactly what your upload code expects—no hidden padding. Position reads from offsets 0–2, velocity from 3–5, no misalignment.\n\nYour TypeScript upload code stays unchanged and will now write data to the correct GPU memory offsets.",
+  "seconds": 64,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T2-without",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/particles.wgsl",
+   "src/upload.ts",
+   "src/upload.ts"
+  ],
+  "cost": 0.048312,
+  "output": "Here's the corrected upload.ts with proper 16-byte alignment for vec3f fields:\n\n```typescript\nexport function uploadParticles(device: GPUDevice, buffer: GPUBuffer, ps: { pos: number[]; vel: number[] }[]) {\n  const data = new Float32Array(ps.length * 8)\n  ps.forEach((p, i) => {\n    data.set(p.pos, i * 8)\n    data.set(p.vel, i * 8 + 4)\n  })\n  device.queue.writeBuffer(buffer, 0, data)\n}\n\nexport function particleBufferSize(count: number) {\n  return count * 8 * 4\n}\n```\n\n**Changes:**\n- Line 2: `ps.length * 6` → `ps.length * 8` (32 bytes per particle = 8 floats)\n- Line 4: `i * 6` → `i * 8` (pos offset accounts for 16-byte alignment)\n- Line 5: `i * 6 + 3` → `i * 8 + 4` (vel offset = 4 floats after pos with padding)\n- Line 11: `count * 6 * 4` → `count * 8 * 4` (32 bytes per particle)\n\nThis ensures the GPU buffer layout matches WGSL's struct alignment rules, where each vec3f gets 16 bytes (3 floats + 1 padding) in a struct.",
+  "seconds": 37,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T3-with",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx",
+   "<run>/",
+   "src/GpuCanvas.tsx",
+   ".claude/skills/webgpu/resources/canvas.md",
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx"
+  ],
+  "cost": 0.074582,
+  "output": "Let me write the corrected version using the `cancelled` flag pattern to prevent the Strict Mode race condition:\n\n```tsx\n'use client'\nimport { useEffect, useRef } from 'react'\nimport { createScene } from './scene'\n\nexport function GpuCanvas() {\n  const ref = useRef<HTMLCanvasElement>(null)\n\n  useEffect(() => {\n    const canvas = ref.current\n    if (!canvas || !navigator.gpu) return\n\n    let cancelled = false\n    let rafId = 0\n    let device: GPUDevice | undefined\n\n    void (async () => {\n      const adapter = await navigator.gpu.requestAdapter()\n      if (!adapter || cancelled) return\n      const d = await adapter.requestDevice()\n      if (cancelled) return d.destroy()\n      device = d\n\n      const context = canvas.getContext('webgpu')\n      if (!context) return\n      const format = navigator.gpu.getPreferredCanvasFormat()\n      context.configure({ device: d, format })\n\n      const scene = await createScene(d, format)\n      if (cancelled) return\n\n      const frame = () => {\n        const encoder = d.createCommandEncoder()\n        scene.encode(encoder, context.getCurrentTexture())\n        d.queue.submit([encoder.finish()])\n        rafId = requestAnimationFrame(frame)\n      }\n      rafId = requestAnimationFrame(frame)\n    })()\n\n    return () => {\n      cancelled = true\n      cancelAnimationFrame(rafId)\n      device?.destroy()\n    }\n  }, [])\n\n  return <canvas ref={ref} className=\"h-full w-full\" />\n}\n```\n\nThe fix adds a `cancelled` flag that's set to `true` in the cleanup function. After each `await`, the async function checks if the component unmounted. This prevents both devices from being created and ensures if one is created during cleanup, it's immediately destroyed. This is the standard pattern for React Strict Mode WebGPU effects.",
+  "seconds": 49,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T3-without",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx",
+   "src/GpuCanvas.tsx",
+   "<run>/",
+   "src/GpuCanvas.tsx"
+  ],
+  "cost": 0.0381966,
+  "output": "Here's the fix:\n\n```typescript\n'use client'\nimport { useEffect, useRef } from 'react'\nimport { createScene } from './scene'\n\nexport function GpuCanvas() {\n  const ref = useRef<HTMLCanvasElement>(null)\n\n  useEffect(() => {\n    let raf = 0\n    let device: GPUDevice | null = null\n    let mounted = true\n\n    async function init() {\n      const adapter = await navigator.gpu.requestAdapter()\n      if (!mounted) return\n      \n      device = await adapter!.requestDevice()\n      if (!mounted) {\n        device.destroy()\n        return\n      }\n      \n      const context = ref.current!.getContext('webgpu')!\n      const format = navigator.gpu.getPreferredCanvasFormat()\n      context.configure({ device, format })\n      \n      const scene = await createScene(device, format)\n      if (!mounted) {\n        device.destroy()\n        return\n      }\n      \n      const frame = () => {\n        const encoder = device!.createCommandEncoder()\n        scene.encode(encoder, context.getCurrentTexture())\n        device!.queue.submit([encoder.finish()])\n        raf = requestAnimationFrame(frame)\n      }\n      raf = requestAnimationFrame(frame)\n    }\n    init()\n\n    return () => {\n      mounted = false\n      cancelAnimationFrame(raf)\n      device?.destroy()\n    }\n  }, [])\n\n  return <canvas ref={ref} className=\"h-full w-full\" />\n}\n```\n\nThe key changes:\n1. **`mounted` flag** – tracks if the component is still mounted\n2. **Checks after awaits** – if unmounted during async operations, bail out early and destroy the device\n3. **`device` can be null** – initialize as `null` instead of `undefined`\n4. **Set `mounted = false` in cleanup** – stops any pending async work from proceeding\n\nThis prevents StrictMode's double-mount from creating duplicate devices since the second init() will find `mounted = false` and return early.",
+  "seconds": 32,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T4-with",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/camera.ts",
+   "src/renderer.ts",
+   ".claude/skills/webgpu/resources/render-basics.md",
+   "src/camera.ts",
+   "src/camera.ts"
+  ],
+  "cost": 0.05283269999999999,
+  "output": "I'll write the corrected file with `perspectiveZO`:\n\n```typescript\nimport { mat4 } from 'gl-matrix'\n\nexport function viewProjection(aspect: number, eye: [number, number, number]) {\n  const proj = mat4.create()\n  mat4.perspectiveZO(proj, Math.PI / 4, aspect, 0.1, 100)\n  const view = mat4.lookAt(mat4.create(), eye, [0, 0, 0], [0, 1, 0])\n  return mat4.multiply(mat4.create(), proj, view)\n}\n```\n\nThe critical change is on line 6: `mat4.perspective` → `mat4.perspectiveZO`. This makes the projection matrix produce depth values in the [0, 1] range that WebGPU expects, instead of [-1, 1] for WebGL. That's why your close objects were disappearing—they were being clipped by the depth test due to the wrong depth range.",
+  "seconds": 38,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T4-without",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/camera.ts",
+   "src/renderer.ts",
+   "src/renderer.ts",
+   "src/renderer.ts",
+   "src/renderer.ts",
+   "<run>/"
+  ],
+  "cost": 0.06521650000000001,
+  "output": "Let me write the corrected renderer.ts file:\n\n```typescript\nexport async function createMeshPipeline(device: GPUDevice, module: GPUShaderModule, format: GPUTextureFormat) {\n  return device.createRenderPipelineAsync({\n    layout: 'auto',\n    vertex: { module, buffers: [{ arrayStride: 12, attributes: [{ shaderLocation: 0, offset: 0, format: 'float32x3' }] }] },\n    fragment: { module, targets: [{ format }] },\n    primitive: { cullMode: 'back' },\n    depthStencil: { format: 'depth24plus', depthWriteEnabled: true, depthCompare: 'greater' },\n  })\n}\n```\n\nI've changed `depthCompare: 'less'` to `depthCompare: 'greater'` on line 7. This fixes the depth test direction for WebGPU—objects closer to the camera (with smaller depth values) now correctly pass the depth test and render on top of distant objects.\n\nThe root cause: WebGPU uses the opposite depth comparison convention compared to how the standard WebGL depth test typically works. With `'less'`, fragments with smaller depth values failed the test, causing nearby objects to be discarded and disappear.",
+  "seconds": 62,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T5-with",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/pipelines.ts",
+   "src/shader.wgsl"
+  ],
+  "cost": 0.028123000000000002,
+  "output": "Without access to the shader, I can explain the fix: you need to define an explicit bind group layout and use it for both pipelines instead of relying on `layout: 'auto'`.\n\nReplace the setup function with:\n\n```typescript\nexport async function setup(device: GPUDevice, module: GPUShaderModule, format: GPUTextureFormat, cameraBuffer: GPUBuffer) {\n  const bindGroupLayout = device.createBindGroupLayout({\n    entries: [{ binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: 'uniform' } }],\n  })\n  const pipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] })\n\n  const mesh = await device.createRenderPipelineAsync({\n    layout: pipelineLayout,\n    vertex: { module, entryPoint: 'vsMesh' },\n    fragment: { module, entryPoint: 'fsMesh', targets: [{ format }] },\n  })\n  const outline = await device.createRenderPipelineAsync({\n    layout: pipelineLayout,\n    vertex: { module, entryPoint: 'vsOutline' },\n    fragment: { module, entryPoint: 'fsOutline', targets: [{ format }] },\n  })\n  const camera = device.createBindGroup({\n    layout: bindGroupLayout,\n    entries: [{ binding: 0, resource: { buffer: cameraBuffer } }],\n  })\n  return { mesh, outline, camera }\n}\n```\n\nThe key changes: create an explicit `bindGroupLayout` and `pipelineLayout`, pass them to both pipelines, and use `bindGroupLayout` (not `mesh.getBindGroupLayout(0)`) for the bind group. This ensures both pipelines see the same layout.\n\nIf your camera buffer isn't uniform, adjust the buffer type accordingly (check [pipelines.md](./resources/pipelines.md) under \"Explicit layouts\" for options).",
+  "seconds": 25,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T5-without",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/pipelines.ts"
+  ],
+  "cost": 0.0207726,
+  "output": "The issue is that you're creating the camera bind group using the `mesh` pipeline's layout, but the `outline` pipeline has a different inferred layout (because of `layout: 'auto'`). A bind group can only be used with a pipeline if it matches that pipeline's bind group layout.\n\nThe fix is to create an explicit, shared bind group layout that both pipelines can use:\n\n```typescript\nexport async function setup(device: GPUDevice, module: GPUShaderModule, format: GPUTextureFormat, cameraBuffer: GPUBuffer) {\n  const cameraLayout = device.createBindGroupLayout({\n    entries: [\n      { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: {} }\n    ]\n  })\n\n  const pipelineLayout = device.createPipelineLayout({\n    bindGroupLayouts: [cameraLayout]\n  })\n\n  const mesh = await device.createRenderPipelineAsync({\n    layout: pipelineLayout,\n    vertex: { module, entryPoint: 'vsMesh' },\n    fragment: { module, entryPoint: 'fsMesh', targets: [{ format }] },\n  })\n  const outline = await device.createRenderPipelineAsync({\n    layout: pipelineLayout,\n    vertex: { module, entryPoint: 'vsOutline' },\n    fragment: { module, entryPoint: 'fsOutline', targets: [{ format }] },\n  })\n  const camera = device.createBindGroup({\n    layout: cameraLayout,\n    entries: [{ binding: 0, resource: { buffer: cameraBuffer } }],\n  })\n  return { mesh, outline, camera }\n}\n```\n\nNow both pipelines share the same explicit layout, and the camera bind group will work with both. Adjust the `visibility` and `buffer` properties to match your actual shader needs.",
+  "seconds": 20,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T6-with",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [
+   "webgpu"
+  ],
+  "reads": [
+   "src/init.ts",
+   ".claude/skills/webgpu/resources/setup.md",
+   ".claude/skills/webgpu/resources/errors-and-device-loss.md",
+   "src/init.ts",
+   ".claude/skills/webgpu/resources/errors-and-device-loss.md",
+   "src",
+   "src/init.ts",
+   "src/init.ts"
+  ],
+  "cost": 0.07252529999999999,
+  "output": "The issue is that your code requests features unconditionally without checking if the adapter supports them. Here's what needs to change in `src/init.ts`:\n\n**Key problems in the current code:**\n1. **Line 2**: `navigator.gpu` is accessed without checking if it exists\n2. **Line 2**: `adapter` can be null, but it's dereferenced with `!`\n3. **Lines 4**: Features `'shader-f16'` and `'timestamp-query'` are requested even if the adapter doesn't support them—when an adapter lacks a requested feature, `requestDevice()` **silently rejects**, leaving your device invalid and the canvas blank\n4. **No error listener**: GPU errors aren't logged, so you never see why setup failed\n5. **No device loss handler**: If the device is lost later, there's no recovery attempt\n\n**The fix:**\n\nReplace `src/init.ts` with:\n\n```ts\nexport async function initGpu(canvas: HTMLCanvasElement) {\n  if (!('gpu' in navigator)) {\n    console.error('WebGPU not supported')\n    return null\n  }\n\n  const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' })\n  if (!adapter) {\n    console.error('No GPU adapter available')\n    return null\n  }\n\n  const wantedFeatures: GPUFeatureName[] = ['shader-f16', 'timestamp-query']\n  const supportedFeatures = wantedFeatures.filter((f) => adapter.features.has(f))\n\n  try {\n    const device = await adapter.requestDevice({\n      label: 'app',\n      requiredFeatures: supportedFeatures,\n    })\n\n    device.addEventListener('uncapturederror', (event) => {\n      console.error('GPU Error:', event.error.message)\n    })\n\n    device.lost.then((info) => {\n      console.error(`Device lost: ${info.reason}`)\n      if (info.reason !== 'destroyed') {\n        console.error(info.message)\n      }\n    })\n\n    const context = canvas.getContext('webgpu')\n    if (!context) {\n      console.error('Failed to get WebGPU context')\n      device.destroy()\n      return null\n    }\n\n    context.configure({ device, format: navigator.gpu.getPreferredCanvasFormat() })\n    return { device, context }\n  } catch (err) {\n    console.error('Device creation failed:', err)\n    return null\n  }\n}\n```\n\nThe critical fix: **line that filters features** — `supportedFeatures` only includes features the adapter actually has. This prevents silent device-creation failures on machines that lack f16 or timestamp-query support. Also add error listeners and return null on failure so your app can fall back to WebGL2 or show a message instead of a blank page.",
+  "seconds": 57,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
+ },
+ {
+  "run": "T6-without",
+  "model": "claude-haiku-4-5-20251001",
+  "status": "success",
+  "skills": [],
+  "reads": [
+   "src/init.ts",
+   "<tmp>"
+  ],
+  "cost": 0.0180741,
+  "output": "Add WebGPU availability checks and handle the null adapter case:\n\n```typescript\nexport async function initGpu(canvas: HTMLCanvasElement) {\n  if (!navigator.gpu) {\n    throw new Error('WebGPU is not supported on this device or browser')\n  }\n  \n  const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' })\n  if (!adapter) {\n    throw new Error('Failed to get a WebGPU adapter. Your device may not support WebGPU')\n  }\n  \n  const device = await adapter.requestDevice({\n    requiredFeatures: ['shader-f16', 'timestamp-query'],\n  })\n  const context = canvas.getContext('webgpu')!\n  context.configure({ device, format: navigator.gpu.getPreferredCanvasFormat() })\n  return { device, context }\n}\n```\n\nThe key changes:\n1. **Check `navigator.gpu` exists** before calling methods on it\n2. **Explicitly check if adapter is null** instead of using `adapter!`—this is what causes the blank page on unsupported devices\n3. **Throw clear error messages** so the caller can handle or display them to the user\n\nYou should also wrap the call to `initGpu()` in a try-catch at the top level to display a user-friendly error message instead of a blank page.",
+  "seconds": 18,
+  "pass": "task, model comparison",
+  "claudeCodeVersion": "2.1.292"
  }
 ]

@@ -60,6 +60,10 @@ pass.dispatchWorkgroups(1000 / 64) // 15.6 is truncated to 15, and 40 elements n
 
 PASS.
 
+<!-- wgsl-prelude
+struct Particle { pos: vec2f, vel: vec2f }
+struct Params { dt: f32 }
+-->
 ```wgsl
 override WG: u32 = 64;
 
@@ -92,6 +96,7 @@ const y = Math.ceil(groups / x)
 pass.dispatchWorkgroups(x, y)
 ```
 
+<!-- wgsl-check: skip, a line from inside a function -->
 ```wgsl
 // num is @builtin(num_workgroups). Then bounds-check i as before.
 let i = id.x + id.y * num.x * WG;

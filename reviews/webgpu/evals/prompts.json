@@ -1,0 +1,136 @@
+{
+  "tasks": [
+    {
+      "id": "T1",
+      "prompt": "My WebGPU canvas is black and nothing throws. The init and frame code is in src/gpu.ts. What's wrong, and how do I fix it?",
+      "fixture": "fixtures/T1"
+    },
+    {
+      "id": "T2",
+      "prompt": "Particle positions look shifted in my WebGPU compute shader. The shader and upload code are in src/. Why, and what's the fix?",
+      "fixture": "fixtures/T2"
+    },
+    {
+      "id": "T3",
+      "prompt": "I added WebGPU to the React component in src/GpuCanvas.tsx. It works, but in development I see two devices and sometimes a leaked one. Fix it.",
+      "fixture": "fixtures/T3"
+    },
+    {
+      "id": "T4",
+      "prompt": "After porting our renderer from WebGL to WebGPU, close objects disappear. The camera and pipeline code are in src/. What's wrong?",
+      "fixture": "fixtures/T4"
+    },
+    {
+      "id": "T5",
+      "prompt": "In src/pipelines.ts the second pipeline rejects my camera bind group. Why, and how should this be set up?",
+      "fixture": "fixtures/T5"
+    },
+    {
+      "id": "T6",
+      "prompt": "Users on some laptops see a blank page from our WebGPU app. Init is in src/init.ts. What should change?",
+      "fixture": "fixtures/T6"
+    }
+  ],
+  "selection": [
+    {
+      "id": "S1",
+      "prompt": "Write a compute shader that blurs an image with WebGPU",
+      "shouldLoad": true
+    },
+    {
+      "id": "S2",
+      "prompt": "Why does textureSample give a uniformity error inside my if?",
+      "shouldLoad": true
+    },
+    {
+      "id": "S3",
+      "prompt": "Set up navigator.gpu with a fallback for Firefox on Linux",
+      "shouldLoad": true
+    },
+    {
+      "id": "S4",
+      "prompt": "My GPUDevice keeps getting lost on Android",
+      "shouldLoad": true
+    },
+    {
+      "id": "S5",
+      "prompt": "Port this WebGL shader to WGSL: precision mediump float; varying vec2 vUv; uniform sampler2D t; void main(){ gl_FragColor = texture2D(t, vUv); }",
+      "shouldLoad": true
+    },
+    {
+      "id": "S6",
+      "prompt": "How do I time a render pass on the GPU in WebGPU?",
+      "shouldLoad": true
+    },
+    {
+      "id": "S7",
+      "prompt": "Add MSAA to my WebGPU renderer",
+      "shouldLoad": true
+    },
+    {
+      "id": "S8",
+      "prompt": "Give me the struct offsets for this WGSL uniform buffer: struct U { a: vec3f, b: f32, c: vec2f, d: mat3x3f }",
+      "shouldLoad": true
+    },
+    {
+      "id": "S9",
+      "prompt": "Play a video into a WebGPU texture",
+      "shouldLoad": true
+    },
+    {
+      "id": "S10",
+      "prompt": "Write a Vitest test for my WebGPU compute shader",
+      "shouldLoad": true
+    },
+    {
+      "id": "S11",
+      "prompt": "Will moving to WebGPU make my dashboard faster?",
+      "shouldLoad": false
+    },
+    {
+      "id": "S12",
+      "prompt": "Make this three.js scene use TSL node materials",
+      "shouldLoad": false
+    },
+    {
+      "id": "S13",
+      "prompt": "Fix a WebGL2 gl.texImage2D INVALID_OPERATION error",
+      "shouldLoad": false
+    },
+    {
+      "id": "S14",
+      "prompt": "Speed up my React list re-renders",
+      "shouldLoad": false
+    },
+    {
+      "id": "S15",
+      "prompt": "Write a GLSL shader for Shadertoy that draws a plasma effect",
+      "shouldLoad": false
+    },
+    {
+      "id": "S16",
+      "prompt": "Set up CUDA on my Linux box",
+      "shouldLoad": false
+    },
+    {
+      "id": "S17",
+      "prompt": "Draw a bar chart with Canvas 2D",
+      "shouldLoad": false
+    },
+    {
+      "id": "S18",
+      "prompt": "My Metal app crashes in Xcode with a command buffer error",
+      "shouldLoad": false
+    },
+    {
+      "id": "S19",
+      "prompt": "Explain how GPUs work in general",
+      "shouldLoad": false
+    },
+    {
+      "id": "S20",
+      "prompt": "Configure Vulkan validation layers for a native game",
+      "shouldLoad": false
+    }
+  ]
+}

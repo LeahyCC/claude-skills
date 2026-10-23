@@ -22,6 +22,24 @@ Raw outputs, skill calls, files read, and estimated costs are in [evaluation-res
 
 The model without the skill was already strong on layout, React, depth range, and auto layouts. The skill's measurable gain was on silent failure: labels, reading the first error, and failing to a fallback with a reason. Skill runs also stated how far they had checked the code, which the skill asks for. Skill runs cost more, roughly $0.10 to $0.16 against $0.06.
 
+## Other models
+
+The six tasks were rerun on Sonnet 5.5 and Haiku 4.5 the same day, with the same setup and the committed runner. Estimated cost was $1.20.
+
+| Model | With skill | Without |
+| --- | --- | --- |
+| Opus 5.5 | 19/19 | 15/19 |
+| Sonnet 5.5 | 18/19 | 16/19 |
+| Haiku 4.5 | 12/19 | 9/19 |
+
+- **Sonnet.** Same pattern as Opus, with smaller gaps. Neither Sonnet run said the first error is the real one in T1. With the skill it added labels, a fallback, and a logged reason in T6. Without the skill T6 filtered features but left the rejected device to the caller.
+- **Haiku with and without the skill missed T1.** Both runs blamed a missing `entryPoint`, which is not needed for a module with one entry point per stage, and left the `MAP_READ` flag on the uniform buffer. The skill loaded, but Haiku did not act on its "black canvas" row.
+- **Haiku without the skill gave a wrong T4 fix.** It flipped `depthCompare` to `'greater'` and kept the WebGL projection. With the skill it read render-basics.md and used `perspectiveZO`.
+- **Haiku with the skill gave a weaker T2.** It switched the struct to six `f32` fields, which works, but never explained the 16-byte `vec3` alignment. Without the skill it explained the alignment and fixed the packing.
+- **Haiku T6.** With the skill it filtered features and logged a reason. Without it, it kept the hard-required features, which is the bug.
+
+Grading follows the same criteria as the Opus run. Partial answers that leave a step to the caller were scored 0 for that step, except where the answer named the exact catch to add.
+
 ## Selection
 
 | Pass | Should load (10) | Should not load (10) |
@@ -33,7 +51,29 @@ The rewording did not help, so the shipped description is unchanged. The S5 and 
 
 ## Limits
 
-- One model. Anthropic suggests also checking Haiku and Sonnet. Not run, to keep usage down.
+- Selection prompts ran on Opus only.
 - No browser. Answers were read and graded, not executed. Code from the "with" runs was not compiled.
 - Read-only tools meant no run could edit files or run the layout script, so T2 and T3 ended with code to paste.
 - The author of the skill graded the answers.
+
+## Rerun
+
+The prompts and fixtures are in [evals/](./evals/). This uses the signed-in Claude account.
+
+```bash
+node reviews/webgpu/evals/run.mjs                          # all 32 prompts on Opus
+node reviews/webgpu/evals/run.mjs --model claude-sonnet-5-5 --only T1-with,T1-without
+```
+
+Results go to a temp folder, not the repo. Grade task answers by hand against [tasks.md](./tasks.md). Selection prompts are scored automatically.
+
+## Automated checks
+
+CI runs on every pull request ([validate.yml](../../.github/workflows/validate.yml)):
+
+- `claude plugin validate . --strict` on the marketplace
+- [checks/layout-selftest.mjs](./checks/layout-selftest.mjs), the layout script against the WGSL spec's worked examples
+- [checks/check-wgsl-snippets.mjs](./checks/check-wgsl-snippets.mjs), every WGSL block in the skills compiled with naga. Fragments carry a `wgsl-prelude` or `wgsl-check: skip` comment in the markdown.
+
+Both checks were shown to fail on a deliberate break: a wrong `vec3` alignment in the script, and a missing semicolon in a snippet.
+

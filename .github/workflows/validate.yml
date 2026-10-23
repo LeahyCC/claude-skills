@@ -1,0 +1,41 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  plugin:
+    name: Plugin manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      # Validation reads local files only. It needs no login.
+      - run: npx --yes @anthropic-ai/claude-code plugin validate . --strict
+
+  webgpu:
+    name: WebGPU checks
+    runs-on: ubuntu-latest
+    env:
+      NAGA_VERSION: 30.0.1
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Layout script matches the WGSL spec examples
+        run: node reviews/webgpu/checks/layout-selftest.mjs
+      # naga takes a few minutes to build, so keep the binary between runs.
+      - uses: actions/cache@v6
+        id: naga
+        with:
+          path: ~/.cargo/bin/naga
+          key: naga-${{ env.NAGA_VERSION }}-${{ runner.os }}
+      - if: steps.naga.outputs.cache-hit != 'true'
+        run: cargo install naga-cli --version ${{ env.NAGA_VERSION }} --locked
+      - name: Every WGSL snippet in the docs compiles
+        run: node reviews/webgpu/checks/check-wgsl-snippets.mjs

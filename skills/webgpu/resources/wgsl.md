@@ -116,6 +116,7 @@ Some calls must run where every invocation takes the same path. WGSL checks this
 
 FAIL.
 
+<!-- wgsl-check: skip, statements from inside a fragment shader -->
 ```wgsl
 if (in.mask > 0.5) {
   color = textureSample(tex, samp, in.uv); // error: derivative_uniformity
@@ -124,6 +125,7 @@ if (in.mask > 0.5) {
 
 PASS. Sample first, then choose.
 
+<!-- wgsl-check: skip, statements from inside a fragment shader -->
 ```wgsl
 let sampled = textureSample(tex, samp, in.uv);
 if (in.mask > 0.5) {
