@@ -1,26 +1,6 @@
 ---
 name: product-marketing
 description: Product management and marketing strategy — positioning, discovery, go-to-market, prioritization, metrics, copywriting, and artifact generation. Verified against Cagan (SVPG), Dunford, Torres, Reforge, JTBD, and OWASP-grade rigor applied to PM/PMM decisions.
-metadata:
-  filePattern:
-    - "src/app/**/page.tsx"
-    - "app/**/page.tsx"
-    - "src/app/**/layout.tsx"
-    - "app/**/layout.tsx"
-    - "src/app/pricing/**"
-    - "app/pricing/**"
-    - "src/app/blog/**"
-    - "app/blog/**"
-    - "src/content/**/*.ts"
-    - "src/content/**/*.md"
-    - "content/**/*.md"
-    - "docs/**/*.md"
-    - "src/app/(marketing)/**"
-    - "app/(marketing)/**"
-    - "src/app/(landing)/**"
-    - "app/(landing)/**"
-  bashPattern: []
-  priority: 40
 ---
 
 # Product & Marketing — Strategy Through Execution

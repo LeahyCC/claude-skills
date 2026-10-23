@@ -1,37 +1,6 @@
 ---
 name: api-security
 description: OWASP API Security Top 10 (2023) with production Next.js App Router code — access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, SSRF
-metadata:
-  filePattern:
-    - "src/app/api/**/*.ts"
-    - "app/api/**/*.ts"
-    - "src/app/**/actions.ts"
-    - "src/app/**/action.ts"
-    - "app/**/actions.ts"
-    - "app/**/action.ts"
-    - "src/actions/**/*.ts"
-    - "actions/**/*.ts"
-    - "src/data/**/*.ts"
-    - "data/**/*.ts"
-    - "src/lib/auth*.ts"
-    - "lib/auth*.ts"
-    - "src/proxy.ts"
-    - "proxy.ts"
-    - "src/middleware.ts"
-    - "middleware.ts"
-    - "route.ts"
-    - "next.config.ts"
-    - "next.config.js"
-    - "next.config.mjs"
-  bashPattern:
-    - "npm audit"
-    - "npx audit"
-    - "pnpm audit"
-    - "semgrep"
-    - "snyk"
-    - "trufflehog"
-    - "gitleaks"
-  priority: 60
 ---
 
 # API Security — OWASP API Security Top 10 (2023) for Next.js

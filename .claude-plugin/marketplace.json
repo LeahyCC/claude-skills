@@ -1,106 +1,229 @@
 {
-  "schema_version": "1.0",
-  "skills": [
+  "name": "leahycc-skills",
+  "description": "Claude Code skills checked against the spec for each domain.",
+  "owner": {
+    "name": "Colin Leahy",
+    "url": "https://github.com/LeahyCC"
+  },
+  "plugins": [
+    {
+      "name": "leahycc-skills",
+      "source": "./",
+      "displayName": "All LeahyCC skills",
+      "description": "Every skill in this repository, in one install.",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT"
+    },
     {
       "name": "wcag-accessibility",
-      "display_name": "WCAG 2.2 Accessibility",
+      "source": "./skills/wcag-accessibility",
+      "displayName": "WCAG 2.2 Accessibility",
       "description": "WCAG 2.2 Level AA. All 55 success criteria across 11 resource files, with production code examples",
       "version": "1.0.0",
-      "categories": ["accessibility", "web-development", "compliance", "quality"],
-      "criteria_covered": 55,
-      "criteria_total": 55,
-      "resource_files": 11,
-      "dependencies": "none",
-      "verified_against": "W3C WCAG 2.2 Recommendation (October 2023)",
-      "install": "npx skills add LeahyCC/claude-skills@wcag-accessibility"
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "accessibility",
+        "web-development",
+        "compliance",
+        "quality"
+      ],
+      "metadata": {
+        "verified_against": "W3C WCAG 2.2 Recommendation (October 2023)",
+        "resource_files": 11,
+        "criteria_covered": 55,
+        "criteria_total": 55,
+        "install": "npx skills add LeahyCC/claude-skills@wcag-accessibility"
+      }
     },
     {
       "name": "spa-performance",
-      "display_name": "SPA Performance",
+      "source": "./skills/spa-performance",
+      "displayName": "SPA Performance",
       "description": "Main thread, frame time, and memory for SPAs. Measure, draw less, workers, OffscreenCanvas, hosted editors, typing, grids, streams, and audio.",
       "version": "0.2.0",
-      "categories": ["performance", "web-development"],
-      "resource_files": 8,
-      "dependencies": "none",
-      "verified_against": "web.dev INP and long tasks, Chrome Long Animation Frames, MDN Scheduler and content-visibility, tldraw performance docs. Scoped in skills/spa-performance/SOURCES.md (checked 2026-10-22).",
-      "install": "npx skills add LeahyCC/claude-skills@spa-performance"
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "performance",
+        "web-development"
+      ],
+      "metadata": {
+        "verified_against": "web.dev INP and long tasks, Chrome Long Animation Frames, MDN Scheduler and content-visibility, tldraw performance docs. Scoped in skills/spa-performance/SOURCES.md (checked 2026-10-22).",
+        "resource_files": 8,
+        "install": "npx skills add LeahyCC/claude-skills@spa-performance"
+      }
     },
     {
       "name": "webgpu",
-      "display_name": "WebGPU",
+      "source": "./skills/webgpu",
+      "displayName": "WebGPU",
       "description": "WebGPU and WGSL: setup and fallback, buffers and alignment, shaders, pipelines, drawing, the canvas loop, compute, device loss, GPU timing, and testing. Includes a struct layout script.",
       "version": "0.2.0",
-      "categories": ["graphics", "gpu", "web-development"],
-      "resource_files": 10,
-      "dependencies": "none",
-      "verified_against": "WebGPU and WGSL editor's drafts (21 October 2026), MDN browser-compat-data 8.1.7, the gpuweb implementation status wiki, and Chrome, Firefox and WebKit release notes. Examples run on Dawn. Scoped in skills/webgpu/SOURCES.md (checked 2026-10-22).",
-      "install": "npx skills add LeahyCC/claude-skills@webgpu"
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "graphics",
+        "gpu",
+        "web-development"
+      ],
+      "metadata": {
+        "verified_against": "WebGPU and WGSL editor's drafts (21 October 2026), MDN browser-compat-data 8.1.7, the gpuweb implementation status wiki, and Chrome, Firefox and WebKit release notes. Examples run on Dawn. Scoped in skills/webgpu/SOURCES.md (checked 2026-10-22).",
+        "resource_files": 10,
+        "install": "npx skills add LeahyCC/claude-skills@webgpu"
+      }
     },
     {
       "name": "react-performance",
-      "display_name": "React Performance",
+      "source": "./skills/react-performance",
+      "displayName": "React Performance",
       "description": "Measurement-first React performance optimization — profiling, Core Web Vitals, rendering, bundle size, React Compiler, Server Components, virtualization",
       "version": "1.0.0",
-      "categories": ["performance", "react", "web-development", "optimization"],
-      "resource_files": 8,
-      "dependencies": "none",
-      "verified_against": "React docs (react.dev), Web Vitals specification (web.dev)",
-      "install": "npx skills add LeahyCC/claude-skills@react-performance"
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "performance",
+        "react",
+        "web-development",
+        "optimization"
+      ],
+      "metadata": {
+        "verified_against": "React docs (react.dev), Web Vitals specification (web.dev)",
+        "resource_files": 8,
+        "install": "npx skills add LeahyCC/claude-skills@react-performance"
+      }
     },
     {
       "name": "seo",
-      "display_name": "SEO & GEO",
+      "source": "./skills/seo",
+      "displayName": "SEO & GEO",
       "description": "Production-ready SEO and GEO for Next.js — metadata, sitemaps, structured data, OG images, llms.txt, AI crawler management, and Google's actual guidance (not myths)",
       "version": "1.0.0",
-      "categories": ["seo", "web-development", "nextjs", "marketing"],
-      "resource_files": 6,
-      "dependencies": "none",
-      "verified_against": "Google SEO Starter Guide, Google Structured Data docs, Next.js Metadata API, Web Vitals spec, llmstxt.org",
-      "install": "npx skills add LeahyCC/claude-skills@seo"
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "seo",
+        "web-development",
+        "nextjs",
+        "marketing"
+      ],
+      "metadata": {
+        "verified_against": "Google SEO Starter Guide, Google Structured Data docs, Next.js Metadata API, Web Vitals spec, llmstxt.org",
+        "resource_files": 6,
+        "install": "npx skills add LeahyCC/claude-skills@seo"
+      }
     },
     {
       "name": "api-security",
-      "display_name": "API Security (OWASP)",
+      "source": "./skills/api-security",
+      "displayName": "API Security (OWASP)",
       "description": "OWASP API Security Top 10 (2023) and Web Top 10 (2021) with production Next.js App Router code — access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, SSRF",
       "version": "1.0.0",
-      "categories": ["security", "api", "web-development", "owasp", "nextjs"],
-      "resource_files": 8,
-      "dependencies": "none",
-      "verified_against": "OWASP API Security Top 10 (2023), OWASP Top 10 (2021), Next.js Security Guide, Vercel Conformance",
-      "install": "npx skills add LeahyCC/claude-skills@api-security"
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "security",
+        "api",
+        "web-development",
+        "owasp",
+        "nextjs"
+      ],
+      "metadata": {
+        "verified_against": "OWASP API Security Top 10 (2023), OWASP Top 10 (2021), Next.js Security Guide, Vercel Conformance",
+        "resource_files": 8,
+        "install": "npx skills add LeahyCC/claude-skills@api-security"
+      }
     },
     {
       "name": "product-marketing",
-      "display_name": "Product & Marketing Strategy",
+      "source": "./skills/product-marketing",
+      "displayName": "Product & Marketing Strategy",
       "description": "Product management and marketing strategy — positioning, discovery, go-to-market, prioritization, metrics, copywriting, and production templates. Verified against 19 named sources including Cagan, Dunford, Torres, and Reforge.",
       "version": "1.0.0",
-      "categories": ["product-management", "marketing", "strategy", "go-to-market"],
-      "resource_files": 8,
-      "dependencies": "none",
-      "verified_against": "Cagan/SVPG (Transformed 2024), Dunford (Obviously Awesome 2019, Sales Pitch 2023), Torres (Continuous Discovery Habits 2021), Christensen (JTBD), Reforge, Amplitude (North Star), Intercom (RICE), OpenView (PLG benchmarks), and 10 more primary sources",
-      "install": "npx skills add LeahyCC/claude-skills@product-marketing"
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "product-management",
+        "marketing",
+        "strategy",
+        "go-to-market"
+      ],
+      "metadata": {
+        "verified_against": "Cagan/SVPG (Transformed 2024), Dunford (Obviously Awesome 2019, Sales Pitch 2023), Torres (Continuous Discovery Habits 2021), Christensen (JTBD), Reforge, Amplitude (North Star), Intercom (RICE), OpenView (PLG benchmarks), and 10 more primary sources",
+        "resource_files": 8,
+        "install": "npx skills add LeahyCC/claude-skills@product-marketing"
+      }
     },
     {
       "name": "nextjs-app-router",
-      "display_name": "Next.js App Router",
+      "source": "./skills/nextjs-app-router",
+      "displayName": "Next.js App Router",
       "description": "Version-aware Next.js App Router guidance: component boundaries, data, caching, routing, proxy, errors, metadata, assets and migration. Scoped source review in skills/nextjs-app-router/SOURCES.md.",
       "version": "1.0.0",
-      "categories": ["nextjs", "web-development", "react"],
-      "resource_files": 10,
-      "dependencies": "none",
-      "verified_against": "Scoped Next.js/React documentation checks; see skills/nextjs-app-router/SOURCES.md (checked 2026-10-21)",
-      "install": "npx skills add LeahyCC/claude-skills@nextjs-app-router"
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "nextjs",
+        "web-development",
+        "react"
+      ],
+      "metadata": {
+        "verified_against": "Scoped Next.js/React documentation checks; see skills/nextjs-app-router/SOURCES.md (checked 2026-10-21)",
+        "resource_files": 10,
+        "install": "npx skills add LeahyCC/claude-skills@nextjs-app-router"
+      }
     },
     {
       "name": "prompt-rewrite",
-      "display_name": "Prompt Rewrite",
+      "source": "./skills/prompt-rewrite",
+      "displayName": "Prompt Rewrite",
       "description": "Rewrites a thin coding prompt into a deep one: raw material, expert tools, an exemplar file, and a proof a third party can check.",
       "version": "0.1.0",
-      "categories": ["prompting", "productivity"],
-      "resource_files": 4,
-      "dependencies": "none",
-      "verified_against": "Anthropic prompting best practices, model pages, Claude Code best practices, and skill authoring guide (fetched 2026-10-22). Scoped in skills/prompt-rewrite/SOURCES.md.",
-      "install": "npx skills add LeahyCC/claude-skills@prompt-rewrite"
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "prompting",
+        "productivity"
+      ],
+      "metadata": {
+        "verified_against": "Anthropic prompting best practices, model pages, Claude Code best practices, and skill authoring guide (fetched 2026-10-22). Scoped in skills/prompt-rewrite/SOURCES.md.",
+        "resource_files": 4,
+        "install": "npx skills add LeahyCC/claude-skills@prompt-rewrite"
+      }
+    },
+    {
+      "name": "ux-copy",
+      "source": "./skills/ux-copy",
+      "description": "UX copy patterns for UI text — buttons, errors, empty states, notifications, onboarding, confirmations, voice and tone calibration, and copy auditing",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "ux-writing",
+        "web-development",
+        "content-design"
+      ]
     }
   ]
 }

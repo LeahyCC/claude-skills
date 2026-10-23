@@ -1,21 +1,6 @@
 ---
 name: ux-copy
 description: Use when writing or reviewing UI text — buttons, error messages, empty states, onboarding, confirmation dialogs, notifications, tooltips, labels, and any user-facing copy in React/Next.js components. Covers voice and tone calibration, microcopy patterns, copy auditing, and refactoring existing copy for consistency and clarity.
-metadata:
-  filePattern:
-    - "src/components/**/*.tsx"
-    - "src/components/**/*.jsx"
-    - "src/app/**/*.tsx"
-    - "app/**/*.tsx"
-    - "components/**/*.tsx"
-    - "pages/**/*.tsx"
-    - "src/content/**/*.ts"
-    - "src/constants/**/*.ts"
-    - "content/**/*.ts"
-    - "messages/**/*.json"
-    - "locales/**/*.json"
-  bashPattern: []
-  priority: 50
 ---
 
 # UX Copy — UI Text That Works

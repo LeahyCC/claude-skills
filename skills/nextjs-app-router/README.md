@@ -10,7 +10,7 @@ npx skills add LeahyCC/claude-skills@nextjs-app-router
 
 This existing repository install command is retained; this pilot does not install into your agent directories. In Claude Code, ask for an App Router task or invoke `/nextjs-app-router` after installation (plugin distributions may namespace the command).
 
-Claude uses the description to decide relevance. Editing `app/**` or running `next build` does not itself guarantee activation. Existing `metadata.filePattern`, `metadata.bashPattern` and `metadata.priority` are retained as custom data for external tooling; Claude Code does not act on that metadata. No executable consumer of those patterns was found in this repo. Claude Code's top-level `paths` is a separate, optional host extension, not the same field.
+Claude uses the description to decide relevance. Editing `app/**` or running `next build` does not itself guarantee activation. The old `metadata` trigger patterns were removed because no tool reads them. Claude Code's top-level `paths` is a separate, optional field, not used here.
 
 The skill keeps standard name/description and existing metadata for portability. It adds no Claude-only invocation control, hooks or dynamic shell execution. Other Agent Skills hosts choose their own loading/invocation rules.
 

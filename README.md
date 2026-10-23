@@ -25,6 +25,17 @@ npx skills add LeahyCC/claude-skills@<skill>
 npx skills add LeahyCC/claude-skills@wcag-accessibility
 ```
 
+### Claude Code plugin
+
+Inside Claude Code:
+
+```text
+/plugin marketplace add LeahyCC/claude-skills
+/plugin install webgpu@leahycc-skills
+```
+
+Each skill is its own plugin. `leahycc-skills@leahycc-skills` installs all of them.
+
 ### Slash commands
 
 Copy the file into the project's `.claude/commands/` directory:
