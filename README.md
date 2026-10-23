@@ -51,6 +51,7 @@ Each skill has its own page: install, what it covers, and the source it was chec
 | [api-security](./skills/api-security/) | OWASP API Top 10 (2023) and Web Top 10 (2021) for Next.js APIs |
 | [product-marketing](./skills/product-marketing/) | Positioning, discovery, go-to-market, prioritization, metrics, and copy |
 | [nextjs-app-router](./skills/nextjs-app-router/) | Next.js 16 App Router: Server Components, caching, routing, proxy, migration |
+| [prompt-rewrite](./skills/prompt-rewrite/) | Turn a thin prompt into a deep one: raw material, expert tools, an exemplar file, and a proof |
 | typescript-strict | Planned. TypeScript handbook |
 
 ## Commands
