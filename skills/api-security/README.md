@@ -1,6 +1,6 @@
 # api-security
 
-OWASP API Security Top 10 (2023) with production Next.js App Router code. Covers access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, and SSRF — with FAIL/PASS examples for every pattern.
+OWASP API Security Top 10 (2023) with production Next.js App Router code. Covers access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, SSRF, and AI tools on those APIs, with FAIL/PASS examples for every pattern.
 
 ## Install
 
@@ -17,6 +17,7 @@ npx skills add LeahyCC/claude-skills@api-security
 - **OWASP Web Top 10 (2025)** — cross-referenced to API-specific resources
 - **FAIL/PASS side-by-side** — see the vulnerability and the fix together
 - **Audit commands**: grep and find patterns to scan your codebase for each vulnerability class
+- **AI tools**: the model can pick the call. The tool still checks the session, and a write needs an approval the browser cannot forge
 
 ## What it catches
 
@@ -62,6 +63,7 @@ const UpdateSchema = z.strictObject({
 | [Data Exposure](resources/data-exposure.md) | API3, API6 | A06, A10 | DAL pattern, DTOs, error sanitization, response filtering, pagination |
 | [Supply Chain](resources/supply-chain.md) | API9, API10 | A03, A08 | Dependency audit, env vars, CI/CD, third-party API validation |
 | [SSRF & Logging](resources/ssrf-and-logging.md) | API7 | A01, A09 | URL validation, fetch safety, structured logging, log injection |
+| [AI Tools](resources/ai-tools.md) | API1, API5 | A01 | Session identity on tool calls, signed approval, MCP |
 
 ## What's Different
 
@@ -96,5 +98,8 @@ const UpdateSchema = z.strictObject({
 - [Next.js Security Guide](https://nextjs.org/docs/app/guides/data-security)
 - [Next.js Security Blog — Server Components and Actions](https://nextjs.org/blog/security-nextjs-server-components-actions)
 - [Vercel Conformance — Security Headers](https://vercel.com/docs/workflow-collaboration/conformance/rules/NEXTJS_MISSING_SECURITY_HEADERS)
+- [OWASP GenAI LLM Top 10 2026](https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/)
+- [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
+- [AI SDK tool approvals](https://ai-sdk.dev/docs/agents/tool-approvals)
 
 Earlier targeted review: October 2026. [Scoped deployment/GraphQL follow-up](SOURCES.md) checked 2026-10-21; this does not certify every security example.
