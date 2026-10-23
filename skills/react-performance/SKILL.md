@@ -1,21 +1,6 @@
 ---
 name: react-performance
 description: Use when optimizing React component rendering, fixing Core Web Vitals (LCP, INP, CLS), reducing bundle size, diagnosing re-renders, code splitting, memoization decisions, Server Component patterns, or profiling React apps. Covers React 19, React Compiler, useTransition, useDeferredValue, Suspense, and Next.js optimization.
-metadata:
-  filePattern:
-    - "src/components/**/*.tsx"
-    - "src/components/**/*.jsx"
-    - "src/app/**/*.tsx"
-    - "app/**/*.tsx"
-    - "components/**/*.tsx"
-    - "pages/**/*.tsx"
-  bashPattern:
-    - "lighthouse"
-    - "next build"
-    - "next analyze"
-    - "ANALYZE=true"
-    - "web-vitals"
-  priority: 50
 ---
 
 # React Performance

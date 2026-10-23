@@ -48,7 +48,7 @@ description: >
 ---
 ```
 
-New skills use only `name` and `description`. Claude Code and the skills CLI do not act on keys under `metadata`, so file and command trigger patterns there do not trigger anything. Older skills keep theirs as custom data.
+Use only `name` and `description`. Claude Code and the skills CLI do not act on keys under `metadata`, so file and command trigger patterns there do not trigger anything.
 
 ### Writing Guidelines
 

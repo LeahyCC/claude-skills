@@ -1,22 +1,6 @@
 ---
 name: seo
 description: Use when adding metadata, creating sitemaps, generating robots.txt, implementing structured data (JSON-LD), optimizing for search engines, building OG images, creating llms.txt for AI search engines, or fixing SEO issues in Next.js applications. Covers Google's official guidance, GEO (Generative Engine Optimization), Core Web Vitals, and common SEO myths.
-metadata:
-  filePattern:
-    - "src/app/**/layout.tsx"
-    - "src/app/**/page.tsx"
-    - "app/**/layout.tsx"
-    - "app/**/page.tsx"
-    - "src/app/sitemap.ts"
-    - "src/app/robots.ts"
-    - "src/app/opengraph-image.tsx"
-    - "app/sitemap.ts"
-    - "app/robots.ts"
-  bashPattern:
-    - "lighthouse"
-    - "next build"
-    - "next-sitemap"
-  priority: 50
 ---
 
 # SEO — Search & AI Engine Optimization

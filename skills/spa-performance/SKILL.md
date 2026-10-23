@@ -5,19 +5,6 @@ description: >
   Web Workers, OffscreenCanvas, scheduler.yield, virtualized or windowed
   rendering, canvas and DOM editors, live updates, or a performance harness.
   Not React re-renders, bundles, or Server Components (see react-performance).
-metadata:
-  filePattern:
-    - "**/*.worker.ts"
-    - "**/*.worker.js"
-    - "**/*.worker.mjs"
-    - "**/*frame-sampler*"
-    - "**/*scheduler.ts"
-    - "**/measure.ts"
-  bashPattern:
-    - "pnpm measure"
-    - "npm run measure"
-    - "--enable-precise-memory-info"
-  priority: 40
 ---
 
 # SPA performance

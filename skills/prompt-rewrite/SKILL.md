@@ -8,13 +8,6 @@ description: >
   security, and accessibility. Use when the user says "rewrite my prompt",
   "improve this prompt", "make this prompt better", "deeper version of this
   task", or pastes a rough task and asks for a proper prompt.
-metadata:
-  filePattern:
-    - "**/*.prompt.md"
-    - "**/prompts/**/*.md"
-    - ".claude/commands/*.md"
-  bashPattern: []
-  priority: 30
 ---
 
 # Prompt rewrite

@@ -1,23 +1,6 @@
 ---
 name: nextjs-app-router
 description: Build, review, or migrate Next.js App Router applications with version-aware component boundaries, data fetching, caching, routing, and mutations. Use for App Router implementation and architecture tasks, not generic React optimization, copy-only edits, or Pages Router fixes that do not involve migration.
-metadata:
-  filePattern:
-    - "app/**/*.tsx"
-    - "app/**/*.ts"
-    - "src/app/**/*.tsx"
-    - "src/app/**/*.ts"
-    - "proxy.ts"
-    - "src/proxy.ts"
-    - "next.config.ts"
-    - "next.config.js"
-    - "next.config.mjs"
-  bashPattern:
-    - "next dev"
-    - "next build"
-    - "next start"
-    - "next typegen"
-  priority: 50
 ---
 
 # Next.js App Router
