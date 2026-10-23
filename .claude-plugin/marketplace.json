@@ -129,7 +129,7 @@
       "name": "api-security",
       "source": "./skills/api-security",
       "displayName": "API Security (OWASP)",
-      "description": "OWASP API Security Top 10 (2023) and Web Top 10 (2021) with production Next.js App Router code — access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, SSRF",
+      "description": "OWASP API Security Top 10 (2023) and Web Top 10 (2025) with production Next.js App Router code — access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, SSRF, and AI tools on those APIs",
       "version": "1.0.0",
       "author": {
         "name": "LeahyCC"
@@ -143,8 +143,8 @@
         "nextjs"
       ],
       "metadata": {
-        "verified_against": "OWASP API Security Top 10 (2023), OWASP Top 10 (2021), Next.js Security Guide, Vercel Conformance",
-        "resource_files": 8,
+        "verified_against": "OWASP API Security Top 10 (2023), OWASP Top 10 (2025), OWASP GenAI LLM Top 10 (2026), OWASP Top 10 for Agentic Applications (2026), Next.js Security Guide, Vercel Conformance, AI SDK tool approvals",
+        "resource_files": 9,
         "install": "npx skills add LeahyCC/claude-skills@api-security"
       }
     },

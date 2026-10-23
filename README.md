@@ -60,7 +60,7 @@ Each skill has its own page: install, what it covers, and the source it was chec
 | [webgpu](./skills/webgpu/) | WebGPU and WGSL: setup and fallback, buffers, shaders, pipelines, drawing, canvas, compute, device loss, GPU timing, testing |
 | [seo](./skills/seo/) | Search and AI-search setup for Next.js: metadata, sitemaps, JSON-LD, llms.txt |
 | [ux-copy](./skills/ux-copy/) | UI text: buttons, errors, empty states, confirmations, tone |
-| [api-security](./skills/api-security/) | OWASP API Top 10 (2023) and Web Top 10 (2021) for Next.js APIs |
+| [api-security](./skills/api-security/) | OWASP API Top 10 (2023) and Web Top 10 (2025) for Next.js APIs, including AI tool calls |
 | [product-marketing](./skills/product-marketing/) | Positioning, discovery, go-to-market, prioritization, metrics, and copy |
 | [nextjs-app-router](./skills/nextjs-app-router/) | Next.js 16 App Router: Server Components, caching, routing, proxy, migration |
 | [prompt-rewrite](./skills/prompt-rewrite/) | Turn a thin prompt into a deep one: raw material, expert tools, an exemplar file, and a proof |

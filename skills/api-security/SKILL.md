@@ -1,11 +1,11 @@
 ---
 name: api-security
-description: OWASP API Security Top 10 (2023) with production Next.js App Router code — access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, SSRF
+description: OWASP API Security Top 10 (2023) with production Next.js App Router code — access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, SSRF, and AI tools on those APIs
 ---
 
 # API Security — OWASP API Security Top 10 (2023) for Next.js
 
-Production-grade API security patterns for Next.js App Router. Covers every category in the OWASP API Security Top 10 (2023) with cross-references to the OWASP Web Top 10 (2025). Verified against the official OWASP specifications.
+Production-grade API security patterns for Next.js App Router. Covers every category in the OWASP API Security Top 10 (2023) with cross-references to the OWASP Web Top 10 (2025). AI tools attached to those APIs are in [AI Tools](resources/ai-tools.md). Verified against the official OWASP specifications.
 
 ## Architecture
 
@@ -35,6 +35,7 @@ The **Data Access Layer (DAL)** is the central security architecture recommended
 | [Data Exposure](resources/data-exposure.md) | API3, API6 | A06, A10 | DAL pattern, DTOs, error sanitization, response filtering |
 | [Supply Chain](resources/supply-chain.md) | API9, API10 | A03, A08 | Dependencies, env vars, CI/CD, third-party APIs |
 | [SSRF & Logging](resources/ssrf-and-logging.md) | API7 | A01, A09 | URL validation, fetch safety, secure logging, audit trails |
+| [AI Tools](resources/ai-tools.md) | API1, API5 | A01 | Tool calls, session identity, signed approval, MCP |
 
 ## Decision Matrix: "Where Do I Add Security?"
 
@@ -45,6 +46,7 @@ The **Data Access Layer (DAL)** is the central security architecture recommended
 | Server Action (`'use server'`) | Auth + authz, input validation, return filtering | **Also a public HTTP endpoint** — not protected by the UI |
 | Data Access Layer (`data/*.ts`) | Ownership checks, field filtering, parameterized queries | Last line — defense in depth |
 | `next.config.ts` | Security headers, redirects, allowed image domains | Static security baseline |
+| Tool `execute` (`lib/ai`) | Session user, one action, signed approval for writes | The model chooses the call. The session is the caller |
 
 ## The #1 Mistake: Server Actions Are Public Endpoints
 
@@ -84,6 +86,9 @@ Notice: the PASS version doesn't accept `userId` as a parameter — it derives i
 | Are env vars only accessed in the DAL? | Move to server-only module | [Supply Chain](resources/supply-chain.md) |
 | Does `fetch()` in server code validate URLs? | Add URL allowlist | [SSRF & Logging](resources/ssrf-and-logging.md) |
 | Are errors sanitized before returning to client? | Return generic messages | [Data Exposure](resources/data-exposure.md) |
+| Does tool `execute` take the user from the session? | Remove `userId` from the tool schema | [AI Tools](resources/ai-tools.md) |
+| Do write tools require an approval the client cannot forge? | Sign it, show the real arguments, spend it once for that user | [AI Tools](resources/ai-tools.md) |
+| Is each MCP server pinned, with its own credential? | Name the tools. Do not forward the session | [AI Tools](resources/ai-tools.md) |
 
 ## OWASP API Security Top 10 (2023) — Full Mapping
 
@@ -115,6 +120,19 @@ Notice: the PASS version doesn't accept `userId` as a parameter — it derives i
 | A09 | Security Logging and Alerting Failures | [ssrf-and-logging](resources/ssrf-and-logging.md) |
 | A10 | Mishandling of Exceptional Conditions | [data-exposure](resources/data-exposure.md) |
 
+## AI tools — where they map
+
+The model is a component until it can call a tool. After that, the agentic list applies. This skill covers the tool call on a Next.js route, in [AI Tools](resources/ai-tools.md). Token spend stays in [rate-limiting](resources/rate-limiting.md).
+
+| Risk | Resource |
+|------|----------|
+| LLM01 Prompt Injection, LLM03 Excessive Agency, LLM10 Improper Output Handling | [ai-tools](resources/ai-tools.md) |
+| LLM06 Unbounded Consumption | [rate-limiting](resources/rate-limiting.md) |
+| ASI01 Goal Hijack, ASI02 Tool Misuse, ASI03 Identity and Privilege Abuse, ASI05 Unexpected Code Execution, ASI09 Human-Agent Trust Exploitation | [ai-tools](resources/ai-tools.md) |
+| ASI04 Agentic Supply Chain (MCP server, tool definitions) | [ai-tools](resources/ai-tools.md), [supply-chain](resources/supply-chain.md) |
+
+Poisoned training data, embedding stores, cross-session memory, and agents talking to each other are outside this skill.
+
 ## Code Review Checklist
 
 When reviewing API code in Next.js, verify:
@@ -132,5 +150,8 @@ When reviewing API code in Next.js, verify:
 - [ ] No `fetch()` to user-controlled URLs without allowlist
 - [ ] Dependencies audited — no known vulnerabilities
 - [ ] `.env*.local` in `.gitignore`
+- [ ] Tool `execute` reads the user from the session, not from arguments
+- [ ] Writes, payments, and sends use a signed tool approval, shown as the real arguments, and spent once for that user
+- [ ] MCP tools are a named list. The server has its own credential, not the user's session
 
 For deployment-key, GraphQL enforcement and optional provider guidance, see the scoped [source review](SOURCES.md); use the target application's installed versions and configuration.
