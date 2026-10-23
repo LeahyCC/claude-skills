@@ -2,16 +2,25 @@
 
 WebGPU needs four things to work: a secure page, a browser that ships it, an adapter, and a device. Each step can say no. Plan the fallback before the first draw call.
 
-Support numbers are from MDN browser-compat-data 8.1.7 and the browsers' release notes, checked 2026-10-22. API rules are from the WebGPU editor's draft of 21 October 2026. Sources are in [SOURCES.md](../SOURCES.md).
+Sources are in [SOURCES.md](../SOURCES.md).
+
+## Contents
+
+- Support
+- Detect, then fall back
+- Adapter
+- Device
+- Old tutorials
+- Checklist
 
 ## Support
 
 | Browser | Since | Gaps |
 | --- | --- | --- |
-| Chrome, Edge | 113 on Windows, macOS, ChromeOS | Linux from 144, Intel Gen12 and newer at first |
-| Chrome Android | 121 | Android 12 and newer, Qualcomm and ARM GPUs at launch |
-| Firefox | 141 on Windows | macOS on Apple silicon from 145 (Tahoe) and 147 (older macOS). No Intel Macs, no Linux, no Android. |
-| Safari macOS, iOS, iPadOS | 26 | |
+| Chrome, Edge | 113 on Windows, macOS, ChromeOS | Linux: Intel Gen12 and newer from 144, NVIDIA on Wayland (driver 535.183.01 and newer) from 147, others behind a flag. Windows on ARM64 behind a flag. |
+| Chrome Android | 121 | Android 12 and newer on ARM, Qualcomm, and Intel GPUs. Imagination GPUs on Android 16 from 139. Samsung Xclipse not yet. |
+| Firefox | 141 on Windows | macOS from 147 (Apple silicon on Tahoe from 145). No Linux or Android release yet. |
+| Safari macOS, iOS, iPadOS, visionOS | 26 | |
 
 Workers have `navigator.gpu` in the same versions. Firefox leaves it out of service workers. `OffscreenCanvas.getContext('webgpu')` matches, but compat data still marks Firefox as Windows only for it. Test before you rely on that on a Mac.
 
@@ -92,7 +101,7 @@ The spec gives no fallback. Pick one by what you built:
 
 ### Compatibility mode
 
-`featureLevel: 'compatibility'` reaches GPUs that only run OpenGL ES 3.1. Chrome shipped it in 146 for Android 10 and newer. Firefox and Safari do not support it, and a browser that cannot enforce it gives you a core adapter instead.
+`featureLevel: 'compatibility'` reaches GPUs that only run OpenGL ES 3.1. Chrome shipped it in 146 on Android. ChromeOS on OpenGL ES 3.1 and Windows on Direct3D 11 are being explored. Firefox and Safari do not support it, and a browser that cannot enforce it gives you a core adapter instead.
 
 Limits are lower. `maxTextureDimension2D` is 4096, `maxComputeInvocationsPerWorkgroup` is 128, `maxUniformBufferBindingSize` is 16384, and the vertex stage has no storage buffers. If your shaders fit, request it and check `adapter.features.has('core-features-and-limits')` to know which you got.
 
@@ -141,8 +150,9 @@ Request each only if `adapter.features` has it, and keep a path without it.
 | `compatibilityMode: true` | `featureLevel: 'compatibility'` |
 | `maxInterStageShaderComponents` | Removed. Use `maxInterStageShaderVariables`. |
 | Request a second device from the same adapter | Rejects. Request a new adapter. |
-| No WebGPU on Linux | Chrome has it since 144. Firefox still does not. |
+| No WebGPU on Linux | Chrome has it since 144 on Intel, 147 on NVIDIA with Wayland. Firefox still does not. |
 | Safari needs a flag | Shipped in Safari 26 |
+| `@align(4)` on a `vec3` member | Rejected since Chrome 133. `@align` must be a multiple of the type's own alignment. |
 
 ## Checklist
 

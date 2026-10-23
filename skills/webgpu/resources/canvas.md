@@ -2,7 +2,16 @@
 
 A WebGPU canvas is a `GPUCanvasContext` that hands you one texture per frame. Most canvas bugs are a stale texture, a blurry or stretched size, or a React effect that leaks a device.
 
-Facts below are from the WebGPU editor's draft of 21 October 2026, MDN `GPUCanvasContext.configure`, and MDN browser-compat-data, checked 2026-10-22. Sources are in [SOURCES.md](../SOURCES.md).
+Sources are in [SOURCES.md](../SOURCES.md).
+
+## Contents
+
+- Configure
+- One texture per frame
+- Size
+- React
+- In a worker
+- Checklist
 
 ## Configure
 
@@ -24,7 +33,7 @@ context.configure({
 | `alphaMode` | `'opaque'` | Use `'premultiplied'` to show the page through. Your shader must then output premultiplied color. |
 | `colorSpace` | `'srgb'` | `'display-p3'` for wide gamut |
 | `toneMapping` | `{ mode: 'standard' }` | `'extended'` with `rgba16float` for HDR |
-| `usage` | `RENDER_ATTACHMENT` | Add `STORAGE_BINDING` to write from compute, if the format allows it |
+| `usage` | `RENDER_ATTACHMENT` | Add `STORAGE_BINDING` to write from compute. `rgba8unorm` allows it. `bgra8unorm`, which `getPreferredCanvasFormat()` often returns, needs the `bgra8unorm-storage` feature. |
 
 Pipelines that draw to the canvas must use the same `format` in their color target. Build them after you know it.
 

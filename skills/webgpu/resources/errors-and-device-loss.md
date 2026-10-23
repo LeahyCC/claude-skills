@@ -2,7 +2,17 @@
 
 WebGPU calls almost never throw. A bad call makes an error object and reports it later. The device itself can also disappear at any time. An app that ignores both shows a black canvas with nothing in the console that it chose to log.
 
-Facts below are from the WebGPU editor's draft of 21 October 2026, checked 2026-10-22. Recovery steps follow Brandon Jones's device-loss guide (a Chrome WebGPU spec editor, not normative). Sources are in [SOURCES.md](../SOURCES.md).
+Recovery steps follow Brandon Jones's device-loss guide. He is a Chrome WebGPU spec editor, and the guide is not normative. Sources are in [SOURCES.md](../SOURCES.md).
+
+## Contents
+
+- How errors arrive
+- Always listen for uncaptured errors
+- Scope the calls you can handle
+- Label everything
+- Shader compile errors
+- Device loss
+- Checklist
 
 ## How errors arrive
 
@@ -90,7 +100,7 @@ After loss, every call is a silent no-op. No errors are reported, not even for b
 
 ### Recover
 
-1. Get a **new adapter**. An adapter that already made a device is consumed, and `requestDevice` on it returns a device that is already lost.
+1. Get a **new adapter**. An adapter that already made a device is consumed, and a second `requestDevice` on it rejects. An adapter can also expire, and then `requestDevice` gives a device that is already lost. Either way, the old adapter is no use.
 2. Request a new device with the same features and limits.
 3. Recreate every buffer, texture, sampler, bind group, and pipeline. Nothing from the old device works on the new one.
 4. Reconfigure the canvas with the new device.
@@ -135,7 +145,7 @@ async function startGpu(
 
 Each renderer's `destroy()` must call `device.destroy()`. That resolves `lost` with `'destroyed'`, and the loop stops.
 
-Test it. In Chrome, `chrome://gpucrash` crashes the GPU process. Calling `device.destroy()` from the console exercises the same path, but with reason `'destroyed'`, so stub the check while testing.
+Test it. In Chrome, the `chrome://gpucrash` debug page crashes the GPU process. That page was not rechecked for this skill, so confirm it in your Chrome version. Calling `device.destroy()` from the console exercises the same path, but with reason `'destroyed'`, so stub the check while testing.
 
 ## Checklist
 

@@ -2,7 +2,18 @@
 
 Every byte the GPU reads lives in a buffer or a texture you made. Most WebGPU bugs here are a usage flag, an alignment, or a buffer used while it is mapped.
 
-Facts below are from the WebGPU editor's draft of 21 October 2026, checked 2026-10-22. Sources are in [SOURCES.md](../SOURCES.md).
+Sources are in [SOURCES.md](../SOURCES.md).
+
+## Contents
+
+- Pick the upload path
+- Usage flags
+- Alignment
+- Mapping and readback
+- Textures
+- New memory reads as zero
+- Freeing memory
+- Checklist
 
 ## Pick the upload path
 
@@ -147,6 +158,10 @@ encoder.copyTextureToBuffer(
   { width, height },
 )
 ```
+
+## New memory reads as zero
+
+The spec requires a new buffer or texture to read as zero until you write it. Do not clear it yourself just to be safe. That is a wasted pass.
 
 ## Freeing memory
 

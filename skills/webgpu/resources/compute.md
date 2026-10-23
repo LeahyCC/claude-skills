@@ -4,7 +4,17 @@ A compute pass runs a function over a grid of invocations, with no triangles and
 
 When compute is worth it at all is a performance question. That decision is in the `spa-performance` skill, in its off-thread resource.
 
-Facts below are from the WebGPU and WGSL editor's drafts of 21 October 2026, checked 2026-10-22. Sources are in [SOURCES.md](../SOURCES.md).
+Sources are in [SOURCES.md](../SOURCES.md).
+
+## Contents
+
+- The grid
+- Default limits
+- Round up, then bounds-check
+- Sharing inside a workgroup
+- Atomics
+- Getting results
+- Checklist
 
 ## The grid
 

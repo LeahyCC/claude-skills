@@ -2,7 +2,19 @@
 
 WGSL is the only shader language WebGPU takes. It compiles when the browser makes the pipeline, so its mistakes show up as validation errors, not crashes. The ones that pass validation and still draw wrong are layout and uniformity.
 
-Facts below are from the WGSL editor's draft of 21 October 2026, checked 2026-10-22. Sources are in [SOURCES.md](../SOURCES.md).
+Sources are in [SOURCES.md](../SOURCES.md).
+
+## Contents
+
+- Memory layout
+- Address spaces
+- Uniformity
+- Overrides
+- Extensions
+- Precision and limits
+- Shaders from outside the app
+- Compiler messages
+- Checklist
 
 ## Memory layout
 
@@ -49,7 +61,24 @@ struct Light {
 const data = new Float32Array([px, py, pz, intensity, r, g, b, range])
 ```
 
-Write the offsets in a comment next to every struct shared with the CPU. A library such as `webgpu-utils` can compute them from the shader, and that removes the trap entirely.
+`@align(n)` can raise a member's alignment, never lower it. `n` must be a multiple of the type's own alignment, so `@align(4)` on a `vec3f` is an error (Chrome 133 and the spec).
+
+Do not work offsets out by hand. Run the bundled script on the shader and copy the indexes it prints:
+
+```bash
+node scripts/wgsl-layout.mjs shaders/lights.wgsl            # storage layout
+node scripts/wgsl-layout.mjs shaders/lights.wgsl --uniform  # also flags uniform-only errors
+```
+
+```
+struct Light  size 32  align 16
+      0  position: vec3f  size 12 align 16  [f32 index 0]
+     12  intensity: f32  size 4 align 4  [f32 index 3]
+     16  color: vec3f  size 12 align 16  [f32 index 4]
+     28  range: f32  size 4 align 4  [f32 index 7]
+```
+
+It follows the WGSL layout rules and matches the spec's worked examples. It exits non-zero on a uniform-rule or `@align` error, so it can run in CI. Write the offsets in a comment next to every struct shared with the CPU.
 
 ### Uniform buffers are stricter
 
@@ -89,16 +118,16 @@ FAIL.
 
 ```wgsl
 if (in.mask > 0.5) {
-  color = textureSample(tex, samp, in.uv) // error: derivative_uniformity
+  color = textureSample(tex, samp, in.uv); // error: derivative_uniformity
 }
 ```
 
 PASS. Sample first, then choose.
 
 ```wgsl
-let sampled = textureSample(tex, samp, in.uv)
+let sampled = textureSample(tex, samp, in.uv);
 if (in.mask > 0.5) {
-  color = sampled
+  color = sampled;
 }
 ```
 
@@ -143,6 +172,12 @@ Subgroups shipped in Chrome 134. Treat them as optional everywhere else.
 - **No recursion.**
 - **No 64-bit types.** No `f64`, no `i64`. Split a 64-bit value into two `u32`.
 - **Out-of-bounds reads and writes never leave the resource**, but the result is not defined. A read can return zero or any value inside the buffer. A write can land anywhere inside it or be dropped. Bounds-check yourself.
+
+## Shaders from outside the app
+
+Treat WGSL from the network or typed by a user as code you are about to run. The browser keeps it inside its buffers and stops runaway work with a GPU timeout, but a shader that runs long enough still trips the timeout and loses the device. Review it, or run it on a separate device you can afford to lose.
+
+You never need to clear new memory for safety. The spec requires buffers, textures, and workgroup memory to read as zero until written. Clear them only when your algorithm needs a value other than zero.
 
 ## Compiler messages
 

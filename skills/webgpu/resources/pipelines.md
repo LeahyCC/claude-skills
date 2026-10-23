@@ -2,7 +2,16 @@
 
 A pipeline is the compiled shader plus every fixed setting. A bind group is the set of buffers and textures one draw reads. Getting these two right decides how much the frame loop costs.
 
-Facts below are from the WebGPU editor's draft of 21 October 2026, checked 2026-10-22. The binding-frequency convention is from Brandon Jones's bind group guide (a Chrome WebGPU spec editor, not normative). Sources are in [SOURCES.md](../SOURCES.md).
+The binding-frequency convention is from Brandon Jones's bind group guide. He is a Chrome WebGPU spec editor, and the guide is not normative. Sources are in [SOURCES.md](../SOURCES.md).
+
+## Contents
+
+- What goes where
+- Create pipelines async
+- Explicit layouts
+- Group by how often it changes
+- Render bundles
+- Checklist
 
 ## What goes where
 

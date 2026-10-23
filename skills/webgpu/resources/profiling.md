@@ -2,7 +2,15 @@
 
 `performance.now()` around `submit()` measures how long it took to queue work, not how long the GPU took to do it. GPU time needs timestamp queries. Whether the GPU is even the bottleneck is a question for the `spa-performance` skill: measure the frame there first.
 
-Facts below are from the WebGPU editor's draft of 21 October 2026, checked 2026-10-22. Sources are in [SOURCES.md](../SOURCES.md).
+Sources are in [SOURCES.md](../SOURCES.md).
+
+## Contents
+
+- Which clock answers what
+- Timestamp queries
+- Reading the numbers
+- Before you read GPU time
+- Checklist
 
 ## Which clock answers what
 
@@ -89,8 +97,9 @@ Keep `resolve()`, `submit()`, and `read()` in the same synchronous block, as abo
 ## Reading the numbers
 
 - **Units are nanoseconds**, as 64-bit unsigned integers.
-- **Precision is reduced on purpose.** The spec requires it, as with other high-resolution timers. Chrome quantizes to 100 microseconds by default, and its `enable-webgpu-developer-features` flag removes that for local profiling. That Chrome detail was checked against a summary of Chrome's developer-features page, not the full page.
+- **Precision is reduced on purpose.** The spec requires it, as with other high-resolution timers. Chrome quantizes to 100 microseconds. Its `chrome://flags/#enable-webgpu-developer-features` flag turns that off for local profiling.
 - **Values can be negative or out of order.** Drop any sample where end is not after start.
+- **A pass shorter than the quantum reads as zero.** A small compute pass run through Dawn on an Apple GPU gave identical start and end values, and the sketch above dropped the sample. Time a group of passes together, or turn on developer features.
 - **Average many frames.** One pass sample is noise. Report a median and a high percentile.
 - **A pass is the smallest unit.** Timestamps inside a pass are not part of core WebGPU. Split work into passes to time it separately, and know that the split itself has a cost.
 

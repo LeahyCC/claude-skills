@@ -42,7 +42,7 @@
     {
       "name": "webgpu",
       "path": "skills/webgpu",
-      "description": "WebGPU and WGSL: setup and fallback, buffers and alignment, shaders, pipelines, the canvas loop, compute, device loss, and GPU timing.",
+      "description": "WebGPU and WGSL: setup and fallback, buffers and alignment, shaders, pipelines, drawing, the canvas loop, compute, device loss, GPU timing, and testing. Includes a struct layout script.",
       "categories": ["graphics", "gpu", "web-development"],
       "triggers": {
         "filePatterns": ["**/*.wgsl", "**/*webgpu*", "**/*WebGPU*", "**/*.gpu.ts"],
