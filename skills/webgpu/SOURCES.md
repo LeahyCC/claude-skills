@@ -33,6 +33,8 @@ Run on 2026-10-22 on an Apple GPU (Metal) with Node 24.
 | `wgsl-layout.mjs` against the three layout examples in the WGSL spec | Every offset and size matches. Uniform checks flag the spec's invalid cases and pass its valid ones. |
 | `wgsl-layout.mjs` against a real GPU: a shader writes markers into 9 members of the spec's struct B | All 9 land at the offsets the script printed |
 
+Model tasks: six paired tasks and twenty selection prompts ran on 2026-10-22. The skill scored 19 of 19 against 15 of 19 without it, and loaded on 9 of 10 relevant prompts and 0 of 10 others. Details are in `reviews/webgpu/validation.md`.
+
 Not run: the React component in a browser, the worker example, render-basics in a browser, headless Chrome, and other GPUs or browsers. Two larger compute runs crashed inside the Dawn Node package, not in the skill's code, and were not pursued.
 
 ## Not confirmed from a primary source

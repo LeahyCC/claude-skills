@@ -2,7 +2,7 @@
 
 Written 2026-10-22, before any model run. Run each prompt against Claude with the skill and without it, as in the Next.js pilot. Score each criterion 0 or 1. One run per task is exploratory, not a statistical estimate.
 
-Status: **not run yet.** Running these uses Colin's Claude subscription and needs his approval first, as the Next.js pilot did.
+Status: **run on 2026-10-22** with Colin's approval. Results and grading are in [validation.md](./validation.md).
 
 ## Behaviour
 
