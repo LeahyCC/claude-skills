@@ -51,7 +51,9 @@ Choose the order yourself. <Ordered steps only when order is the point.>
 - <command> passes, unchanged from before
 - <metric> goes from <baseline> to <target>, measured the same way both times
 - <third-party check: axe, contract test, screenshot diff, user task>
+- New tests fail before the change and pass after; show both runs
 Show the command output as evidence, not a statement that it passed.
+<If a stub or mock would let a check pass regardless, name it here and what it means for the proof.>
 </proof>
 
 <constraints>

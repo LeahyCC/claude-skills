@@ -50,7 +50,7 @@ draft prompt
 6. hand back --------> four answers, the prompt, how to enforce the proof
 ```
 
-1. **Look first.** Read what the draft points at: the files, `package.json` scripts, the test setup, docs that govern the area. Find one existing file that already does this kind of thing well; it becomes the exemplar. Never invent a path, script, or number. When something is out of reach, write a marked placeholder (`<path to the slow page>`).
+1. **Look first.** Read what the draft points at: the files, `package.json` scripts, the test setup, docs that govern the area. Take the package manager from the lockfile (`pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `package-lock.json`); with no lockfile, write `npm run`. Find one existing file that already does this kind of thing well; it becomes the exemplar. Never invent a path, script, or number. When something is out of reach, write a marked placeholder (`<path to the slow page>`).
 2. **Size it.** Pick one shape from [template.md](./resources/template.md):
    - **Short:** the diff fits in one sentence. Return 3 to 6 lines: the change, the exemplar, the proof.
    - **Full:** multi-file, unfamiliar code, or the approach is unclear. Use the full template and add "plan first and wait for approval".
@@ -77,6 +77,7 @@ Worked rewrites: [examples.md](./resources/examples.md).
 | Do | Do not |
 | --- | --- |
 | Name the proof as a command, number, or pass/fail, and ask for its output as evidence | "Double-check your work" (adds cost on models that already self-check, and proves nothing) |
+| Make sure the proof can fail: new tests fail before the change, numbers beat run-to-run noise, the check hits the real thing | A proof a stub, mock, or lucky run would pass anyway |
 | Give the reason behind a constraint | Bare "NEVER" rules; absolute words are for true invariants only |
 | Name the tools and the evidence available | A fixed step list the model must follow (current models plan better than a prescribed order) |
 | Point at one exemplar file to follow | Describe a pattern the repo already shows |
@@ -98,6 +99,7 @@ For long unattended runs, add one line: a fresh subagent reviews the diff agains
 - [ ] Every path, script, and tool was seen in the repo or is a marked placeholder
 - [ ] Raw material is raw (trace, log, code, data, recording), not a summary, and an exemplar file is named
 - [ ] The proof is something a third party could run, with a number or a pass/fail
+- [ ] The proof can fail: if a stub, mock, or missing tool would let it pass regardless, the prompt says so
 - [ ] No constraint fights the task, and no two instructions contradict each other
 - [ ] No filler adjectives without a check behind them
 - [ ] Length follows the material: a short draft rarely needs more than 35 lines, but a full spec can run longer

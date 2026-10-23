@@ -33,4 +33,4 @@ Refactoring: Martin Fowler, *Refactoring*, 2nd ed. (2018); Michael Feathers, *Wo
 
 ## Not claimed
 
-- No measured uplift yet. [evals.md](./resources/evals.md) holds the cases; until they have been run, the skill makes prompts specific and checkable and promises nothing more.
+- One small eval on Sonnet (three cases, results in [evals.md](./resources/evals.md)). It shows the skill keeps scope and size where a strong hand-written prompt did not, and that the hand-written prompt had better proof ideas, which were then folded in. Three cases is not a benchmark; Haiku and Opus are not yet run.

@@ -27,7 +27,7 @@ One block per kind of task. Each answers the four questions. Use them as a start
 - **Pros do:** name the moment a person feels (load, a click, typing, a scroll), measure it, set a budget, change one thing, measure again. Keep "one change at a time" here; it is noise in most other prompts.
 - **Raw material:** a recorded performance trace, field data (real-user p75), a network waterfall. Not a Lighthouse score or "it feels slow".
 - **Method and tools:** Chrome DevTools Performance panel, the `web-vitals` library (LCP, INP, CLS), Long Animation Frames, React Profiler, a bundle analyser. A scripted Playwright run repeated several times so numbers are comparable.
-- **Proof:** the named metric from repeated runs, before and after, same device and build, median and worst case. Repo skills: `spa-performance`, `react-performance`.
+- **Proof:** the named metric from repeated runs, before and after, same device and build, median and worst case. A gain smaller than the spread between the baseline runs is not a gain. Pin the current output (a test on the rendered data) before optimizing, so faster does not mean wrong. Repo skills: `spa-performance`, `react-performance`.
 
 ## UI
 
@@ -48,7 +48,7 @@ One block per kind of task. Each answers the four questions. Use them as a start
 - **Pros do:** write the contract first, from how callers actually use it. Settle errors, pagination, versioning, and idempotency up front.
 - **Raw material:** the callers' code, real request and response samples or logs, the existing schema (OpenAPI, GraphQL SDL, Zod).
 - **Method and tools:** an OpenAPI or SDL contract, RFC 9457 problem details for errors, idempotency keys for writes that can be retried, cursor pagination. Spectral to lint the spec. Schemathesis to fuzz it. Pact for consumer contract tests.
-- **Proof:** Spectral passes, consumer contract tests pass, fuzzing finds no 500s, existing callers compile against the new types. Repo skills: `api-security`, `nextjs-app-router`.
+- **Proof:** Spectral passes, consumer contract tests pass, fuzzing finds no 500s, existing callers compile against the new types. Access and transaction tests run against the real auth and a real test database; a stubbed `requireUser` or mocked `db` passes them regardless, so the prompt must say so. Repo skills: `api-security`, `nextjs-app-router`.
 
 ## Frontend
 
