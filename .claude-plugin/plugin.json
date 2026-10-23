@@ -180,6 +180,16 @@
           "next typegen"
         ]
       }
+    },
+    {
+      "name": "prompt-rewrite",
+      "path": "skills/prompt-rewrite",
+      "description": "Rewrites a thin coding prompt into a deep one: raw material, expert tools, an exemplar file, and a proof a third party can check. Same scope, not longer.",
+      "categories": ["prompting", "productivity", "web-development"],
+      "triggers": {
+        "filePatterns": ["**/*.prompt.md", "**/prompts/**/*.md", ".claude/commands/*.md"],
+        "bashPatterns": []
+      }
     }
   ]
 }
