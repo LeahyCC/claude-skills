@@ -90,6 +90,17 @@
       "dependencies": "none",
       "verified_against": "Scoped Next.js/React documentation checks; see skills/nextjs-app-router/SOURCES.md (checked 2026-10-21)",
       "install": "npx skills add LeahyCC/claude-skills@nextjs-app-router"
+    },
+    {
+      "name": "prompt-rewrite",
+      "display_name": "Prompt Rewrite",
+      "description": "Rewrites a thin coding prompt into a deep one: raw material, expert tools, an exemplar file, and a proof a third party can check.",
+      "version": "0.1.0",
+      "categories": ["prompting", "productivity"],
+      "resource_files": 4,
+      "dependencies": "none",
+      "verified_against": "Anthropic prompting best practices, model pages, Claude Code best practices, and skill authoring guide (fetched 2026-10-22). Scoped in skills/prompt-rewrite/SOURCES.md.",
+      "install": "npx skills add LeahyCC/claude-skills@prompt-rewrite"
     }
   ]
 }
