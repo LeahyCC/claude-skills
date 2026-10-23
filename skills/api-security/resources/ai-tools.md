@@ -100,7 +100,7 @@ execute: async ({ command }) => execSync(command, { encoding: 'utf8' })
 
 Do not ship a shell, `eval`, a raw SQL string, or "fetch this URL" as a tool. A document the model just read can tell it which command to pass. A specific tool that cancels one owned order has nothing to pass through.
 
-A tool that fetches a URL uses the allowlist in [SSRF & Logging](ssrf-and-logging.md). A tool that writes SQL uses a parameterized query, from [Input Validation](input-validation.md). A tool that runs code the model wrote runs outside the function process, with no deployment env and no default outbound network. On Vercel that is a sandbox or a virtual workspace, not `execSync` in the route.
+A tool that fetches a URL uses the allowlist in [SSRF & Logging](ssrf-and-logging.md). A tool that writes SQL uses a parameterized query, from [Input Validation](input-validation.md). Do not run code the model wrote with `execSync` in the route. On Vercel, a virtual workspace stays inside the function (just-bash on a virtual filesystem) and cannot see the deployment env. A Vercel Sandbox is a separate machine. It allows all outbound traffic unless `sandbox()` is called with `network: 'deny-all'` or a host allowlist (`network: { allow: ['registry.npmjs.org'] }`).
 
 Give each route the tools that route needs. A support route that reads orders does not also get `refund`, `sendEmail`, and `runSql`. Remove tools left over from a trial.
 
