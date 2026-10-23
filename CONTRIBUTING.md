@@ -68,7 +68,8 @@ Use only `name` and `description`. Claude Code and the skills CLI do not act on 
 5. Add an entry to `.claude-plugin/marketplace.json` with `"source": "./skills/your-skill-name"`, then run `claude plugin validate .`
 6. Verify: `npx skills add LeahyCC/claude-skills@your-skill-name` works
 7. Write the skill's test prompts in `reviews/your-skill-name/tasks.md`
-8. Open a PR with:
+8. CI runs `claude plugin validate . --strict` and any checks under `reviews/`. Run them locally before you push.
+9. Open a PR with:
    - Skill name and description
    - What spec/source it's verified against
    - Coverage summary (X of Y criteria/rules)

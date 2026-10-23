@@ -99,6 +99,10 @@ const [mesh, outline] = await Promise.all([
 
 Per-object data with a dynamic offset is in [buffers-and-textures.md](./buffers-and-textures.md). For thousands of objects, put the transforms in one storage buffer and index it with `instance_index`. One draw call replaces thousands.
 
+<!-- wgsl-prelude
+struct Frame { viewProj: mat4x4f }
+@group(0) @binding(0) var<uniform> frame: Frame;
+-->
 ```wgsl
 @group(2) @binding(0) var<storage, read> transforms: array<mat4x4f>;
 
