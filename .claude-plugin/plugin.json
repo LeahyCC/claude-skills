@@ -40,6 +40,16 @@
       }
     },
     {
+      "name": "webgpu",
+      "path": "skills/webgpu",
+      "description": "WebGPU and WGSL: setup and fallback, buffers and alignment, shaders, pipelines, the canvas loop, compute, device loss, and GPU timing.",
+      "categories": ["graphics", "gpu", "web-development"],
+      "triggers": {
+        "filePatterns": ["**/*.wgsl", "**/*webgpu*", "**/*WebGPU*", "**/*.gpu.ts"],
+        "bashPatterns": ["enable-unsafe-webgpu", "enable-webgpu-developer-features"]
+      }
+    },
+    {
       "name": "react-performance",
       "path": "skills/react-performance",
       "description": "Measurement-first React performance optimization — Core Web Vitals, rendering, bundle size, React Compiler, Server Components",

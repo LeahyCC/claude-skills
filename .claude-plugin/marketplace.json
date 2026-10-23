@@ -26,6 +26,17 @@
       "install": "npx skills add LeahyCC/claude-skills@spa-performance"
     },
     {
+      "name": "webgpu",
+      "display_name": "WebGPU",
+      "description": "WebGPU and WGSL: setup and fallback, buffers and alignment, shaders, pipelines, the canvas loop, compute, device loss, and GPU timing.",
+      "version": "0.1.0",
+      "categories": ["graphics", "gpu", "web-development"],
+      "resource_files": 8,
+      "dependencies": "none",
+      "verified_against": "WebGPU and WGSL editor's drafts (21 October 2026), MDN browser-compat-data 8.1.7, Chrome, Firefox and WebKit release notes. Scoped in skills/webgpu/SOURCES.md (checked 2026-10-22).",
+      "install": "npx skills add LeahyCC/claude-skills@webgpu"
+    },
+    {
       "name": "react-performance",
       "display_name": "React Performance",
       "description": "Measurement-first React performance optimization — profiling, Core Web Vitals, rendering, bundle size, React Compiler, Server Components, virtualization",
