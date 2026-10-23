@@ -101,4 +101,4 @@ WebGPU pays when one of these is the measured wall:
 
 It does not pay for a DOM list, a hosted editor that paints SVG, or a document of images. Figma's WebGPU path came after a custom tile renderer that had already left the DOM. Their earlier notes name why HTML, SVG, and Canvas2D lost for that product: DOM cost, Canvas2D re-uploading geometry every frame, and effects those APIs do not have.
 
-Ship WebGL2 beside it until you have checked the browsers you support. Readback (`getImageData`, a synchronous map) will stall whichever API you pick.
+Ship WebGL2 beside it until you have checked the browsers you support. How to set it up, detect it, and recover from device loss is in the `webgpu` skill. Readback (`getImageData`, a synchronous map) will stall whichever API you pick.
