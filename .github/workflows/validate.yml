@@ -39,3 +39,16 @@ jobs:
         run: cargo install naga-cli --version ${{ env.NAGA_VERSION }} --locked
       - name: Every WGSL snippet in the docs compiles
         run: node reviews/webgpu/checks/check-wgsl-snippets.mjs
+
+  typescript-safety:
+    name: TypeScript samples
+    runs-on: ubuntu-latest
+    env:
+      TS_VERSIONS: 7.0.2 6.0.3
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Every TypeScript sample in the skill type-checks
+        run: node reviews/typescript-safety/checks/check-ts-snippets.mjs
