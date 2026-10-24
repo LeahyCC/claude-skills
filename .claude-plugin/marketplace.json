@@ -170,6 +170,28 @@
       }
     },
     {
+      "name": "llm-agent-security",
+      "source": "./skills/llm-agent-security",
+      "displayName": "LLM and Agent Security",
+      "description": "OWASP LLM Top 10 (2026) and Agentic Top 10 (2026) when a model can see untrusted content or act with real credentials. Trust boundaries, tools, memory, MCP, supply chain, output handling, and human approval.",
+      "version": "1.0.0",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "security",
+        "ai",
+        "owasp",
+        "web-development"
+      ],
+      "metadata": {
+        "verified_against": "OWASP Top 10 for LLM Applications 2026, OWASP Top 10 for Agentic Applications 2026, OWASP Cheat Sheet Series (LLM Prompt Injection Prevention, AI Agent Security). Scoped in skills/llm-agent-security/SOURCES.md (checked 2026-10-24).",
+        "resource_files": 8,
+        "install": "npx skills add LeahyCC/claude-skills@llm-agent-security"
+      }
+    },
+    {
       "name": "product-marketing",
       "source": "./skills/product-marketing",
       "displayName": "Product & Marketing Strategy",
