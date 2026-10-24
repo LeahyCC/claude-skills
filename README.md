@@ -67,6 +67,7 @@ Each skill has its own page: install, what it covers, and the source it was chec
 | [typescript-safety](./skills/typescript-safety/) | TypeScript 6 and 7: tsconfig past strict, narrowing, generics, escape hatches, typed linting, the upgrade to TS 7 |
 | [gotchas](./skills/gotchas/) | Silent bugs that pass typecheck and happy-path tests: 200 HTML fallbacks, pre-await state, swallowed catches, singletons, fresh-clone gaps, false-green tests |
 | [code-readability](./skills/code-readability/) | Code a cold reader can follow: floating/magic numbers and strings, naming and units, function shape, nesting, honest comments, dead code, and balanced lint tuning |
+| [plain-docs](./skills/plain-docs/) | Docs cut to what the reader needs: a fixed 5 layer page shape, a cut ladder for sections, and the AI sound tells to fix |
 
 ## Commands
 
