@@ -153,5 +153,6 @@ When reviewing API code in Next.js, verify:
 - [ ] Tool `execute` reads the user from the session, not from arguments
 - [ ] Writes, payments, and sends use a signed tool approval, shown as the real arguments, and spent once for that user
 - [ ] MCP tools are a named list. The server has its own credential, not the user's session
+- [ ] Memory, compaction, install-time AI dependencies, and repo agent config follow [llm-agent-security](../llm-agent-security/SKILL.md)
 
 For deployment-key, GraphQL enforcement and optional provider guidance, see the scoped [source review](SOURCES.md); use the target application's installed versions and configuration.
