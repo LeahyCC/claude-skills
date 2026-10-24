@@ -290,6 +290,29 @@
         "resource_files": 7,
         "install": "npx skills add LeahyCC/claude-skills@code-readability"
       }
+    },
+    {
+      "name": "plain-docs",
+      "source": "./skills/plain-docs",
+      "displayName": "Plain Docs",
+      "description": "Docs cut to what the reader needs: a fixed 5 layer page shape (why, picture, substance, edges, detail on demand), a cut ladder for sections, and the AI sound tells to fix. Write new docs or trim existing ones.",
+      "version": "0.1.0",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "documentation",
+        "writing",
+        "readme",
+        "guides",
+        "web-development"
+      ],
+      "metadata": {
+        "verified_against": "Ponytail (the ladder and never cut line), Humanizer and Wikipedia Signs of AI writing (12 of 26 patterns, docs subset), GOV.UK content design (plain words), Diataxis (by type split). Scoped in skills/plain-docs/SOURCES.md (checked 2026-10-24).",
+        "resource_files": 3,
+        "install": "npx skills add LeahyCC/claude-skills@plain-docs"
+      }
     }
   ]
 }
