@@ -23,8 +23,8 @@ Order matters here. Each step relies on the one before.
 ```
 
 1. Install `typescript@6`. Set `target`, `module`, and `types` explicitly, because 6.0 changed all three defaults (see [config.md](./config.md)).
-2. Run `tsc`. Fix every deprecation error with the table below. `"ignoreDeprecations": "6.0"` silences them on 6.0, but it is a way to ship 6.0 today, not a fix: TS 7 accepts the setting and brings none of the removed options back.
-3. Run once with `--stableTypeOrdering`. It makes 6.0 order union members the way 7.0 does, so errors that depend on the order show up now. It can slow checking by up to 25%, so do not leave it on.
+2. Run `tsc`. Fix every deprecation error with the table below. The experimental `@typescript/ts5to6` codemod (`npx @typescript/ts5to6`) can automatically adjust `baseUrl` and `rootDir` across a codebase. `"ignoreDeprecations": "6.0"` silences deprecations on 6.0, but it is a way to ship 6.0 today, not a fix: TS 7 accepts the setting and brings none of the removed options back.
+3. Run once with `--stableTypeOrdering`. It makes 6.0 order union members and properties the way 7.0's deterministic parallel checker does, so errors or `.d.ts` diffs that depend on declaration order show up now. If `--stableTypeOrdering` surfaces an inference error, add an explicit type argument (`someFunc<ExplicitType>(...)`) or variable type annotation. It can slow checking by up to 25%, so do not leave it on.
 4. Install `typescript@7` and run `tsc`. Keep TS 6 for tools that need the compiler API, such as typescript-eslint (see [linting.md](./linting.md)).
 
 ## Removed options
@@ -52,7 +52,7 @@ Each of these is an error on TS 7, with TS5102 (option removed) or TS5108 (value
 | `module Foo { }` for a namespace | `namespace Foo { }`. Quoted `declare module 'pkg'` is unchanged. | TS1540 |
 | `import x from './x.json' assert { type: 'json' }` | `with { type: 'json' }` | TS2880 |
 | `import('./x.json', { assert: { type: 'json' } })` | `{ with: { type: 'json' } }` | |
-| `/// <reference no-default-lib="true" />` | Delete it. On 7.0 it is ignored when `skipDefaultLibCheck` is on. | |
+| `/// <reference no-default-lib="true" />` | Delete it, or use `--noLib` or `--libReplacement` instead. On 7.0 it is ignored when `skipDefaultLibCheck` is on. | TS5107 (6.0) |
 | `/// <amd-module name="..." />` | Delete it. AMD output is gone. | |
 | `tsc file.ts` with a `tsconfig.json` in the folder | `tsc -p .`, or `tsc --ignoreConfig file.ts` | TS5112 |
 
@@ -62,7 +62,8 @@ The `module` keyword fix can be done by search and replace on unquoted names: `m
 
 | Version | Change | Who it hits |
 | --- | --- | --- |
-| 6.0 | Union member order follows 7.0 rules when `stableTypeOrdering` is on | Code whose errors or overloads depended on order |
+| 6.0 | Union member order follows 7.0 rules when `stableTypeOrdering` is on | Code whose errors or overloads depended on order. Fix with an explicit type argument (`fn<T>()`) or variable annotation. |
+| 6.0 | Functions and object-literal methods that never read `this` are no longer contextually sensitive | Generic calls with method syntax now infer type parameters regardless of property order (see [generics.md](./generics.md)) |
 | 6.0 | Stricter checks on function expressions passed to generic calls | Callback-heavy generic APIs |
 | 7.0 | Template literal `infer` splits by Unicode code point, not by UTF-16 unit | Type-level string helpers. Example in [type-level.md](./type-level.md). |
 | 7.1 (beta) | A type that matches only the original type parameter is rejected once that parameter has been distributed. The error says it is only assignable to the non-distributed form. | Libraries with many conditional types |

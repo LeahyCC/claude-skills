@@ -42,8 +42,20 @@ Rules that follow from "delete the types and run it":
 - `enum`, `namespace` with runtime code, parameter properties, and `import x = require()` are errors. They generate code, so deleting them is not enough.
 - Relative imports need the real extension: `import { db } from './db.ts'`.
 - Type-only imports need `import type`, or Node tries to load a value that does not exist.
-- `tsconfig` `paths` are ignored. Use `package.json` `"imports"` with `#` names instead.
+- `tsconfig` `paths` are ignored. Use `package.json` `"imports"` with `#/` subpath aliases instead (supported in TS 6.0+ under `nodenext` and `bundler` resolution, and in Node 20+).
 - `.tsx` and decorators are not supported.
+
+In `package.json`, a `#/*` subpath import maps straight to your source or output directory without needing an extra segment like `#root/*`, replacing tsconfig `@/*` `paths` with an alias that Node resolves natively:
+
+```json
+{
+  "name": "my-app",
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*"
+  }
+}
+```
 
 The tsconfig that makes `tsc` agree with Node:
 
@@ -141,4 +153,4 @@ export function greet(u: User): string {
 - [ ] Code run by Node directly has `erasableSyntaxOnly` and `rewriteRelativeImportExtensions` on
 - [ ] No `enum`, parameter properties, or runtime `namespace` in that code. Const objects with a derived union instead.
 - [ ] `verbatimModuleSyntax` is on and type-only imports say `import type`
-- [ ] Import aliases use `package.json` `"imports"`, not `paths`, when Node resolves them
+- [ ] Import aliases use `package.json` `"imports"` (such as `"#/*": "./src/*"`), not `paths`, when Node resolves them

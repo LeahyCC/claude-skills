@@ -7,8 +7,8 @@ Run on 2026-10-23 with Node 24.21.0.
 `node reviews/typescript-safety/checks/check-ts-snippets.mjs`
 
 ```
-ts 7.0.2: 54 blocks compiled
-ts 6.0.3: 53 blocks compiled
+ts 7.0.2: 56 blocks compiled
+ts 6.0.3: 55 blocks compiled
 4 blocks skipped by marker
 All TypeScript samples pass.
 ```
