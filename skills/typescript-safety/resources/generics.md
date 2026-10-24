@@ -11,6 +11,7 @@ Sources are in [SOURCES.md](../SOURCES.md).
 - satisfies
 - const type parameters
 - NoInfer
+- this-less method inference
 - Checklist
 
 ## When a function needs a type parameter
@@ -172,6 +173,31 @@ function createMachine<S extends string>(states: S[], initial: NoInfer<S>): S {
 // @ts-expect-error '"stopped"' is not assignable to '"idle" | "running"'
 createMachine(['idle', 'running'], 'stopped')
 ```
+
+## this-less method inference
+
+Before TS 6.0, object-literal methods always had an implicit `this` parameter, which made them contextually sensitive during generic inference. If a method that consumed `T` was written before a method that produced `T`, inference skipped the producer and `T` fell back to `unknown`.
+
+Since TS 6.0, a method or function that never reads `this` is not treated as contextually sensitive. Method syntax and arrow functions now infer `T` in any property order:
+
+```ts
+declare function runPipeline<T>(step: {
+  consume: (value: T) => string
+  produce: (seed: number) => T
+}): string
+
+// Works in TS 6.0 and 7.0 even though consume comes before produce
+const out = runPipeline({
+  consume(value) {
+    return value.toFixed(2)
+  },
+  produce(seed: number) {
+    return seed * 2
+  },
+})
+```
+
+If a method actually uses `this`, it remains contextually sensitive and is still deferred during the first inference pass.
 
 ## Checklist
 

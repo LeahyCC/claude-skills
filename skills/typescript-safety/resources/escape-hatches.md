@@ -132,7 +132,7 @@ function lookup(key: string): number {
 }
 ```
 
-PASS. One read, one check:
+PASS. One read, one check, or use the TS 6.0 `esnext` upsert methods (`getOrInsert` and `getOrInsertComputed`) when initializing a missing entry:
 
 ```ts
 const cache = new Map<string, number>()
@@ -140,6 +140,14 @@ const cache = new Map<string, number>()
 function lookup(key: string): number {
   const hit = cache.get(key)
   return hit ?? 0
+}
+
+function getOrInit(key: string): number {
+  return cache.getOrInsert(key, 0)
+}
+
+function getOrCompute(key: string): number {
+  return cache.getOrInsertComputed(key, (k) => k.length)
 }
 ```
 

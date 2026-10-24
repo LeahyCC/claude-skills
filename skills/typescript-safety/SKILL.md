@@ -45,15 +45,15 @@ data from outside ──> unknown ──> parse at the edge ──> precise type
 
 | Task | Resource |
 | --- | --- |
-| tsconfig defaults, the baseline, flags past strict, `module` by runtime, the empty `types` default | [config.md](./resources/config.md) |
-| Upgrading to 6.0 and 7.0, removed options and syntax, running TS 6 next to 7 | [upgrade-6-to-7.md](./resources/upgrade-6-to-7.md) |
+| tsconfig defaults, `es2025` and `dom` (`dom.iterable` included), the baseline, flags past strict, `module` by runtime, the empty `types` default | [config.md](./resources/config.md) |
+| Upgrading to 6.0 and 7.0, removed options and syntax, `ts5to6`, `stableTypeOrdering`, running TS 6 next to 7 | [upgrade-6-to-7.md](./resources/upgrade-6-to-7.md) |
 | Discriminated unions, exhaustive switches, predicates, assertion functions, unsound spots | [narrowing.md](./resources/narrowing.md) |
-| When a type parameter earns its place, constraints, `satisfies`, `const` type parameters, `NoInfer` | [generics.md](./resources/generics.md) |
+| When a type parameter earns its place, constraints, `satisfies`, `const` type parameters, `NoInfer`, `this`-less method inference | [generics.md](./resources/generics.md) |
 | Utility types, the `Omit` trap, mapped, conditional, and template literal types, augmentation | [type-level.md](./resources/type-level.md) |
 | Untyped data at the edges, branded IDs and units, `readonly` inputs | [domain-types.md](./resources/domain-types.md) |
-| `any`, `as`, `!`, `@ts-expect-error`, and what to use instead | [escape-hatches.md](./resources/escape-hatches.md) |
+| `any`, `as`, `!`, `@ts-expect-error`, and what to use instead (including `Map.getOrInsert`) | [escape-hatches.md](./resources/escape-hatches.md) |
 | typescript-eslint configs and rules, and the TS 6 alias the linter still needs | [linting.md](./resources/linting.md) |
-| Node type stripping, `erasableSyntaxOnly`, `verbatimModuleSyntax`, enums | [node-and-emit.md](./resources/node-and-emit.md) |
+| Node type stripping, `erasableSyntaxOnly`, `verbatimModuleSyntax`, `#/` subpath imports, enums | [node-and-emit.md](./resources/node-and-emit.md) |
 
 ## The traps that cost the most time
 
@@ -65,12 +65,14 @@ data from outside ──> unknown ──> parse at the edge ──> precise type
 | typescript-eslint breaks after installing TS 7 | `import 'typescript'` on 7 is only the version. Alias TS 6 for the linter. | [linting.md](./resources/linting.md) |
 | A typed value is wrong at runtime | `any` from `.json()` or `JSON.parse` assigned to a typed variable | [domain-types.md](./resources/domain-types.md) |
 | `arr[0].x` crashes on an empty array | `noUncheckedIndexedAccess` is off | [config.md](./resources/config.md) |
+| `map.has(k)` then `map.get(k)!` used for defaults | `has` does not narrow `get`. Read once with `??` or use `getOrInsert` / `getOrInsertComputed`. | [escape-hatches.md](./resources/escape-hatches.md) |
 | A new union member is silently ignored | The switch has no exhaustive check | [narrowing.md](./resources/narrowing.md) |
 | Renamed field still listed in an `Omit`, no error | `Omit` does not check its keys | [type-level.md](./resources/type-level.md) |
 | A literal list types as `string[]` | No `as const` or `const` type parameter | [generics.md](./resources/generics.md) |
 | A wrong value is accepted by a generic function | Another argument widens `T`. Wrap it in `NoInfer`. | [generics.md](./resources/generics.md) |
 | `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` from Node | An enum, parameter property, or runtime namespace | [node-and-emit.md](./resources/node-and-emit.md) |
 | `does not provide an export named` from Node | A type imported without `import type` | [node-and-emit.md](./resources/node-and-emit.md) |
+| `@/*` tsconfig `paths` fail when Node runs `.ts` | Node ignores `tsconfig.json`. Map `#/*` in `package.json` `"imports"` instead. | [node-and-emit.md](./resources/node-and-emit.md) |
 | A narrowed property is wrong after a call | Narrowing is not reset by function calls | [narrowing.md](./resources/narrowing.md) |
 | TS2775 on an assertion function call | The function is a `const` with no type annotation | [narrowing.md](./resources/narrowing.md) |
 

@@ -7,6 +7,7 @@ Sources are in [SOURCES.md](../SOURCES.md).
 ## Contents
 
 - What changed in 6.0 and 7.0
+- lib and target in 6.0
 - The baseline
 - Flags past strict
 - noUncheckedIndexedAccess
@@ -22,7 +23,7 @@ TS 6.0 changed defaults and deprecated old options. TS 7.0 is the Go compiler, a
 | Setting | Default before 6.0 | Default in 6.0 and 7.0 |
 | --- | --- | --- |
 | `strict` | `false` | `true` |
-| `module` | depends on `target` | `esnext`, per the 6.0 announcement. `tsc --help` prints it unset. |
+| `module` | depends on `target` | `esnext`, per the 6.0 release notes. `tsc --help` prints it unset. |
 | `target` | `es5` | the current supported year: `es2025` on 6.0.3 and 7.0.2 |
 | `types` | every `@types/*` package | `[]` |
 | `noUncheckedSideEffectImports` | `false` | `true` |
@@ -31,11 +32,29 @@ TS 6.0 changed defaults and deprecated old options. TS 7.0 is the Go compiler, a
 
 A tsconfig that sets nothing behaves differently on 6.0 than on 5.x. Set `target`, `module`, and `types` yourself so an upgrade does not move them.
 
-`tsc --help` on 6.0.3, 7.0.2, and 7.1.0-beta prints the `module` default as unset. The 6.0 announcement says the new default is `esnext`. On 7.1.0-beta, `tsc --help` prints the `target` default as `es2026`.
+`tsc --help` on 6.0.3, 7.0.2, and 7.1.0-beta prints the `module` default as unset. The 6.0 release notes say the new default is `esnext`. On 7.1.0-beta, `tsc --help` prints the `target` default as `es2026`.
 
 `libReplacement: false` means an `@typescript/lib-*` package does not replace the built-in libraries. Turn it back on only when that package's docs say to.
 
 `rootDir` is inferred only when `tsc` is run on files with no tsconfig. With a tsconfig, the default is the folder that holds the tsconfig. If `outDir` is set, the files live deeper than that folder (only under `src/`, for example), and `rootDir` is unset, tsc 6.0.3 and 7.0.2 stop with TS5011. The error names the common source directory (`./src`) and says `rootDir` must be set. `noEmit` does not hit this. Set `"rootDir": "./src"`.
+
+## lib and target in 6.0
+
+In TS 6.0, `dom` includes the full contents of `dom.iterable` and `dom.asynciterable`. `lib.dom.iterable.d.ts` and `lib.dom.asynciterable.d.ts` are now empty stubs, so `"lib": ["dom", "dom.iterable"]` simplifies to `"lib": ["dom"]`.
+
+The `es2025` target and lib add `RegExp.escape` and move `Promise.try`, `Iterator` helper methods, and `Set` methods (`intersection`, `union`, `difference`) out of `esnext`. The `esnext` lib adds stage 4 `Temporal` (`esnext.temporal`) and `Map`/`WeakMap` upsert methods (`getOrInsert` and `getOrInsertComputed`).
+
+```ts
+for (const el of document.querySelectorAll('div')) {
+  console.log(el.textContent)
+}
+
+const pattern = new RegExp(`\\b${RegExp.escape('price ($)')}\\b`, 'g')
+const today = Temporal.Now.plainDateISO()
+const counts = new Map<string, number>()
+const next = counts.getOrInsertComputed('visits', () => 0) + 1
+console.log(pattern.test('price ($)'), today.toString(), next)
+```
 
 ## The baseline
 
@@ -159,7 +178,7 @@ const b: Settings = { locale: undefined }
 
 `nodenext` follows current Node resolution. It does not set `target`. On tsc 7.0.2, `module: nodenext` still uses the default target: `using` is rewritten, and the compile reports TS2318 (`Disposable` is missing) and TS2550 (`Symbol.dispose`) until `lib` includes `esnext`. `node20` freezes resolution, and `moduleResolution` becomes `node16`. It does not freeze `target` at `es2023`: `Set.intersection` typechecks under `module: node20` on 7.0.2. The handbook still says `nodenext` implies `target: esnext` and `node20` implies `es2023`. Set `target` yourself. Pick `node20` when the resolver must stay put across a TypeScript upgrade.
 
-A project that emits CommonJS for a bundler should keep `module: commonjs` and set `moduleResolution: bundler`. TS 6 allows that pair, and the 6.0 announcement calls it the usual upgrade from `moduleResolution: node`. `preserve` is the other bundler setting. It keeps the source module syntax, so the emit changes.
+A project that emits CommonJS for a bundler should keep `module: commonjs` and set `moduleResolution: bundler`. TS 6 allows that pair, and the 6.0 release notes call it the usual upgrade from `moduleResolution: node`. `preserve` is the other bundler setting. It keeps the source module syntax, so the emit changes.
 
 `moduleResolution: node` (also called `node10`), `classic`, `baseUrl`, and `module: amd | umd | systemjs | none` are gone in TS 7. See [upgrade-6-to-7.md](./upgrade-6-to-7.md).
 
@@ -172,7 +191,7 @@ Since 6.0, `types` defaults to `[]`. Ambient globals from `@types/node`, `@types
 | `Cannot find name 'process'` or `'Buffer'` | `"types": ["node"]` |
 | `Cannot find name 'describe'` or `'expect'` | Add the test runner, e.g. `"types": ["node", "vitest/globals"]`, or import from the runner |
 
-List only what the code uses. A test globals package in the app tsconfig makes `describe` type-check in production files.
+`"types": ["*"]` restores the 5.9 behavior of enumerating every package in `node_modules/@types`, at the cost of slower builds (often 20 to 50 percent slower in workspaces). List only what the code uses. A test globals package in the app tsconfig makes `describe` type-check in production files.
 
 ## Checklist
 
