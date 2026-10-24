@@ -23,7 +23,7 @@ Order matters here. Each step relies on the one before.
 ```
 
 1. Install `typescript@6`. Set `target`, `module`, and `types` explicitly, because 6.0 changed all three defaults (see [config.md](./config.md)).
-2. Run `tsc`. Fix every deprecation error with the table below. The experimental `@typescript/ts5to6` codemod (`npx @typescript/ts5to6`) can automatically adjust `baseUrl` and `rootDir` across a codebase. `"ignoreDeprecations": "6.0"` silences deprecations on 6.0, but it is a way to ship 6.0 today, not a fix: TS 7 accepts the setting and brings none of the removed options back.
+2. Run `tsc`. Fix every deprecation error with the table below. The experimental `@andrewbranch/ts5to6` codemod (`npx @andrewbranch/ts5to6 --fixBaseUrl .` and `--fixRootDir .`) can adjust `baseUrl` and `rootDir` across a codebase. `"ignoreDeprecations": "6.0"` silences deprecations on 6.0, but it is a way to ship 6.0 today, not a fix: TS 7 accepts the setting and brings none of the removed options back.
 3. Run once with `--stableTypeOrdering`. It makes 6.0 order union members and properties the way 7.0's deterministic parallel checker does, so errors or `.d.ts` diffs that depend on declaration order show up now. If `--stableTypeOrdering` surfaces an inference error, add an explicit type argument (`someFunc<ExplicitType>(...)`) or variable type annotation. It can slow checking by up to 25%, so do not leave it on.
 4. Install `typescript@7` and run `tsc`. Keep TS 6 for tools that need the compiler API, such as typescript-eslint (see [linting.md](./linting.md)).
 
@@ -52,7 +52,7 @@ Each of these is an error on TS 7, with TS5102 (option removed) or TS5108 (value
 | `module Foo { }` for a namespace | `namespace Foo { }`. Quoted `declare module 'pkg'` is unchanged. | TS1540 |
 | `import x from './x.json' assert { type: 'json' }` | `with { type: 'json' }` | TS2880 |
 | `import('./x.json', { assert: { type: 'json' } })` | `{ with: { type: 'json' } }` | |
-| `/// <reference no-default-lib="true" />` | Delete it, or use `--noLib` or `--libReplacement` instead. On 7.0 it is ignored when `skipDefaultLibCheck` is on. | TS5107 (6.0) |
+| `/// <reference no-default-lib="true" />` | Delete it, or use `--noLib` or `--libReplacement` instead. Ignored in 6.0 and 7.0. | |
 | `/// <amd-module name="..." />` | Delete it. AMD output is gone. | |
 | `tsc file.ts` with a `tsconfig.json` in the folder | `tsc -p .`, or `tsc --ignoreConfig file.ts` | TS5112 |
 

@@ -45,7 +45,7 @@ Rules that follow from "delete the types and run it":
 - `tsconfig` `paths` are ignored. Use `package.json` `"imports"` with `#/` subpath aliases instead (supported in TS 6.0+ under `nodenext` and `bundler` resolution, and in Node 20+).
 - `.tsx` and decorators are not supported.
 
-In `package.json`, a `#/*` subpath import maps straight to your source or output directory without needing an extra segment like `#root/*`, replacing tsconfig `@/*` `paths` with an alias that Node resolves natively:
+In `package.json`, a `#/*` subpath import maps straight to your source or output directory without needing an extra segment like `#root/*`. It replaces tsconfig `@/*` `paths` with an alias that Node resolves natively:
 
 ```json
 {
