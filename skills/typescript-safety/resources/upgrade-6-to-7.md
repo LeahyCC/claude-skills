@@ -1,6 +1,6 @@
 # Upgrading to TS 6 and 7
 
-TS 6.0 (March 2026) is the last compiler written in TypeScript. TS 7.0 (July 2026) is the Go compiler, installed as plain `typescript`. Code that compiles cleanly on 6.0, with no `ignoreDeprecations` and with `stableTypeOrdering` on, should type-check the same on 7.0. So the upgrade is two steps, and the work is all in the first.
+TS 6.0 (March 2026) is the last compiler written in TypeScript. TS 7.0 (July 2026) is the Go compiler, installed as plain `typescript`. Code that compiles cleanly on 6.0, with no `ignoreDeprecations` and with `stableTypeOrdering` on, should type-check the same on 7.0. The 7.0 announcement lists the exceptions: template literal inference (below), and in `.js` files a value is not a type, `@enum` and `@class` are dropped, a bare `?` is dropped, postfix `!` is dropped, and Closure `function()` types are dropped. So the upgrade is two steps, and the work is all in the first.
 
 Sources are in [SOURCES.md](../SOURCES.md).
 
@@ -33,9 +33,9 @@ Each of these is an error on TS 7, with TS5102 (option removed) or TS5108 (value
 
 | Option | Use instead |
 | --- | --- |
-| `target: es5` | `es2015` or later. Transpile to ES5 with another tool if you must support it. |
+| `target: es5` | `es2015` or later. On 7.0, `es5` is TS5108 and `es3` is TS6046 (not a known value). Transpile further with another tool if you must. |
 | `downlevelIteration` | Delete. It only affected ES5 output. |
-| `moduleResolution: node` (or `node10`) | `bundler` for bundled code, `nodenext` for Node |
+| `moduleResolution: node` (or `node10`) | `bundler`, and keep `module: commonjs` if that is what you emit. `nodenext` when the code runs on Node. See [config.md](./config.md). |
 | `moduleResolution: classic` | Same as above |
 | `baseUrl` | `paths` with relative targets, e.g. `"paths": { "@/*": ["./src/*"] }` |
 | `module: amd`, `umd`, `systemjs`, `none` | `esnext` or `preserve`, with a bundler for those formats |
@@ -52,7 +52,7 @@ Each of these is an error on TS 7, with TS5102 (option removed) or TS5108 (value
 | `module Foo { }` for a namespace | `namespace Foo { }`. Quoted `declare module 'pkg'` is unchanged. | TS1540 |
 | `import x from './x.json' assert { type: 'json' }` | `with { type: 'json' }` | TS2880 |
 | `import('./x.json', { assert: { type: 'json' } })` | `{ with: { type: 'json' } }` | |
-| `/// <reference no-default-lib="true" />` | Delete it | |
+| `/// <reference no-default-lib="true" />` | Delete it. On 7.0 it is ignored when `skipDefaultLibCheck` is on. | |
 | `/// <amd-module name="..." />` | Delete it. AMD output is gone. | |
 | `tsc file.ts` with a `tsconfig.json` in the folder | `tsc -p .`, or `tsc --ignoreConfig file.ts` | TS5112 |
 
@@ -65,14 +65,14 @@ The `module` keyword fix can be done by search and replace on unquoted names: `m
 | 6.0 | Union member order follows 7.0 rules when `stableTypeOrdering` is on | Code whose errors or overloads depended on order |
 | 6.0 | Stricter checks on function expressions passed to generic calls | Callback-heavy generic APIs |
 | 7.0 | Template literal `infer` splits by Unicode code point, not by UTF-16 unit | Type-level string helpers. Example in [type-level.md](./type-level.md). |
-| 7.1 (beta) | Errors where a distributive type parameter is assigned to its non-distributed form | Libraries with many conditional types |
+| 7.1 (beta) | A type that matches only the original type parameter is rejected once that parameter has been distributed. The error says it is only assignable to the non-distributed form. | Libraries with many conditional types |
 
 ## What 7.0 does not do yet
 
 | Gap | Workaround |
 | --- | --- |
-| No compiler API. It is planned for 7.1 and is in the 7.1 beta. | Keep TS 6 installed through `@typescript/typescript6` for tools that import `typescript` |
-| No language service plugins | TS 6 in the editor for Vue, Svelte, Astro, MDX, and Angular templates |
+| `import 'typescript'` is only the version file. 7.0.2 ships `typescript/unstable/sync`, `async`, `fs`, and `ast`. The 7.1 beta moves those to `typescript/sync` and the same siblings. | Tools that still `import 'typescript'` (typescript-eslint 8.72) need TS 6 through `@typescript/typescript6` |
+| No language service plugins. The 7.1 beta adds content mappers (`contentMappers` in tsconfig, and `tsc --runExternalCode`) for Vue, Svelte, Astro, and MDX. The beta post's sample `@vue/content-mapper` was not on npm. Angular is not in that list. | Keep TS 6 in the editor until the framework package you use ships a mapper |
 
 `tsc` on 7.0 still writes `.js`, `.d.ts`, and source maps. Checked on 7.0.2 with `module: nodenext` and `declaration: true`.
 

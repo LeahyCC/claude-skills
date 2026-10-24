@@ -15,7 +15,7 @@ Sources are in [SOURCES.md](../SOURCES.md).
 
 ## When a function needs a type parameter
 
-The Handbook's rules: push type parameters down, use as few as possible, and a type parameter should appear at least twice. One that appears once only relates nothing, so it is an `unknown` with extra steps.
+The Handbook's rules for functions: push type parameters down, use as few as possible, and a type parameter should appear at least twice. An inferred return counts, so `function first<T>(arr: T[]) { return arr[0] }` writes `T` once and is the good example. `type Box<T> = { value: T }` is fine. One that appears once only relates nothing, so it is an `unknown` with extra steps.
 
 FAIL. `T` appears once. It lets the caller pick any type and makes the return a silent cast:
 
@@ -175,7 +175,7 @@ createMachine(['idle', 'running'], 'stopped')
 
 ## Checklist
 
-- [ ] Every type parameter appears at least twice, or it is replaced by `unknown`
+- [ ] Every function type parameter appears at least twice (an inferred return counts), or the function returns `unknown`
 - [ ] No generic return type that only exists to skip validation (`parse<T>(): T`)
 - [ ] Constraints name only what the body uses
 - [ ] Config objects use `satisfies`, not a widening annotation
