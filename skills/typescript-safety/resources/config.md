@@ -22,13 +22,20 @@ TS 6.0 changed defaults and deprecated old options. TS 7.0 is the Go compiler, a
 | Setting | Default before 6.0 | Default in 6.0 and 7.0 |
 | --- | --- | --- |
 | `strict` | `false` | `true` |
-| `module` | depends on `target` | `esnext` |
-| `target` | `es5` | the current-year ES version (`es2025` in 2026) |
+| `module` | depends on `target` | `esnext`, per the 6.0 announcement. `tsc --help` prints it unset. |
+| `target` | `es5` | the current supported year: `es2025` on 6.0.3 and 7.0.2 |
 | `types` | every `@types/*` package | `[]` |
 | `noUncheckedSideEffectImports` | `false` | `true` |
+| `libReplacement` | `true` | `false` |
 | `rootDir` | inferred from the input files | the folder holding `tsconfig.json` |
 
 A tsconfig that sets nothing behaves differently on 6.0 than on 5.x. Set `target`, `module`, and `types` yourself so an upgrade does not move them.
+
+`tsc --help` on 6.0.3, 7.0.2, and 7.1.0-beta prints the `module` default as unset. The 6.0 announcement says the new default is `esnext`. On 7.1.0-beta, `tsc --help` prints the `target` default as `es2026`.
+
+`libReplacement: false` means an `@typescript/lib-*` package does not replace the built-in libraries. Turn it back on only when that package's docs say to.
+
+`rootDir` is inferred only when `tsc` is run on files with no tsconfig. With a tsconfig, the default is the folder that holds the tsconfig. If `outDir` is set, the files live deeper than that folder (only under `src/`, for example), and `rootDir` is unset, tsc 6.0.3 and 7.0.2 stop with TS5011. The error names the common source directory (`./src`) and says `rootDir` must be set. `noEmit` does not hit this. Set `"rootDir": "./src"`.
 
 ## The baseline
 
@@ -68,7 +75,7 @@ Change `module`, `types`, and the output options to fit the project (see the mod
 
 ## Flags past strict
 
-`strict` turns on `noImplicitAny`, `strictNullChecks`, `strictFunctionTypes`, `strictBindCallApply`, `strictPropertyInitialization`, `strictBuiltinIteratorReturn`, `noImplicitThis`, `useUnknownInCatchVariables`, and `alwaysStrict`. These are not in it:
+`strict` turns on eight flags: `noImplicitAny`, `strictNullChecks`, `strictFunctionTypes`, `strictBindCallApply`, `strictPropertyInitialization`, `strictBuiltinIteratorReturn`, `noImplicitThis`, and `useUnknownInCatchVariables`. `alwaysStrict` is not one of them. It defaults to `true` on its own, so `strict: false` still emits `"use strict"`. `alwaysStrict: false` is deprecated in 6.0 (TS5107) and removed in 7.0 (TS5108). These are not part of `strict`:
 
 | Flag | Catches | Cost | Turn on |
 | --- | --- | --- | --- |
@@ -145,12 +152,14 @@ const b: Settings = { locale: undefined }
 | The code runs in | `module` | Also set |
 | --- | --- | --- |
 | A bundler (Vite, Next.js, webpack, esbuild) | `preserve` | `noEmit: true`. `preserve` implies `moduleResolution: bundler`. |
-| Node, built by `tsc` | `nodenext`, or `node20` to pin | `outDir`. Relative imports end in `.js`. |
+| Node, built by `tsc` | `nodenext`, or `node20` to pin resolution | `outDir` and `rootDir`. Relative imports end in `.js`. |
 | Node, run straight from `.ts` | `nodenext` | `noEmit`, `erasableSyntaxOnly`, `rewriteRelativeImportExtensions`. Relative imports end in `.ts`. |
 | A published library | `nodenext` | `declaration`, `isolatedDeclarations` |
 | Bun | `preserve` | `noEmit: true` |
 
-`nodenext` follows the newest Node and implies `target: esnext`. `node20` is fixed and implies `es2023`. Pick `node20` when the output must not change when TS updates.
+`nodenext` follows current Node resolution. It does not set `target`. On tsc 7.0.2, `module: nodenext` still uses the default target: `using` is rewritten, and the compile reports TS2318 (`Disposable` is missing) and TS2550 (`Symbol.dispose`) until `lib` includes `esnext`. `node20` freezes resolution, and `moduleResolution` becomes `node16`. It does not freeze `target` at `es2023`: `Set.intersection` typechecks under `module: node20` on 7.0.2. The handbook still says `nodenext` implies `target: esnext` and `node20` implies `es2023`. Set `target` yourself. Pick `node20` when the resolver must stay put across a TypeScript upgrade.
+
+A project that emits CommonJS for a bundler should keep `module: commonjs` and set `moduleResolution: bundler`. TS 6 allows that pair, and the 6.0 announcement calls it the usual upgrade from `moduleResolution: node`. `preserve` is the other bundler setting. It keeps the source module syntax, so the emit changes.
 
 `moduleResolution: node` (also called `node10`), `classic`, `baseUrl`, and `module: amd | umd | systemjs | none` are gone in TS 7. See [upgrade-6-to-7.md](./upgrade-6-to-7.md).
 
@@ -168,6 +177,7 @@ List only what the code uses. A test globals package in the app tsconfig makes `
 ## Checklist
 
 - [ ] `target`, `module`, and `types` are set explicitly
+- [ ] `rootDir` is set when `outDir` is set and the sources are not next to `tsconfig.json`
 - [ ] `strict`, `noUncheckedIndexedAccess`, and `exactOptionalPropertyTypes` are on
 - [ ] `verbatimModuleSyntax` is on, and type-only imports use `import type`
 - [ ] `module` matches where the code runs

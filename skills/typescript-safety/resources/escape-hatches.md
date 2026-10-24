@@ -163,11 +163,12 @@ Always write the reason after the directive. typescript-eslint's `ban-ts-comment
 ## Finding them
 
 ```bash
-# Every hatch, for a review
-grep -rnE ': any\b|as any|<any>|as unknown as|@ts-ignore|@ts-nocheck|[]a-zA-Z0-9_)]!([^=]|$)' src --include='*.ts' --include='*.tsx'
+# Every hatch, for a review. Works with the grep shipped on macOS.
+find src \( -name '*.ts' -o -name '*.tsx' \) -print0 \
+  | xargs -0 grep -nE ': any([^A-Za-z0-9_]|$)|as any([^A-Za-z0-9_]|$)|<any>|as unknown as|@ts-ignore|@ts-nocheck|[]A-Za-z0-9_)]!([^=]|$)'
 ```
 
-The lint rules that report them as you write are in [linting.md](./linting.md): `no-explicit-any`, the `no-unsafe-*` family, `no-non-null-assertion`, `no-unsafe-type-assertion`, and `ban-ts-comment`.
+The lint rules that report them as you write are in [linting.md](./linting.md): `no-explicit-any`, the five `no-unsafe-*` rules in `recommendedTypeChecked` (`argument`, `assignment`, `call`, `member-access`, `return`), `no-non-null-assertion` once you use `strictTypeChecked`, `no-unsafe-type-assertion` if you turn it on, and `ban-ts-comment`.
 
 ## Checklist
 

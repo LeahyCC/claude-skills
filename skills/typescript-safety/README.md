@@ -35,7 +35,7 @@ Version 0.1.0. Nine resources.
 | [type-level.md](./resources/type-level.md) | Utility types, the `Omit` trap, mapped types and key remapping, conditional types and distribution, template literal types and the union limit, augmentation |
 | [domain-types.md](./resources/domain-types.md) | Where types stop being true, untyped data at the edges, branded IDs and units, `readonly` inputs |
 | [escape-hatches.md](./resources/escape-hatches.md) | A ranking of `any`, `as`, `!`, and comment directives, with what to use instead, and a grep to find them |
-| [linting.md](./resources/linting.md) | Running typescript-eslint while TS 7 has no API, which config, rules no config turns on, a tested flat config |
+| [linting.md](./resources/linting.md) | Running typescript-eslint on TS 7 via the TS 6 alias, which config, rules no config turns on, a tested flat config |
 | [node-and-emit.md](./resources/node-and-emit.md) | Three ways TS becomes JS, Node type stripping by version, erasable syntax, `verbatimModuleSyntax` |
 
 9 resource files.

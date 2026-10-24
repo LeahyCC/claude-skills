@@ -82,6 +82,28 @@ interface User {
 type NewUser = StrictOmit<User, 'id' | 'createdAt'>
 ```
 
+`StrictOmit` checks keys on one object type. On a union, `keyof` is only the shared keys, so the result is not a distributed omit:
+
+```ts
+type StrictOmit<T, K extends keyof T> = Omit<T, K>
+
+interface A {
+  id: string
+  name: string
+}
+interface B {
+  id: string
+  email: string
+}
+
+type Collapsed = StrictOmit<A | B, 'id'> // {}, not { name: string } | { email: string }
+const value: Collapsed = { name: 'Ada' } // extra properties are allowed on {}
+// @ts-expect-error Property 'name' does not exist. The only shared key was id, and it was removed.
+console.log(value.name)
+```
+
+For a union, write the omit inside each member (`T extends unknown ? Omit<T, K> : never`) and check `K` against that member, or write the result by hand. The handbook does not define `StrictOmit`.
+
 ## Mapped types
 
 Use when: every property of a type needs the same change.
@@ -142,7 +164,7 @@ type D = ToArray<string | number> // string[] | number[]
 type W = ToArrayWhole<string | number> // (string | number)[]
 ```
 
-TS 7.1 (in beta) reports more errors where a distributive type parameter is assigned to its non-distributed form. Check the 7.1 notes before upgrading code with many conditional types.
+TS 7.1 (in beta) rejects a type that matches only the original type parameter once that parameter has been distributed. The error says the type is only assignable to the non-distributed form. Check the 7.1 notes before upgrading code with many conditional types.
 
 ## Template literal types
 
@@ -206,7 +228,7 @@ declare module 'express-serve-static-core' {
 }
 ```
 
-Merging only works for `interface` and `namespace`. A `type` alias cannot be augmented.
+An `interface` merges with another `interface`. A `namespace` also merges with a class, a function, an enum, or another namespace. A `type` alias cannot be merged (TS2300).
 
 ## Checklist
 

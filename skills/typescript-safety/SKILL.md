@@ -52,7 +52,7 @@ data from outside ──> unknown ──> parse at the edge ──> precise type
 | Utility types, the `Omit` trap, mapped, conditional, and template literal types, augmentation | [type-level.md](./resources/type-level.md) |
 | Untyped data at the edges, branded IDs and units, `readonly` inputs | [domain-types.md](./resources/domain-types.md) |
 | `any`, `as`, `!`, `@ts-expect-error`, and what to use instead | [escape-hatches.md](./resources/escape-hatches.md) |
-| typescript-eslint configs and rules, and running it while TS 7 has no API | [linting.md](./resources/linting.md) |
+| typescript-eslint configs and rules, and the TS 6 alias the linter still needs | [linting.md](./resources/linting.md) |
 | Node type stripping, `erasableSyntaxOnly`, `verbatimModuleSyntax`, enums | [node-and-emit.md](./resources/node-and-emit.md) |
 
 ## The traps that cost the most time
@@ -60,8 +60,9 @@ data from outside ──> unknown ──> parse at the edge ──> precise type
 | Symptom | Usual cause | Read |
 | --- | --- | --- |
 | `Cannot find name 'process'` after upgrading | `types` defaults to `[]` since 6.0 | [config.md](./resources/config.md) |
+| TS5011, common source directory | `outDir` is set, sources sit under `src/`, and `rootDir` is unset | [config.md](./resources/config.md) |
 | TS5102 or TS5108, "has been removed" | An option TS 7 dropped: `baseUrl`, `moduleResolution: node`, `target: es5`, `outFile` | [upgrade-6-to-7.md](./resources/upgrade-6-to-7.md) |
-| typescript-eslint breaks after installing TS 7 | TS 7.0 has no compiler API. Alias TS 6 for the linter. | [linting.md](./resources/linting.md) |
+| typescript-eslint breaks after installing TS 7 | `import 'typescript'` on 7 is only the version. Alias TS 6 for the linter. | [linting.md](./resources/linting.md) |
 | A typed value is wrong at runtime | `any` from `.json()` or `JSON.parse` assigned to a typed variable | [domain-types.md](./resources/domain-types.md) |
 | `arr[0].x` crashes on an empty array | `noUncheckedIndexedAccess` is off | [config.md](./resources/config.md) |
 | A new union member is silently ignored | The switch has no exhaustive check | [narrowing.md](./resources/narrowing.md) |
@@ -80,7 +81,7 @@ data from outside ──> unknown ──> parse at the edge ──> precise type
 - [ ] Data from outside is `unknown` until parsed, once, at the edge
 - [ ] No `any` in new code. Every `as` sits behind a runtime check. No `@ts-ignore`.
 - [ ] States with different fields are discriminated unions, and switches over them are exhaustive
-- [ ] Every type parameter appears at least twice
+- [ ] A function type parameter appears at least twice. An inferred return counts. A type alias may use its parameter once.
 - [ ] IDs and units that can be mixed up are branded
 - [ ] typescript-eslint runs a type-checked config
 - [ ] The report names the TS version and shows the `tsc --noEmit` result

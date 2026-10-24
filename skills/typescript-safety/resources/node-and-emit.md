@@ -32,7 +32,7 @@ Node replaces type annotations with whitespace and runs what is left. It does no
 | --- | --- |
 | 22.6 | Added behind `--experimental-strip-types` |
 | 22.18, 23.6 | On by default |
-| 24.3 | Experimental warning removed |
+| 22.18, 24.3 | Experimental warning removed |
 | 24.12, 25.2 | Stable |
 
 Checked on Node 24.21 with the tsconfig below.

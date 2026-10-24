@@ -123,7 +123,21 @@ transfer(userId, toAccountId('acc_2'), toCents(500))
 transfer(toAccountId('acc_1'), toAccountId('acc_2'), toCents(500))
 ```
 
-The `unique symbol` key keeps the brand out of autocomplete and stops anyone from building a branded object literal by hand. An `as` cast can still forge one, which is why `no-unsafe-type-assertion` (see [linting.md](./linting.md)) is worth turning on. Keep the constructor functions next to the domain rules they enforce, not in a generic utility file.
+The `unique symbol` key keeps the brand out of autocomplete. A plain string is rejected. Three other paths still forge one, with no cast, when `brand` is in scope:
+
+```ts
+declare const brand: unique symbol
+type Brand<T, B extends string> = T & { readonly [brand]: B }
+type AccountId = Brand<string, 'AccountId'>
+type User = { name: string } & { readonly [brand]: 'User' }
+
+const fromJson: AccountId = JSON.parse('""') // any assigns straight in
+const stamped: User = { name: 'Ada', [brand]: 'User' }
+const spread: User = { ...{ name: 'Ada' }, [brand]: 'User' }
+const assigned: User = Object.assign({ name: 'Ada' }, { [brand]: 'User' as const })
+```
+
+On an object, `keyof` includes that symbol, so a mapped type sees a phantom key. `no-unsafe-type-assertion` (see [linting.md](./linting.md)) catches the `as` cast and does not catch `JSON.parse` or the object forms. Keep the constructor functions next to the domain rules they enforce, not in a generic utility file.
 
 ## Readonly inputs
 
