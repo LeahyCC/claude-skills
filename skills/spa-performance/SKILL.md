@@ -3,7 +3,8 @@ name: spa-performance
 description: >
   Use when an SPA is slow because of the main thread, frame time, or memory:
   Web Workers, OffscreenCanvas, scheduler.yield, virtualized or windowed
-  rendering, canvas and DOM editors, live updates, or a performance harness.
+  rendering, canvas and DOM editors, image swaps, flicker, blank frames,
+  live updates, or a performance harness.
   Not React re-renders, bundles, or Server Components (see react-performance).
 ---
 
@@ -61,13 +62,15 @@ A hosted editor (tldraw, and the same class of canvas) shares the main thread wi
 | Logs, prices, live dashboards | [streams.md](./resources/streams.md) | written |
 | Audio and video deadlines | [audio-video.md](./resources/audio-video.md) | written |
 
-Maps, large images, and chart series are [draw-less.md](./resources/draw-less.md): tiles, and one sample per screen pixel. They are not separate techniques.
+Maps, large images, and chart series are [draw-less.md](./resources/draw-less.md): tiles, and one sample per screen pixel. An `<img>` swap that blanks the old picture is in that file too.
 
 ## Review checklist
 
 - [ ] The moment is named, and the number is from a scripted rerun, not a single hand gesture
 - [ ] Cold and warm are separate, and the previous run cannot write the next run's result
 - [ ] Frame numbers are headed, with window size and device pixel ratio written down
+- [ ] The gesture was run at 1x and at 2x, and the note says which bottleneck each showed ([measure.md](./resources/measure.md))
+- [ ] A long frame has a trace, self time by event name, before any fix ([measure.md](./resources/measure.md))
 - [ ] Memory is the store that actually holds the bytes, not only the JS heap
 - [ ] A switch that wins on load was also timed on the gesture
 - [ ] Hit testing and geometry follow the host's record, not live zoom read during render

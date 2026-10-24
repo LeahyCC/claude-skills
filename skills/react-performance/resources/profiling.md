@@ -74,6 +74,10 @@ Main thread timeline:
 Long Task = anything > 50ms blocking the main thread
 ```
 
+### A dev build is in the profile
+
+A CPU profile of a dev server counts React's development instrumentation. On one PDF canvas the top of a dev profile included `exports.jsxDEV`, plus `now` and `run` with no source location. Name those symbols and leave them out of the app's cost. Quote frame numbers from a production build only. A dev build is a different program. The spa-performance skill says the same in `resources/measure.md`, next to the harness notes.
+
 ### CPU Throttling
 
 **Critical**: Always profile with CPU throttling enabled. Developer machines are 4-10x faster than user devices.
