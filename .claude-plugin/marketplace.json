@@ -245,6 +245,28 @@
         "web-development",
         "content-design"
       ]
+    },
+    {
+      "name": "gotchas",
+      "source": "./skills/gotchas",
+      "displayName": "Gotchas",
+      "description": "Silent bugs that pass typecheck and happy-path tests: 200 HTML fallbacks, pre-await state commits, swallowed catches, module singletons, Web API footguns, fresh-clone gaps, and false-green tests.",
+      "version": "0.1.0",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "debugging",
+        "code-review",
+        "quality",
+        "web-development"
+      ],
+      "metadata": {
+        "verified_against": "WHATWG Fetch, URL and DOM Standards, W3C Clipboard API, ECMA-262 Date and Array specs, RFC 8259, Vite 8 htmlFallbackMiddleware, Node.js AsyncLocalStorage docs, and empirical agentic failure studies (arXiv:2609.10548). Scoped in skills/gotchas/SOURCES.md (checked 2026-10-23).",
+        "resource_files": 5,
+        "install": "npx skills add LeahyCC/claude-skills@gotchas"
+      }
     }
   ]
 }

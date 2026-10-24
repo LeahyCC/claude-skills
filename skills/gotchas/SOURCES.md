@@ -1,0 +1,27 @@
+# Sources
+
+Checked 2026-10-23. When a file changes, update its row here. Do not copy rules back into [SKILL.md](./SKILL.md).
+
+| Claim home | Status | Checked against |
+| --- | --- | --- |
+| [silent-failures.md](./resources/silent-failures.md) | written | MDN `Error.prototype.cause` (ECMAScript 2022). Empirical study of silent failures in agentic patches: Bai et al., "When Passing Tests Hides Vulnerabilities: An Empirical Study of Silent Failures in Agentic Systems", arXiv:2609.10548 (June 2026, 1,030 execution traces across 7 agent frameworks, 170 confirmed silent failures where tests passed). Worked examples from `h2-pdf-viewer` (`DECISIONS.md`, 2026-10-23): `maxShapesPerPage` batch drop in `src/features/perf/bench/stress.ts`, action/tool registry deletion in `src/app/editor-config.ts`, and half-restored IndexedDB persistence under "No persistence: a reload starts over". |
+| [state-and-async.md](./resources/state-and-async.md) | written | WHATWG DOM Standard `AbortController` and `AbortSignal`. Node.js `node:async_hooks` (`AsyncLocalStorage`) docs (Node 22/24/26 LTS). Worked examples from `h2-pdf-viewer` (2026-10-23): point-of-no-return commit order in `src/features/pdf/open/open-pdf.ts` and `src/features/perf/ui/use-bench.ts` (`committed`, `lastSource`, `previousTimings`, `forgetStressShapes`), `inFlightOpen === controller` guard in `open-pdf.ts`, and pure record geometry vs live zoom in `DECISIONS.md` ("Pin: the same size on screen at any zoom"). |
+| [web-and-runtime.md](./resources/web-and-runtime.md) | written | WHATWG Fetch Standard (`Response.ok`, `BodyInit` multipart boundary extraction for `FormData`). Vite 8 `htmlFallbackMiddleware` and `servePublicMiddleware` (`packages/vite/src/node/server/middlewares/htmlFallback.ts`, checked 2026-10-23): `GET` and `HEAD` requests with `Accept` containing `text/html` or `*/*` rewrite missing public paths to `/index.html` with HTTP 200 and `Content-Type: text/html`. WHATWG URL Standard (RFC 3986 relative resolution). W3C Clipboard API and events editor's draft and WebKit bug 222262 (`ClipboardItem` with a `Promise<Blob>` inside the user gesture). HTML Standard `DedicatedWorkerGlobalScope` (no `window` or `document`). ECMA-262 Date Time String Format (`YYYY-MM-DD` parsed as UTC midnight vs local time) and `Array.prototype.sort` / `Array.prototype.toSorted`. RFC 8259 (JSON) and ECMA-262 `JSON.stringify`. |
+| [fresh-clone.md](./resources/fresh-clone.md) | written | Vite Static Asset Handling (`publicDir`). Git documentation on case-insensitive filesystems (`core.ignoreCase`). pnpm strict `node_modules` resolution docs. Worked examples from `h2-pdf-viewer` (2026-10-23): gitignored `public/stress/` sets (`scripts/make-stress-pdfs.ts` and `src/features/perf/ui/use-bench.ts`), `lefthook` postinstall vs `prepare` in unpacked archives (`DECISIONS.md` "Hooks and CI"), and Node `engines` range `^22.18.0 \|\| ^24.0.0 \|\| >=26.0.0` (`DECISIONS.md` "Node: 22.18 or later"). |
+| [false-green-tests.md](./resources/false-green-tests.md) | written | Vitest 5 `expect.assertions` and async test docs. GNU Bash Reference Manual section 3.2.3 Pipelines (`pipefail` off by default; pipeline exit status is the last command). Bai et al., arXiv:2609.10548 (June 2026) on test-passing patches with omitted or inadequate controls. Tambon et al., "Bugs in large language models generated code: an empirical study", *Empirical Software Engineering* (2025, DOI 10.1007/s10664-025-10614-4). |
+
+## Platform and spec facts used
+
+- `fetch()` resolves on HTTP 4xx and 5xx; only network failures reject. [WHATWG Fetch](https://fetch.spec.whatwg.org/#fetch-method).
+- Vite's SPA fallback rewrites `GET` and `HEAD` for missing paths to `/index.html` (`200 OK`, `Content-Type: text/html`) whenever `Accept` is empty, `*/*`, or includes `text/html`. [Vite htmlFallback.ts](https://github.com/vitejs/vite/blob/main/packages/vite/src/node/server/middlewares/htmlFallback.ts).
+- Setting `Content-Type: multipart/form-data` manually on a `fetch` with a `FormData` body omits the generated `boundary` parameter required by RFC 7578. [WHATWG Fetch BodyInit](https://fetch.spec.whatwg.org/#concept-bodyinit-extract).
+- Date-only ISO strings (`YYYY-MM-DD`) are interpreted as UTC, whereas date-time strings without a timezone offset are interpreted as local time. [ECMA-262 21.4.1.32](https://tc39.es/ecma262/#sec-date-time-string-format).
+- `Array.prototype.sort()` with no comparator sorts by UTF-16 code units in place; `Array.prototype.toSorted()` copies first. [MDN Array.prototype.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort).
+- Safari requires `navigator.clipboard.write()` to be invoked within the synchronous user gesture turn; async data must be passed as a `Promise` inside `new ClipboardItem(...)`. [W3C Clipboard API](https://w3c.github.io/clipboard-apis/#write-content-to-the-clipboard), [WebKit bug 222262](https://bugs.webkit.org/show_bug.cgi?id=222262).
+
+## Overlap
+
+- `typescript-safety` owns compiler flags (`noUncheckedIndexedAccess`), type narrowing, branded types, and `unknown` at data edges.
+- `spa-performance` owns main-thread frame budgets, `OffscreenCanvas`, `content-visibility`, and image-decode flicker.
+- `api-security` owns OWASP authorization, SSRF, rate limiting, and schema validation.
+- `gotchas` owns cross-cutting runtime, async-state, environment, and test-validity traps where the types and syntax are already clean.

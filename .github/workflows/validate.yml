@@ -52,3 +52,5 @@ jobs:
           node-version: 22
       - name: Every TypeScript sample in the skill type-checks
         run: node reviews/typescript-safety/checks/check-ts-snippets.mjs
+      - name: Every TypeScript sample in gotchas type-checks
+        run: node reviews/gotchas/checks/check-ts-snippets.mjs
