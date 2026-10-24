@@ -22,3 +22,10 @@ Checked on 2026-10-21 (Pacific/Honolulu). This follows #9, not a fresh certifica
 Actually checked date for every row: 2026-10-21. Source page dates are upstream fields, not our review date. No broad React17/18 compatibility or compiler/build-configuration revalidation is claimed. Existing performance/resource overlap with Next.js and SEO remains intentional; no sibling files removed. Recheck affected rows on framework upgrades, observed failures or before relying on guidance older than three months in an active project. Age alone does not make guidance wrong.
 
 Validation: unchanged discovery name/description/metadata, frontmatter, links and whitespace checks. Typed changed asset examples checked against local Next16.4.2/React19.2.0; local media/script files and Google build networking are integration prerequisites, not exercised services. No additional Claude evaluation or measured speedup is claimed for this follow-up.
+
+## One PDF canvas, 2026-10-23
+
+| Claim home | Checked against |
+| --- | --- |
+| [rendering.md](./resources/rendering.md), per-asset update under a large tree | `DECISIONS.md` entry "A bitmap swap keeps the old picture until the new one is decoded". `measurements/2026-10-23-markup/200-pages-10k-profile-before.txt` (`propagateParentContextChanges`, 2450 ms of a 22 s sample) and `200-pages-10k-shapes.txt` (56 fps and 60 dropped, then 59 and 5). Old `page-shape.tsx` at `2761494^` was `useValue` plus `useState`. |
+| [profiling.md](./resources/profiling.md), dev build in the profile | Same profile file. The printed symbols are `exports.jsxDEV`, and `now` and `run` with no source location. |

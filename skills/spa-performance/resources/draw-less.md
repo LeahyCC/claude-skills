@@ -80,6 +80,39 @@ Pages on a canvas, map tiles, and a large image are the same policy in two dimen
 - When one item at a sharp scale is larger than the screen, tile it. Draw the visible part. A new graphics API does not fix an oversized bitmap.
 - A host that already culls (`display: none` off-screen) may still keep the decoded bitmap. Owning the element is what lets you give the bytes back. See [hosted-editor.md](./hosted-editor.md).
 
+## Images
+
+Changing an `<img>` `src` drops the picture already on screen. With `decoding="async"`, the browser paints nothing until the new bitmap is decoded. On one PDF canvas a 2x sheet was 62 MB decoded and a 2.87x sheet was 128 MB, and the gap was 3 to 4 frames at 60 Hz. The blank-frame count is in [measure.md](./measure.md).
+
+Decode the next bitmap off screen, keep the old picture up, then swap. `decoding="sync"` on the visible image makes the paint wait for a decode that is already in the cache. `decoding="sync"` alone also removes the blank. The decode then runs on the main thread inside the paint, up to 70 ms for the largest bitmap on that canvas: four frames at 60 Hz, eight at 120.
+
+Keep the image and its placeholder mounted, and toggle `hidden`. Taking one out of the DOM is a blank of its own. If thousands of siblings would re-render to do this swap, the React side is in the react-performance skill, `resources/rendering.md`.
+
+```ts
+// BAD: the visible image goes blank until the new bytes are decoded
+img.decoding = 'async'
+img.src = nextUrl
+
+// GOOD: decode away from the screen, then swap. The paint waits on a cached decode.
+async function swap(img: HTMLImageElement, nextUrl: string): Promise<void> {
+  const next = new Image()
+  next.src = nextUrl
+  try {
+    await next.decode()
+  } catch {
+    // The decode failed. Swap anyway. The visible image decodes during paint.
+  }
+  img.decoding = 'sync'
+  img.src = nextUrl
+}
+```
+
+## Thousands of transformed elements
+
+Past a few thousand transformed DOM elements, the frame rate bends and tuning the app does not move it. The fix is fewer elements: tiles, one canvas, or a renderer you own. A profile summed by script URL tells your code from the browser's. The trace method is in [measure.md](./measure.md).
+
+One PDF canvas, 1x, all four switches on. The example held 59 fps at 5,000 shapes and 50 fps at 10,000. At 19,994 shapes it was 36 fps. All off at 20,000 was the same 36 fps. This app's own source was 52 ms of a 24.7 s CPU profile. Inside the long gaps (the trace script's fixed 25 ms cutoff, 7380 ms of self time) `PaintArtifactCompositor::Update` and `Layerize` were 3759 ms. React mounting and unmounting culled shapes was about 1.2 s in that trace. `getHostSibling` was 449 ms of self time in the profile, searching long sibling lists for the insertion point.
+
 ## Charts
 
 A line has one sample per screen pixel. Drawing a million points into an 800 px chart is the same waste as a page rendered sharper than the screen. Decimate to the pixel, in a worker if the reduce is heavy ([off-thread.md](./off-thread.md)).

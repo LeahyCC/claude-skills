@@ -51,6 +51,9 @@ One PDF canvas on that SDK also found:
 - `createShapes` past the cap dropped the extra shapes and reported success. The stress code had counted the request.
 - Camera export still blocked the main thread for about 430 ms after live page renders had moved to a worker.
 - A pin drag re-rendered none of the app's components. The long task was the host.
+- The host's `react()` subscription, started inside a `useEffect`, is how a shape component wrote the DOM without a React render. A `useValue` read of the same atom re-rendered from the root. The cost of that render is in the react-performance skill, `resources/rendering.md`.
+- A flag read once at open and a flag read live look the same in a panel. A flip of either reopened the document, so the numbers on screen belonged to the switches shown. That is a panel lie, not a frame cost.
+- The shape cap was raised from the default 4,000 to 20,000. On a 1x screen the example was 36 fps at 19,994 shapes, and the page code was idle: 52 ms of a 24.7 s profile. The curve and the compositor time are in [draw-less.md](./draw-less.md). 34 fps on a 500 page run was release-far, a different test.
 
 ## Figma is a different bet
 

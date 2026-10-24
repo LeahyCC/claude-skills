@@ -20,8 +20,8 @@ Version 0.2.0. Eight resources are written.
 
 | Resource | Status | Topics |
 | --- | --- | --- |
-| [measure.md](./resources/measure.md) | written | Lab vs field, frame gaps, cold and warm, heap vs resident set, a rerunnable harness |
-| [draw-less.md](./resources/draw-less.md) | written | Windows, content-visibility, release, level of detail, tiles, chart decimation |
+| [measure.md](./resources/measure.md) | written | Lab vs field, frame gaps, a quiet canvas, flicker, user timing, cold and warm, heap vs resident set, a rerunnable harness |
+| [draw-less.md](./resources/draw-less.md) | written | Windows, content-visibility, release, level of detail, tiles, image swaps, a DOM ceiling, chart decimation |
 | [off-thread.md](./resources/off-thread.md) | written | scheduler.yield, workers, transferables, OffscreenCanvas, WebGPU last |
 | [hosted-editor.md](./resources/hosted-editor.md) | written | Shared main thread, host contracts, tldraw, the Figma contrast |
 | [typing.md](./resources/typing.md) | written | Keystroke to next paint, which work stays on the main thread, viewport parse, canvas input |

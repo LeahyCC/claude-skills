@@ -31,12 +31,14 @@ Report all of these. Average fps is `frames / total time`, so one hitch pulls it
 | Average fps | Did the gesture keep up, hitches included |
 | p95 frame gap | How the bad frames feel |
 | Worst frame | The stall |
-| Dropped frames | Gaps longer than two 60 Hz frames (about 33 ms). A person can see those. |
+| Dropped frames | A gap longer than 1.5 ticks of that screen. A fixed 33 ms (two 60 Hz frames) is four ticks at 120 Hz. On one 120 Hz run that bar counted 0 while 25 ms gaps went past. |
 | Duration and frame count | So the fps has a denominator |
 
 Nearest-rank percentile: sort the gaps, rank `ceil(p/100 * n) - 1`, clamp to the array. Say which method you used so the next run matches.
 
-Drop the first gap. It includes whatever happened before the run started.
+The sampler's first interval starts before the loop is running. Leave that interval out of the numbers.
+
+Leaving it out does not keep setup out of the recording. On one PDF canvas the bench mounted 5,000 shapes and started sampling in the same tick. The mount was a 482 ms React commit. It landed inside the recording on one setup (worst frame 580 ms) and inside the discarded interval on the other. Wait until the canvas is quiet, then record: two frames in a row under 50 ms, and give up after 3 seconds so a canvas that never settles still gets a row. That row's worst frame includes the busyness. A fixed sleep is the wrong wait. It is too short for a large open and wasted on a small one.
 
 State the sampler's own time. A sampler that does real work is part of the number.
 
@@ -94,7 +96,9 @@ function isEventTiming(entry: PerformanceEntry): entry is PerformanceEventTiming
 - New headless is not the quoted run. A Chrome 153 `--headless=new` trace on macOS, 2026-10-21, still paused BeginFrames for about a second before first paint. Where there is no display, the GPU stays off unless you turn it on, so the paint cost changes. Smoke-test there if you want. Publish the headed rerun.
 - `chrome-headless-shell` is the old browser. Its `beginFrame` interval defaults to 60 Hz, a number you set, and that control is not in new headless.
 - Headless rechecked 2026-10-22: Chrome headless docs, CDP `HeadlessExperimental.beginFrame`, Chrome's headless GPU note, Chromium issue 575939921.
-- Write down machine, browser, window size, device pixel ratio, and production or dev. A dev build is a different program. Quote production, or say you didn't.
+- Write down machine, browser, window size, device pixel ratio, and production or dev. A dev build is a different program. Quote production, or say you didn't. Run the gesture at 1x and at 2x and say which bottleneck each shows. Writing the ratio down is not a substitute for the second run. On one PDF canvas with 10,000 shapes, stock at 2x was 49 fps and 107 dropped frames, and `LayerTreeHost::WaitForCommitCompletion` was 2159 ms of self time inside the long gaps, because the bitmaps were four times the pixels. At 1x, before the swap moved out of React, stock beat the optimised path. That re-render is in the react-performance skill, `resources/rendering.md`.
+- Wait for a quiet canvas before the timer starts. Two frames in a row under 50 ms, then record. Give up after 3 seconds. The first-interval rule above is why.
+- Assert the app booted, including the global the script needs, within a few seconds, before the gesture. Close the browser context in `finally`. If a set fails, stop. Do not walk the rest of the matrix. One measure script used Playwright's default 30 second wait, closed the context only on the success path, and on failure tried twice and then continued. A blank app keeps opening windows that way.
 - CPU throttle is a way to see a phone-class main thread. Keep throttled runs in their own column.
 - Five runs, one at a time. Publish the median of the runs, and the worst run. Five is the count whose median Lighthouse score is twice as stable as one run, and that doc says to use an aggregate (the median, or the min and the max) instead of one run. Five is a starting count for variance, not a proof that a small delta is real. Lighthouse still does not perform the gesture. Checked 2026-10-22: Lighthouse `docs/variability.md`.
 - On one 20 second camera path, run-to-run noise was about 5%. That band is that path. Measure your own. Do not treat 5%, or five runs, as a universal constant. Publish a delta only outside the band you measured.
@@ -139,11 +143,34 @@ One tldraw PDF canvas, 200 pages, headed Chromium, 1400 by 900 at 2x, 2026-10-22
 
 Nearby-only moved the work from load onto the pan. The worker is what made that pan free. Release and zoom-scale are what kept memory flat. Each one alone was worse or useless. The heap looked cured on the worker path because the bytes were blobs. Process resident set was the number that still grew.
 
+The "0 dropped" cell used a fixed 33 ms bar. On the 120 Hz run the next day, the same all-four path, judged at 1.5 ticks, dropped 1 frame cold and 2 warm out of about 2400.
+
+## A long frame
+
+No fix for a long frame until a trace names what the main thread did inside it, as self time by event name. For the JavaScript, a CPU profile with self time and callers.
+
+The script that explained one 580 ms frame finds `requestAnimationFrame` gaps over a fixed 25 ms and sums the self time of events inside each gap. That 25 ms is the script's cutoff. It is not the 1.5-tick dropped-frame row above.
+
+On that run the guess was paint under 5,000 shapes, so the page got `will-change: transform`. The frame did not move. Dropped frames went from about 17 to about 63 in both setups. The change was reverted the same hour.
+
+## Flicker
+
+A flicker is a count. Capture every composited frame (CDP `Page.startScreencast`) and scan for a frame whose change is undone on the next, or for the canvas colour showing in a region that had content. Log DOM mutations with timestamps so a flash lines up with its cause.
+
+One PDF canvas, Chrome's screencast at 58 fps, on a 200 page pan: 127 one-frame jumps in how much of the page column was canvas colour. 53 jumped by 0.1 or more, a page going blank, and 11 of those by more than half the column. After the swap waited for decode, one jump still passed 0.1, and the page was drawn in all three frames of it. A scan for "the drawing went dark" did not separate the before and after on that pan. A 60 fps screen recording of the short document showed blanks of 3 to 4 frames at the two zoom steps. Watching a recording is how you notice it. The count comes from the composited frames.
+
+## Name the work
+
+One `performance.measure` per unit of work. The facts go in the name (`pdf:render p12 sharp 2x aborted`) and the rest goes in `detail`. Marks for the swap and the release. Do not mark work that runs on every frame of a camera move. It fills the track. Dev and test only. A production build has none of the names. Check the bundle.
+
+A `PerformanceObserver` with `buffered: true` reads them back for a panel. The browser does not trim its measure timeline. Clear measures by name past a cap, or the timeline grows for the life of the tab. One panel kept the first 1,000 jobs, so a longer path loses the end. The log that clears the timeline keeps a wider window and, past that, drops the start.
+
 ## Smallest sampler
 
 ```ts
 // Gaps between paints. Call the returned function to stop.
-// Discard the first gap: it spans the time before the run.
+// Leave out the first interval. It starts before the loop is running.
+// That does not exclude setup. Wait for a quiet canvas first. See above.
 export function startFrameSampler(onGap: (gapMs: number) => void): () => void {
   let last = performance.now()
   let handle = 0

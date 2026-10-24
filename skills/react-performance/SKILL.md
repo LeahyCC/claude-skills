@@ -1,6 +1,6 @@
 ---
 name: react-performance
-description: Use when optimizing React component rendering, fixing Core Web Vitals (LCP, INP, CLS), reducing bundle size, diagnosing re-renders, code splitting, memoization decisions, Server Component patterns, or profiling React apps. Covers React 19, React Compiler, useTransition, useDeferredValue, Suspense, and Next.js optimization.
+description: Use when optimizing React component rendering, fixing Core Web Vitals (LCP, INP, CLS), reducing bundle size, diagnosing re-renders, a store update under a large tree, code splitting, memoization decisions, Server Component patterns, or profiling React apps. Covers React 19, React Compiler, useTransition, useDeferredValue, Suspense, and Next.js optimization.
 ---
 
 # React Performance
@@ -103,4 +103,5 @@ When reviewing code, watch for these performance killers:
 - [ ] **Images without dimensions** — causes CLS
 - [ ] **`onPaste={e => e.preventDefault()}` on password fields** — blocks password managers (also an a11y violation)
 - [ ] **Manual memo/useMemo/useCallback** without measuring first — adds complexity for no proven benefit
+- [ ] **Per-asset state or store hook under thousands of siblings.** The cost is the walk from the root. Subscribe in an effect and write the DOM. See [rendering.md](./resources/rendering.md).
 - [ ] **`new ExpensiveThing()` in `useRef` initializer** — runs every render (use lazy init pattern)

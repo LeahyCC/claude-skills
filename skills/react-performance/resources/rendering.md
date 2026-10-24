@@ -301,6 +301,35 @@ import { useStore } from './store'
 const count = useStore(state => state.count)  // Only re-renders when count changes
 ```
 
+## A value that changes per asset, under thousands of siblings
+
+A selector is the right tool when one slice of a store should re-render one small component. It is the wrong tool when the value changes per asset, or per frame, and that component sits under thousands of siblings.
+
+One PDF canvas read each page bitmap with tldraw's `useValue` (a `useSyncExternalStore` subscription) and then kept the decoded bitmap in `useState`. With 10,000 shapes, each swap rendered from the root. A CPU profile of that path put 2450 ms in `propagateParentContextChanges` out of a 22 s sample. Stock, which never swaps, was 59 fps and 5 dropped frames. The swapping path was 56 fps and 60 dropped. An effect that subscribed to the atom and set `img.src` through a ref made the swapping path 59 fps and 5 dropped. Memoization was not the change. The measured time was the walk from the root.
+
+Keep the image and its placeholder mounted, and toggle `hidden`. The decode-before-swap rule for the blank frame is in the spa-performance skill, `resources/draw-less.md`.
+
+```tsx
+import { useEffect, useRef, useSyncExternalStore } from 'react'
+
+// BAD: every bitmap renders this component, and the tree above it walks
+const bitmap = useSyncExternalStore(subscribe, () => store.get(id))
+return <img src={bitmap?.url} alt="" />
+
+// GOOD: the effect writes the node. The siblings do not render.
+function Page({ id }: { id: string }) {
+  const imgRef = useRef<HTMLImageElement>(null)
+  useEffect(() => {
+    return subscribe(id, (bitmap) => {
+      const img = imgRef.current
+      if (!img || !bitmap) return
+      img.src = bitmap.url
+    })
+  }, [id])
+  return <img ref={imgRef} alt="" />
+}
+```
+
 ## useRef for Non-Rendering Values
 
 ```tsx
