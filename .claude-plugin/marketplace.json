@@ -82,6 +82,27 @@
       }
     },
     {
+      "name": "typescript-safety",
+      "source": "./skills/typescript-safety",
+      "displayName": "TypeScript Safety",
+      "description": "TypeScript 6 and 7: tsconfig past strict, narrowing, generics, types from types, branded types, data at the edges, escape hatches, typed linting, Node type stripping, and the upgrade to TS 7.",
+      "version": "0.1.0",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "typescript",
+        "type-safety",
+        "web-development"
+      ],
+      "metadata": {
+        "verified_against": "TypeScript release notes 3.7 to 7.1 beta, the TSConfig reference and Handbook, typescript-eslint.io, and the Node.js TypeScript docs. Every sample type-checked on TS 7.0.2 and 6.0.3. Scoped in skills/typescript-safety/SOURCES.md (checked 2026-10-23).",
+        "resource_files": 9,
+        "install": "npx skills add LeahyCC/claude-skills@typescript-safety"
+      }
+    },
+    {
       "name": "react-performance",
       "source": "./skills/react-performance",
       "displayName": "React Performance",
