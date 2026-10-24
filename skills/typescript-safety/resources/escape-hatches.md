@@ -132,7 +132,7 @@ function lookup(key: string): number {
 }
 ```
 
-PASS. One read, one check, or use the TS 6.0 `esnext` upsert methods (`getOrInsert` and `getOrInsertComputed`) when initializing a missing entry:
+PASS. One read, one check, or use the TS 6.0 `esnext` upsert methods (`getOrInsert` and `getOrInsertComputed`) to initialize a missing entry:
 
 ```ts
 const cache = new Map<string, number>()
