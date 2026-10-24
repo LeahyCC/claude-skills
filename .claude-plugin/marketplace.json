@@ -267,6 +267,29 @@
         "resource_files": 5,
         "install": "npx skills add LeahyCC/claude-skills@gotchas"
       }
+    },
+    {
+      "name": "code-readability",
+      "source": "./skills/code-readability",
+      "displayName": "Code Readability",
+      "description": "Code a cold reader can follow: no floating (magic) numbers or strings without a name or a unit-and-why note nearby, names that carry units and do not lie, small single-purpose functions, shallow nesting, honest comments, no dead code, and balanced ESLint tuning.",
+      "version": "0.1.0",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "code-quality",
+        "readability",
+        "code-review",
+        "linting",
+        "web-development"
+      ],
+      "metadata": {
+        "verified_against": "Fowler Refactoring (2nd ed.) smell catalogue, Clean Code ch. 2-4 and 17, Code Complete ch. 11, ESLint and typescript-eslint rule docs (no-magic-numbers, complexity, max-depth), and SonarSource S109/S3776/S125. Scoped in skills/code-readability/SOURCES.md (checked 2026-10-24).",
+        "resource_files": 7,
+        "install": "npx skills add LeahyCC/claude-skills@code-readability"
+      }
     }
   ]
 }

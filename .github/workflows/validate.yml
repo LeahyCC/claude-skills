@@ -40,6 +40,17 @@ jobs:
       - name: Every WGSL snippet in the docs compiles
         run: node reviews/webgpu/checks/check-wgsl-snippets.mjs
 
+  code-readability:
+    name: Code readability checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Magic-number FAIL/PASS cases and skill links
+        run: node reviews/code-readability/checks/check-magic-numbers.mjs
+
   typescript-safety:
     name: TypeScript samples
     runs-on: ubuntu-latest
