@@ -335,6 +335,29 @@
         "resource_files": 3,
         "install": "npx skills add LeahyCC/claude-skills@plain-docs"
       }
+    },
+    {
+      "name": "ascii-art",
+      "source": "./skills/ascii-art",
+      "displayName": "ASCII Art",
+      "description": "Everything drawn with text characters, for work or fun: diagrams, tables, bar charts, sparklines, banners, boxes, pictures, pixel sprites, kaomoji, game boards and mazes. Draws on a grid, hands the counting to 5 Node scripts, and checks alignment before showing.",
+      "version": "0.1.0",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "ascii-art",
+        "diagrams",
+        "terminal",
+        "documentation",
+        "unicode"
+      ],
+      "metadata": {
+        "verified_against": "Unicode 18.0 EastAsianWidth.txt and UAX #11 (cell widths), CommonMark 0.31.2 (fences and escapes), WCAG 2.2 non-text content and technique H86, git-commit cleanup modes, C++ translation phase 2, Python 3.12 escape warnings. Scoped in skills/ascii-art/SOURCES.md (checked 2026-10-24).",
+        "resource_files": 7,
+        "install": "npx skills add LeahyCC/claude-skills@ascii-art"
+      }
     }
   ]
 }

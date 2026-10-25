@@ -69,6 +69,7 @@ Each skill has its own page: install, what it covers, and the source it was chec
 | [gotchas](./skills/gotchas/) | Silent bugs that pass typecheck and happy-path tests: 200 HTML fallbacks, pre-await state, swallowed catches, singletons, fresh-clone gaps, false-green tests |
 | [code-readability](./skills/code-readability/) | Code a cold reader can follow: floating/magic numbers and strings, naming and units, function shape, nesting, honest comments, dead code, and balanced lint tuning |
 | [plain-docs](./skills/plain-docs/) | Docs cut to what the reader needs: a fixed 5 layer page shape, a cut ladder for sections, and the AI sound tells to fix |
+| [ascii-art](./skills/ascii-art/) | Text drawings for work and fun: diagrams, tables, charts, banners, pictures, kaomoji, boards and mazes. Scripts do the counting, a checker catches drift |
 
 ## Commands
 

@@ -65,3 +65,14 @@ jobs:
         run: node reviews/typescript-safety/checks/check-ts-snippets.mjs
       - name: Every TypeScript sample in gotchas type-checks
         run: node reviews/gotchas/checks/check-ts-snippets.mjs
+
+  ascii-art:
+    name: ASCII art checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Drawings line up, samples match the scripts, counts match
+        run: node reviews/ascii-art/checks/check-skill.mjs
