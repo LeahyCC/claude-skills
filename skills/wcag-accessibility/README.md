@@ -8,6 +8,12 @@ WCAG 2.2 Level AA for Claude Code. 11 resource files, with React, Next.js, and T
 npx skills add LeahyCC/claude-skills@wcag-accessibility
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install wcag-accessibility --marketplace LeahyCC/claude-skills
+```
+
 ## What It Does
 
 WCAG 2.2 Level AA for web UI. It loads when the task is accessibility: contrast, ARIA, keyboard access, focus, screen readers, alt text, or an audit. It covers all 55 Level A and AA criteria, including the 6 added in WCAG 2.2.

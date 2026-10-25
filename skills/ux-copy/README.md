@@ -8,6 +8,12 @@ Production-ready UX copy patterns for React and Next.js applications — buttons
 npx skills add LeahyCC/claude-skills@ux-copy
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install ux-copy --marketplace LeahyCC/claude-skills
+```
+
 ## What It Does
 
 Auto-triggers when you edit component files (`.tsx`, `.jsx`) or content/i18n files (`.ts`, `.json`). Provides decision matrices, FAIL/PASS JSX examples, and copy templates for every common UI text pattern.

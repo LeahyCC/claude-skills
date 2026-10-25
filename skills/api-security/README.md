@@ -8,6 +8,12 @@ OWASP API Security Top 10 (2023) with production Next.js App Router code. Covers
 npx skills add LeahyCC/claude-skills@api-security
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install api-security --marketplace LeahyCC/claude-skills
+```
+
 ## What It Does
 
 **When editing API code** (Route Handlers, Server Actions, middleware, auth modules, next.config), this skill provides:

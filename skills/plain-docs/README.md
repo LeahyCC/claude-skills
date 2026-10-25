@@ -8,6 +8,12 @@ Documentation cut to what the reader needs. Every doc in the same 5 layers: why,
 npx skills add LeahyCC/claude-skills@plain-docs
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install plain-docs --marketplace LeahyCC/claude-skills
+```
+
 ## What it does
 
 **Before:**

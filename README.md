@@ -30,11 +30,16 @@ npx skills add LeahyCC/claude-skills@wcag-accessibility
 Inside Claude Code:
 
 ```text
-/plugin marketplace add LeahyCC/claude-skills
-/plugin install webgpu@leahycc-skills
+/plugin install webgpu --marketplace LeahyCC/claude-skills
 ```
 
-Each skill is its own plugin. `leahycc-skills@leahycc-skills` installs all of them.
+Each skill is its own plugin. To install all of them:
+
+```text
+/plugin install leahycc-skills --marketplace LeahyCC/claude-skills
+```
+
+On Claude Code older than 2.1.275, add the marketplace first with `/plugin marketplace add LeahyCC/claude-skills`, then run `/plugin install webgpu@leahycc-skills`.
 
 ### Slash commands
 

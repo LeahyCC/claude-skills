@@ -8,6 +8,12 @@ Comprehensive React performance optimization for Claude Code — measurement-fir
 npx skills add LeahyCC/claude-skills@react-performance
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install react-performance --marketplace LeahyCC/claude-skills
+```
+
 ## What It Does
 
 Claude uses the description to decide relevance. Editing a `.tsx` file, including one under `src/features/`, does not itself load this skill. Path and shell patterns used to sit under `metadata` and were removed: nothing reads them, and a list there breaks the skill format.
