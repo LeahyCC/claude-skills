@@ -95,7 +95,7 @@ function AnimatedComponent() {
 ### What Counts as a Flash
 
 - A pair of opposing changes in luminance (light → dark → light)
-- Particularly dangerous: large area (> 25% of viewport) with high contrast change
+- Particularly dangerous: a combined flash area larger than 25% of any 10-degree visual field (not 25% of the viewport), with a high contrast change
 - Red flashing is especially hazardous
 
 ## Auto-Playing Content

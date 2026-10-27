@@ -232,4 +232,4 @@ grep -rn 'text-muted-foreground' src/ --include="*.tsx" -A 5 | grep -v 'Button\|
 - Nielsen Norman Group — [Empty State Interface Design](https://www.nngroup.com/articles/empty-state-interface-design/)
 - Apple HIG — [Writing (empty states section)](https://developer.apple.com/design/human-interface-guidelines/writing)
 - Atlassian Design System — [Designing Messages (empty states)](https://atlassian.design/foundations/content/designing-messages)
-- Shopify Polaris — [Error messages](https://polaris.shopify.com/content/error-messages)
+- Shopify Polaris — [Error messages](https://github.com/Shopify/polaris/blob/main/polaris.shopify.com/content/content/error-messages.mdx)

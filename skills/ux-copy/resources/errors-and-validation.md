@@ -275,7 +275,7 @@ grep -rn 'text-destructive' src/ --include="*.tsx" -l | xargs grep -L 'aria-inva
 
 - Nielsen Norman Group — [Error-Message Guidelines](https://www.nngroup.com/articles/error-message-guidelines/)
 - Nielsen Norman Group — [Errors in Forms](https://www.nngroup.com/articles/errors-forms-design-guidelines/)
-- Shopify Polaris — [Error messages](https://polaris.shopify.com/content/error-messages)
+- Shopify Polaris — [Error messages](https://github.com/Shopify/polaris/blob/main/polaris.shopify.com/content/content/error-messages.mdx)
 - Apple HIG — [Writing](https://developer.apple.com/design/human-interface-guidelines/writing)
 - Microsoft — [Top 10 tips](https://learn.microsoft.com/en-us/style-guide/top-10-tips-style-voice)
 - Smashing Magazine — [Inline Validation in Forms](https://www.smashingmagazine.com/2022/09/inline-validation-web-forms-ux/)

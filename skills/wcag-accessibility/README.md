@@ -52,10 +52,10 @@ Plus: Hover/Focus Content (1.4.13) and Status Messages (4.1.3) in the main [SKIL
 ## What it catches
 
 ```tsx
-// Fails 1.4.3. Contrast is about 2.7:1. AA needs 4.5:1.
+// Fails 1.4.3. In the default shadcn theme the blend is about 2.3:1. AA needs 4.5:1.
 <p className="text-muted-foreground/60 text-xs">Helper text</p>
 
-// Passes 1.4.3. Contrast is about 5.2:1.
+// Passes 1.4.3 in the default theme at about 4.8:1. Measure your own tokens.
 <p className="text-muted-foreground text-xs">Helper text</p>
 ```
 

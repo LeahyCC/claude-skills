@@ -95,7 +95,7 @@ Source: Nielsen Norman Group — 3 C's framework (Clarity > Concision > Characte
 
 ## Core Principles
 
-These 8 rules are universal — every major UX writing authority agrees on them regardless of brand, industry, or tone.
+These 8 rules show up across the major UX writing guides. The guides do not agree on everything. Principle 2 is where they split.
 
 ### 1. Plain language, always
 
@@ -121,7 +121,7 @@ Instructions can address the user as "you". An error should name the problem and
 <p>Password reset.</p>
 ```
 
-Source: Shopify Polaris (inline errors stay passive so they don't blame). GOV.UK and Apple address the person as "you" in instructions. The six sources are NN/g, GOV.UK, Apple, Microsoft, Shopify, and Atlassian. They do not all agree on voice.
+Source: NN/g (do not use phrasing that blames users). Polaris (say what went wrong and what to do, and keep "we" out of it unless the product caused the problem). GOV.UK and Apple address the person as "you" in instructions. The six sources are NN/g, GOV.UK, Apple, Microsoft, Shopify, and Atlassian. They do not all agree on voice.
 
 ### 3. Front-load important information
 

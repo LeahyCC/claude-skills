@@ -112,7 +112,7 @@ Ask these four questions to a sample of target customers:
 Plot the four curves. The intersections give you:
 - **Point of marginal cheapness**: lower bound of acceptable range
 - **Point of marginal expensiveness**: upper bound
-- **Optimal price point**: highest conversion point
+- **Optimal price point**: where the "too cheap" and "too expensive" curves cross. A survey intersection, not a measured conversion rate
 - **Indifference price point**: equal bargain/expensive perception
 
 ### Pricing Page Structure

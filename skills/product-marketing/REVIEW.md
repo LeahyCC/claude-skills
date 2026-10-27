@@ -15,3 +15,5 @@ Checked 2026-10-21 (Pacific/Honolulu). Scope: the changes in PR #14, not a new f
 Locally recalculated the two LTV examples using monthly revenue, monthly churn and gross margin: 100 * .8 / .08 = 1,000 and 100 * .8 / .03 = 2,666.67. LTV:CAC rounds to .33 and 3.3; payback is 37.5 and 10 months. This is the simple steady-state illustrative formula, not a validation of forecasting assumptions.
 
 Checked README named-source count (19, with Doerr and Wodtke separate), removed old changed figures, and preserved metadata.filePattern/bashPattern/priority. No behavioral model evaluation ran for this PR. Dates and numerical/source checks do not verify unrelated pricing, adoption, activation, statistical-testing or strategy claims that were intentionally left outside this correction.
+
+2026-10-26: added the five sources the resources already cite (Rachitsky, Poyar, Bush, Bessemer, Van Westendorp) to the README and SKILL tables, so the named-source count is 24. Corrected the Van Westendorp optimal price point (a curve intersection, not a conversion rate) and separated Wodtke's planning confidence from Doerr's end-of-quarter score. The rest of the skill was not re-checked.

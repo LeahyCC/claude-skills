@@ -158,29 +158,14 @@ AI engines prefer content that is:
 
 ## Robots.txt for GEO
 
-Strategic AI crawler management:
+The default `robots.ts` is in [Crawlability](./crawlability.md): search crawlers allowed, training crawlers allowed. This block is the training opt-out. Disallow does not remove you from search.
 
 ```tsx
-// app/robots.ts
-export default function robots(): MetadataRoute.Robots {
-  return {
-    rules: [
-      // Allow all search engines
-      { userAgent: '*', allow: '/' },
-
-      // Search crawlers. These are the citation rules.
-      { userAgent: 'OAI-SearchBot', allow: '/' },
-      { userAgent: 'Claude-SearchBot', allow: '/' },
-      { userAgent: 'PerplexityBot', allow: '/' },
-      // Training. Blocking these does not remove you from search.
-      { userAgent: 'GPTBot', disallow: '/' },
-      { userAgent: 'ClaudeBot', disallow: '/' },
-      { userAgent: 'Google-Extended', disallow: '/' },
-      { userAgent: 'CCBot', disallow: '/' },
-    ],
-    sitemap: 'https://example.com/sitemap.xml',
-  }
-}
+// Training opt-out. Not the default. See crawlability.md.
+{ userAgent: 'GPTBot', disallow: '/' },
+{ userAgent: 'ClaudeBot', disallow: '/' },
+{ userAgent: 'Google-Extended', disallow: '/' },
+{ userAgent: 'CCBot', disallow: '/' },
 ```
 
 ## Structured Data for GEO

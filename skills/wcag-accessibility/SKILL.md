@@ -244,8 +244,8 @@ Run this checklist on every component:
 - [ ] Error messages are programmatically associated with inputs (`aria-describedby`)
 - [ ] Dynamic content updates announced via `aria-live` regions
 - [ ] No content flashes more than 3 times per second
-- [ ] Page works at 200% zoom without horizontal scrolling
-- [ ] Content reflows at 320px width without horizontal scrolling
+- [ ] Text resizes to 200% without loss of content or functionality (1.4.4)
+- [ ] Content reflows at 320 CSS pixels wide without two-dimensional scrolling, except where the layout needs two dimensions (1.4.10)
 - [ ] Touch targets are at least 24x24 CSS pixels (44x44 preferred)
 - [ ] Drag operations have single-pointer alternatives
 - [ ] Tooltips/popovers are dismissible, hoverable, and persistent

@@ -1,6 +1,6 @@
 ---
 name: product-marketing
-description: Product management and marketing strategy — positioning, discovery, go-to-market, prioritization, metrics, copywriting, and artifact generation. Verified against Cagan (SVPG), Dunford, Torres, Reforge, JTBD, and OWASP-grade rigor applied to PM/PMM decisions.
+description: Product management and marketing strategy — positioning, discovery, go-to-market, prioritization, metrics, copywriting, and artifact generation. Verified against Cagan (SVPG), Dunford, Torres, Reforge, and JTBD.
 ---
 
 # Product & Marketing — Strategy Through Execution
@@ -135,5 +135,10 @@ This skill synthesizes frameworks from authoritative, primary sources:
 | David Skok | SaaS unit economics | ForEntrepreneurs blog (2010–2026) |
 | Patrick Campbell | SaaS pricing strategy | ProfitWell / Paddle content archive |
 | Donald Miller | StoryBrand narrative framework | "Building a StoryBrand" (2017) |
+| Lenny Rachitsky | Six-month retention and bottom-up net revenue retention | Newsletter issue 29 (June 2020) |
+| Kyle Poyar | PLG conversion benchmarks, with Lenny Rachitsky | Lenny's Newsletter (2023) |
+| Wes Bush | Product-led growth motion | "Product-Led Growth" (2019) |
+| Bessemer Venture Partners | Burn multiple | Unit-economics table in Metrics |
+| Van Westendorp | Four-question price sensitivity meter | Go-to-Market |
 
 Scoped review: 2026-10-21. See [REVIEW.md](REVIEW.md) for the changed sections, source dates and checks. This date does not certify the entire skill.
