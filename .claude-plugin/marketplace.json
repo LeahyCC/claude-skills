@@ -358,6 +358,30 @@
         "resource_files": 7,
         "install": "npx skills add LeahyCC/claude-skills@ascii-art"
       }
+    },
+    {
+      "name": "tailwind-design-system",
+      "source": "./skills/tailwind-design-system",
+      "displayName": "Tailwind Design System",
+      "description": "Build and run design systems on Tailwind CSS v4 at scale: token tiers, closed scales, OKLCH palettes with measured contrast, themes and brands, component APIs, monorepo packages that own their @source, registries, lint and CI enforcement, versioning, deprecation, docs and migration. Ships a contrast-checked starter theme and 3 Node scripts.",
+      "version": "0.1.0",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "tailwind",
+        "design-system",
+        "design-tokens",
+        "theming",
+        "accessibility",
+        "web-development"
+      ],
+      "metadata": {
+        "verified_against": "Tailwind CSS 4.3.3 docs, changelog and source, shadcn/ui docs and registry sources, DTCG 2025.10, WCAG 2.2, MDN and Baseline data, tailwind-merge, cn, cva, tailwind-variants, eslint-plugin-better-tailwindcss, Storybook 10.6, Changesets 3, Primer, Atlassian, Carbon and GOV.UK governance docs. Every CSS sample compiled and every sample class checked on Tailwind 4.3.3. Scoped in skills/tailwind-design-system/SOURCES.md (checked 2026-10-26).",
+        "resource_files": 11,
+        "install": "npx skills add LeahyCC/claude-skills@tailwind-design-system"
+      }
     }
   ]
 }

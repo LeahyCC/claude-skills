@@ -1,0 +1,5 @@
+.btn {
+  @apply rounded-md px-4;
+  color: #fff;
+  background: oklch(0.5 0.1 20);
+}

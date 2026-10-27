@@ -1,0 +1,11 @@
+/* The package declares where its own classes live. Apps only import this file. */
+@source "./components";
+
+:root {
+  --brand: oklch(0.546 0.215 263);
+}
+
+@theme inline {
+  --color-*: initial;
+  --color-brand: var(--brand);
+}
