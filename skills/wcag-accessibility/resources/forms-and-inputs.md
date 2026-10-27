@@ -1,6 +1,6 @@
 # Forms and Inputs
 
-WCAG Success Criteria: 1.3.1 (Info and Relationships), 1.3.5 (Identify Input Purpose), 3.3.1 (Error Identification), 3.3.2 (Labels or Instructions), 3.3.3 (Error Suggestion), 3.3.4 (Error Prevention)
+WCAG Success Criteria: 1.3.5 (Identify Input Purpose), 3.3.1 (Error Identification), 3.3.2 (Labels or Instructions), 3.3.3 (Error Suggestion)
 
 ## Labels
 
@@ -102,7 +102,7 @@ Errors must be identified in text, not just by color:
   {error && (
     <p id="email-error" className="mt-1 text-destructive text-sm" role="alert">
       <AlertCircle className="mr-1 inline size-4" aria-hidden="true" />
-      Please enter a valid email address
+      Enter an address with an @ and a domain, such as name@company.com.
     </p>
   )}
 </div>
@@ -110,6 +110,8 @@ Errors must be identified in text, not just by color:
 // WRONG — only red border, no text explanation
 <input className={error ? "border-red-500" : ""} />
 ```
+
+3.3.3 asks for a suggestion when the correction is known. The message above names the @ and the domain.
 
 ### Error Summary
 
@@ -180,7 +182,7 @@ WCAG 2.5.8 (AA): Interactive targets must be at least **24x24 CSS pixels**, with
 </button>
 
 // Small inline controls — use padding to increase target
-<button className="p-2">  {/* Icon is 16px, but target is 16+16+16 = 48px */}
+<button className="p-2">  {/* 16px icon + 8px padding each side = 32px, above the 24px minimum */}
   <X className="size-4" />
 </button>
 

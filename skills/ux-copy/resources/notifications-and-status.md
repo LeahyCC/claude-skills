@@ -282,5 +282,6 @@ grep -rn 'ToastTitle\|AlertTitle' src/ --include="*.tsx" -A 5 | grep -v 'Action\
 
 - Nielsen Norman Group — [Indicators, Validations, and Notifications](https://www.nngroup.com/articles/indicators-validations-notifications/)
 - Atlassian Design System — [Designing Messages](https://atlassian.design/foundations/content/designing-messages)
-- Shopify Polaris — [Error messages](https://polaris.shopify.com/content/error-messages)
+- Shopify Polaris — [Error messages](https://github.com/Shopify/polaris/blob/main/polaris.shopify.com/content/content/error-messages.mdx)
+- Shopify Polaris — [Toast content guidelines](https://github.com/Shopify/polaris/blob/main/polaris.shopify.com/content/components/deprecated/toast.mdx) (3 words, noun + verb)
 - Apple HIG — [Notifications](https://developer.apple.com/design/human-interface-guidelines/notifications)

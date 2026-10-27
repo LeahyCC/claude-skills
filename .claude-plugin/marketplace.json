@@ -208,7 +208,7 @@
         "go-to-market"
       ],
       "metadata": {
-        "verified_against": "Cagan/SVPG (Transformed 2024), Dunford (Obviously Awesome 2019, Sales Pitch 2023), Torres (Continuous Discovery Habits 2021), Christensen (JTBD), Reforge, Amplitude (North Star), Intercom (RICE), OpenView (PLG benchmarks), and 10 more primary sources",
+        "verified_against": "Cagan/SVPG (Transformed 2024), Dunford (Obviously Awesome 2019, Sales Pitch 2023), Torres (Continuous Discovery Habits 2021), Christensen (JTBD), Reforge, Amplitude (North Star), Intercom (RICE), Rachitsky and Poyar (PLG benchmarks), and 16 more primary sources",
         "resource_files": 8,
         "install": "npx skills add LeahyCC/claude-skills@product-marketing"
       }

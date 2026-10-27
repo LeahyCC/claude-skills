@@ -1,6 +1,6 @@
 # Keyboard Navigation
 
-WCAG Success Criteria: 2.1.1 (Keyboard), 2.1.2 (No Keyboard Trap), 2.4.3 (Focus Order), 2.4.7 (Focus Visible), 2.4.11 (Focus Not Obscured)
+WCAG Success Criteria: 2.1.1 (Keyboard), 2.1.2 (No Keyboard Trap), 2.4.1 (Bypass Blocks), 2.4.3 (Focus Order), 2.4.7 (Focus Visible, AA), 2.4.11 (Focus Not Obscured, AA). 2.4.13 (Focus Appearance) is AAA.
 
 ## Core Requirements
 
@@ -33,11 +33,25 @@ WCAG Success Criteria: 2.1.1 (Keyboard), 2.1.2 (No Keyboard Trap), 2.4.3 (Focus 
 
 **Never remove focus indicators.** If the default browser outline doesn't match your design, replace it — don't remove it.
 
-### Focus Indicator Requirements (WCAG 2.4.13 AA)
+### Focus Visible (WCAG 2.4.7, AA)
 
-- Must have **3:1 contrast** against adjacent colors
-- Must have at least **2px** of solid outline or equivalent area
-- Must not be obscured by other content
+A keyboard user must be able to see which element has focus. Replace a weak outline. Do not remove it.
+
+### Focus Not Obscured (WCAG 2.4.11, AA)
+
+When a component receives keyboard focus, author-created content must not entirely hide it. Sticky headers and footers are the usual cause. Browser chrome is outside this criterion.
+
+```tsx
+// FAIL — the sticky header covers the focused target
+<a href="#details">Details</a>
+
+// PASS — scroll margin keeps the target below a 4rem header
+<a className="scroll-mt-16" href="#details">Details</a>
+```
+
+### Focus Appearance (WCAG 2.4.13, AAA)
+
+Not required for Level AA. When you meet it, part of the indicator is at least as large as a 2 CSS pixel perimeter of the unfocused component, and those pixels change by at least 3:1 between the focused and unfocused states.
 
 ### Tab Order
 

@@ -43,10 +43,10 @@ Composite of 6 authoritative sources (cross-referenced for consensus):
 - [GOV.UK Content Design](https://www.gov.uk/guidance/content-design/writing-for-gov-uk) — Plain English rules, reading level targets
 - [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/writing) — Voice/tone, component-level copy
 - [Microsoft Writing Style Guide](https://learn.microsoft.com/en-us/style-guide/welcome/) — Brand voice, top 10 tips
-- [Shopify Polaris](https://polaris.shopify.com/content/voice-and-tone) — Error message anatomy, actionable language
+- [Shopify Polaris](https://shopify.dev/docs/apps/design/content/voice-and-tone) — Voice and tone, grade 7 reading level. The error message page now lives in the [Polaris repo](https://github.com/Shopify/polaris/blob/main/polaris.shopify.com/content/content/error-messages.mdx)
 - [Atlassian Design System](https://atlassian.design/foundations/content/voice-tone) — Message design, severity types
 
-Last verified: March 2026
+Last verified: October 2026
 
 ## License
 

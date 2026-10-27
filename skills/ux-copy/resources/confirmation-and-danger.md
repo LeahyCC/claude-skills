@@ -277,5 +277,5 @@ grep -rn '>Confirm<' src/ --include="*.tsx"
 
 - Nielsen Norman Group — [Confirmation Dialogs](https://www.nngroup.com/articles/confirmation-dialog/)
 - Apple HIG — [Alerts](https://developer.apple.com/design/human-interface-guidelines/alerts)
-- Shopify Polaris — [Error messages](https://polaris.shopify.com/content/error-messages)
+- Shopify Polaris — [Error messages](https://github.com/Shopify/polaris/blob/main/polaris.shopify.com/content/content/error-messages.mdx)
 - Atlassian Design System — [Designing Messages](https://atlassian.design/foundations/content/designing-messages)

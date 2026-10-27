@@ -51,7 +51,7 @@ Or inside Claude Code:
 
 ## Verified Against
 
-This skill synthesizes frameworks from 19 authoritative, primary sources:
+This skill synthesizes frameworks from 24 authoritative, primary sources:
 
 | Source | What We Cite |
 |---|---|
@@ -74,5 +74,10 @@ This skill synthesizes frameworks from 19 authoritative, primary sources:
 | David Skok | SaaS unit economics (ForEntrepreneurs, 2010–2026) |
 | Patrick Campbell | SaaS pricing strategy (ProfitWell, 2016–2023) |
 | Donald Miller | StoryBrand ("Building a StoryBrand", 2017) |
+| Lenny Rachitsky | Retention and net revenue retention benchmarks (newsletter issue 29, June 2020) |
+| Kyle Poyar | PLG conversion benchmarks, with Lenny Rachitsky (2023) |
+| Wes Bush | Product-led growth ("Product-Led Growth", 2019) |
+| Bessemer Venture Partners | Burn multiple, on the unit-economics table |
+| Van Westendorp | Price sensitivity meter, the four questions in Go-to-Market |
 
 Scoped review: 2026-10-21. See [REVIEW.md](REVIEW.md) for the changed sections, source dates and checks. This date does not certify the entire skill.

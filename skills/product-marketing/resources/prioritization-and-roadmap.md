@@ -180,7 +180,7 @@ Bets:
 - KR2: Reduce median time-to-first-value from 45 min to 10 min
 - KR3: Increase 7-day retention from 35% to 50%
 
-### Confidence: 0.5 (stretch goal — healthy range is 0.3-0.7)
+### Planning confidence: 0.5 (Wodtke's habit: start near 5/10 and update it weekly. Not Doerr's end-of-quarter score)
 
 ### Initiatives (inputs, not measured):
 - Build interactive onboarding tour
@@ -195,8 +195,8 @@ Bets:
 | 3-5 objectives per quarter | Focus. More = dilution |
 | 2-4 key results per objective | Measurable, not overwhelming |
 | Key results are outcomes, not outputs | "Launch feature X" is an output. "Increase metric from A to B" is an outcome |
-| Confidence 0.3-0.7 at start of quarter | Too low = unrealistic. Too high = sandbagging |
-| Score at end of quarter (0.0-1.0) | 0.7 = successful. 1.0 = goal was too easy |
+| Planning confidence 0.3-0.7 at the start | Wodtke's habit, not Doerr's score. Too low = unrealistic. Too high = sandbagging |
+| End-of-quarter score (Doerr, 0.0-1.0) | 0.7 = successful. 1.0 = the goal was too easy |
 | Separate OKRs from performance reviews | If OKRs affect compensation, people sandbag |
 
 ### FAIL vs. PASS

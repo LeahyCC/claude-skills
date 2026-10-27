@@ -173,8 +173,8 @@ Text must be resizable to 200% without loss of content or functionality:
 <div className="max-w-prose">Content</div>          {/* Relative max-width */}
 <div className="py-4 px-6">Padded content</div>     {/* rem-based spacing */}
 
-// FAIL — fixed pixel sizes prevent scaling
-<p style={{ fontSize: '14px' }}>Fixed text</p>      {/* Doesn't scale in some browsers */}
+// Page zoom scales px. Clipping is the failure, not the unit.
+<p style={{ fontSize: '14px' }}>Fixed text</p>      {/* Scales with browser zoom */}
 <div style={{ height: '300px', overflow: 'hidden' }}> {/* Clips when text grows */}
   Content that may overflow
 </div>

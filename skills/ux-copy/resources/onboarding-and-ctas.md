@@ -294,6 +294,6 @@ grep -rn '"Step\|"step' src/ --include="*.tsx"
 
 - Nielsen Norman Group — [UX Copy Sizes](https://www.nngroup.com/articles/ux-copy-sizes/)
 - Apple HIG — [Writing](https://developer.apple.com/design/human-interface-guidelines/writing)
-- Shopify Polaris — [Voice and tone](https://polaris.shopify.com/content/voice-and-tone)
+- Shopify Polaris — [Voice and tone](https://shopify.dev/docs/apps/design/content/voice-and-tone)
 - Atlassian Design System — [Designing Messages](https://atlassian.design/foundations/content/designing-messages)
 - Microsoft Writing Style Guide — [Top 10 tips](https://learn.microsoft.com/en-us/style-guide/top-10-tips-style-voice)

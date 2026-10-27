@@ -25,7 +25,7 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'OAI-SearchBot', allow: '/' },
       { userAgent: 'Claude-SearchBot', allow: '/' },
       { userAgent: 'PerplexityBot', allow: '/' },
-      // Training. A separate choice. Disallow does not remove you from search.
+      // Training. Allow is the default. Disallow is the opt-out, and it does not remove you from search.
       { userAgent: 'GPTBot', allow: '/' },
       { userAgent: 'ClaudeBot', allow: '/' },
       {

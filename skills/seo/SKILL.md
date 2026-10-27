@@ -89,11 +89,11 @@ These are widely believed but **wrong** according to Google's official documenta
 | "Add meta keywords" | Google has ignored `<meta name="keywords">` since 2009 | [Google Webmaster Blog](https://developers.google.com/search/blog/2009/09/google-does-not-use-keywords-meta-tag) |
 | "E-E-A-T is a ranking factor" | There is no E-E-A-T score to add. Ranking systems look for signals that match experience, expertise, authoritativeness, and trust. | [Helpful content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content) |
 | "Content must be X words long" | No minimum or maximum. Write what's useful. | [Google SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) |
-| "Heading order affects rankings" | Heading hierarchy helps accessibility, not rankings | Google Search Central (multiple confirmations) |
+| "Heading order affects rankings" | Heading order is for screen readers. Google Search does not require headings in order. | [SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) |
 | "Duplicate content is a penalty" | No spam penalty. Google picks a canonical. Bad UX, not a ranking hit. | [Google Search Central](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls) |
-| "Domain keywords boost ranking" | Minimal if any impact | Google (multiple confirmations) |
+| "Domain keywords boost ranking" | Keywords in the domain have hardly any effect beyond appearing in breadcrumbs. | [SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) |
 | "Subdomain vs subdirectory matters" | Google can handle either. Choose for architecture, not SEO. | [John Mueller, Google](https://www.youtube.com/watch?v=uJGDyAN9g-g) |
-| "More backlinks = higher ranking" | Quality and relevance matter, not quantity | [Google Link Spam Update](https://developers.google.com/search/docs/essentials/spam-policies) |
+| "More backlinks = higher ranking" | PageRank uses links, and it is one signal among many. | [SEO Starter Guide](https://developers.google.com/search/docs/fundamentals/seo-starter-guide) |
 | "FID is a Core Web Vital" | **INP replaced FID** in March 2024 | [web.dev](https://web.dev/articles/inp) |
 
 ## What Google Actually Cares About

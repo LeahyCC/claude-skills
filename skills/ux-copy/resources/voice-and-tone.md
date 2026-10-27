@@ -239,5 +239,5 @@ export const terms = {
 - Apple Human Interface Guidelines — [Writing](https://developer.apple.com/design/human-interface-guidelines/writing)
 - Microsoft Writing Style Guide — [Brand voice](https://learn.microsoft.com/en-us/style-guide/brand-voice-above-all-simple-human)
 - Atlassian Design System — [Voice and tone](https://atlassian.design/foundations/content/voice-tone)
-- Shopify Polaris — [Voice and tone](https://polaris.shopify.com/content/voice-and-tone)
+- Shopify Polaris — [Voice and tone](https://shopify.dev/docs/apps/design/content/voice-and-tone)
 - GOV.UK — [Content design](https://www.gov.uk/guidance/content-design/writing-for-gov-uk)

@@ -46,13 +46,13 @@ The most common failure pattern in Tailwind projects is reducing text opacity be
 <p className="text-muted-foreground text-xs">Helper text</p>
 ```
 
-**Safe opacity ranges** (varies by theme — always verify):
+**Opacity modifiers** (the ratio depends on the theme, so measure):
 
-| Token                 | Min safe opacity (light bg) | Min safe opacity (dark bg) |
-| --------------------- | --------------------------- | -------------------------- |
-| `text-foreground`     | /30 (~4.5:1)                | /30 (~4.5:1)               |
-| `text-muted-foreground` | /100 (no modifier)        | /80 (borderline)           |
-| `text-primary`        | Depends on primary color    | Depends on primary color   |
+| Token | What to do |
+| --- | --- |
+| `text-foreground` | Measure. A /30 modifier on near-black text over white is far below 4.5:1. |
+| `text-muted-foreground` | Measure the token itself before adding an opacity modifier. |
+| `text-primary` | Measure. The ratio depends on the primary color. |
 
 ### Gray Text on White/Light Backgrounds
 

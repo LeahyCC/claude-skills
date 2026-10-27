@@ -137,11 +137,11 @@ Avoid using images for text. If unavoidable:
 
 | Content Type | AA Requirement | AAA Requirement |
 |---|---|---|
-| Pre-recorded video + audio | Captions + audio description (or full text alt) | Captions + audio description + sign language |
+| Pre-recorded video + audio | Captions (1.2.2) and audio description (1.2.5). A text alternative meets 1.2.3 (A), not 1.2.5 | Captions, audio description, and sign language |
 | Pre-recorded audio only | Transcript | Transcript |
 | Pre-recorded video only (no audio) | Text alternative or audio track | Audio description |
 | Live video + audio | Captions | Captions + sign language |
-| Live audio only | Transcript (if feasible) | Transcript |
+| Live audio only | None at A or AA | Transcript (1.2.9) |
 
 ## Audio
 

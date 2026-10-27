@@ -193,6 +193,6 @@ export const metadata: Metadata = {
 ## Testing
 
 - **Facebook Sharing Debugger**: https://developers.facebook.com/tools/debug/
-- **Twitter Card Validator**: https://cards-dev.twitter.com/validator
+- **X card preview**: paste the URL into a draft post. The old public validator at cards-dev.twitter.com no longer previews cards.
 - **LinkedIn Post Inspector**: https://www.linkedin.com/post-inspector/
 - **opengraph.xyz**: Preview OG images across platforms
