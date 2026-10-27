@@ -1,0 +1,9 @@
+{
+  "name": "@acme/ui",
+  "exports": {
+    "./theme.css": { "style": "./src/theme.css", "default": "./src/theme.css" },
+    "./components/*": "./src/components/*.tsx"
+  },
+  "peerDependencies": { "tailwindcss": "^4.3.0" },
+  "dependencies": { "cn": "^0.5.0", "class-variance-authority": "^0.7.1" }
+}

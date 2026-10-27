@@ -1,0 +1,286 @@
+/*
+ * Starter theme for a Tailwind CSS v4 design system.
+ *
+ * Import it after Tailwind in every app:
+ *   @import "tailwindcss";
+ *   @import "@acme/ui/theme.css";
+ *
+ * When it ships inside a UI package, add the package's own scan path at the top,
+ * so apps find the components' classes without knowing the package's folders:
+ *   @source "./components";
+ *
+ * Three tiers, and where each one lives:
+ *
+ *   1. primitives   --palette-*     :root            raw values, never utilities
+ *   2. semantic     --background    :root, dark       what a value is for, swapped per mode
+ *   3. utilities    --color-*       @theme inline     what Tailwind turns into classes
+ *
+ * Component tokens (tier 4) are optional and live with the component.
+ *
+ * Every text pair passes WCAG 2.2 1.4.3 (4.5:1) and every control boundary,
+ * focus ring and solid fill passes 1.4.11 (3:1), in both modes. Re-measure
+ * after any change:
+ *   node scripts/check-contrast.mjs templates/theme.css
+ */
+
+/* Dark mode follows a data attribute on <html>, so brands and densities can use their own. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------- 1. primitives: raw OKLCH values, referenced only by tier 2 ---------- */
+:root {
+  --palette-neutral-0: oklch(1 0 0);
+  --palette-neutral-50: oklch(0.985 0.002 264);
+  --palette-neutral-100: oklch(0.967 0.003 264);
+  --palette-neutral-200: oklch(0.928 0.006 264);
+  --palette-neutral-300: oklch(0.872 0.01 258);
+  --palette-neutral-400: oklch(0.707 0.022 261);
+  --palette-neutral-500: oklch(0.551 0.027 264);
+  --palette-neutral-600: oklch(0.446 0.03 257);
+  --palette-neutral-700: oklch(0.373 0.034 260);
+  --palette-neutral-800: oklch(0.278 0.033 257);
+  --palette-neutral-900: oklch(0.21 0.034 265);
+  --palette-neutral-950: oklch(0.13 0.028 262);
+
+  --palette-brand-100: oklch(0.932 0.032 256);
+  --palette-brand-300: oklch(0.809 0.105 252);
+  --palette-brand-400: oklch(0.714 0.143 254);
+  --palette-brand-600: oklch(0.546 0.215 263);
+  --palette-brand-700: oklch(0.488 0.217 264);
+  --palette-brand-900: oklch(0.379 0.138 266);
+
+  --palette-red-100: oklch(0.936 0.032 17);
+  --palette-red-400: oklch(0.704 0.191 22);
+  --palette-red-600: oklch(0.577 0.245 27);
+  --palette-red-700: oklch(0.505 0.213 27);
+
+  --palette-green-100: oklch(0.962 0.044 157);
+  --palette-green-400: oklch(0.792 0.209 152);
+  --palette-green-700: oklch(0.527 0.154 150);
+  --palette-green-800: oklch(0.448 0.119 151);
+
+  --palette-amber-100: oklch(0.962 0.059 95);
+  --palette-amber-300: oklch(0.879 0.169 91);
+  --palette-amber-400: oklch(0.828 0.189 84);
+  --palette-amber-900: oklch(0.414 0.112 46);
+}
+
+/* ---------- 2. semantic: light mode ---------- */
+:root {
+  color-scheme: light;
+
+  --background: var(--palette-neutral-0);
+  --foreground: var(--palette-neutral-950);
+  --card: var(--palette-neutral-0);
+  --card-foreground: var(--palette-neutral-950);
+  --popover: var(--palette-neutral-0);
+  --popover-foreground: var(--palette-neutral-950);
+
+  --primary: var(--palette-brand-600);
+  --primary-foreground: var(--palette-neutral-0);
+  --secondary: var(--palette-neutral-100);
+  --secondary-foreground: var(--palette-neutral-900);
+  --muted: var(--palette-neutral-100);
+  --muted-foreground: var(--palette-neutral-600);
+  --accent: var(--palette-neutral-100);
+  --accent-foreground: var(--palette-neutral-900);
+
+  --destructive: var(--palette-red-600);
+  --destructive-foreground: var(--palette-neutral-0);
+  --success: var(--palette-green-800);
+  --success-foreground: var(--palette-neutral-0);
+  --warning: var(--palette-amber-300);
+  --warning-foreground: var(--palette-amber-900);
+  --info: var(--palette-brand-100);
+  --info-foreground: var(--palette-brand-900);
+
+  /* --border is decorative (dividers, card edges). --input marks where a control is, so it needs 3:1. */
+  --border: var(--palette-neutral-200);
+  --input: var(--palette-neutral-500);
+  --ring: var(--palette-brand-600);
+}
+
+/* ---------- 2. semantic: dark mode, same names, new values ---------- */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: var(--palette-neutral-950);
+  --foreground: var(--palette-neutral-50);
+  --card: var(--palette-neutral-900);
+  --card-foreground: var(--palette-neutral-50);
+  --popover: var(--palette-neutral-900);
+  --popover-foreground: var(--palette-neutral-50);
+
+  --primary: var(--palette-brand-400);
+  --primary-foreground: var(--palette-neutral-950);
+  --secondary: var(--palette-neutral-800);
+  --secondary-foreground: var(--palette-neutral-50);
+  --muted: var(--palette-neutral-800);
+  --muted-foreground: var(--palette-neutral-400);
+  --accent: var(--palette-neutral-800);
+  --accent-foreground: var(--palette-neutral-50);
+
+  --destructive: var(--palette-red-400);
+  --destructive-foreground: var(--palette-neutral-950);
+  --success: var(--palette-green-400);
+  --success-foreground: var(--palette-neutral-950);
+  --warning: var(--palette-amber-400);
+  --warning-foreground: var(--palette-neutral-950);
+  --info: var(--palette-brand-900);
+  --info-foreground: var(--palette-brand-100);
+
+  --border: var(--palette-neutral-800);
+  --input: var(--palette-neutral-500);
+  --ring: var(--palette-brand-400);
+}
+
+/* ---------- 3. utilities: only these names become classes ---------- */
+@theme inline {
+  /* Drop Tailwind's palette so bg-blue-500 stops compiling. Only the system's colours exist. */
+  --color-*: initial;
+  --color-white: #fff;
+  --color-black: #000;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* One radius knob. Every step moves with it. The reset closes the scale to these steps. */
+  --radius-*: initial;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-full: calc(infinity * 1px);
+}
+
+/* Values that do not change per mode go in plain @theme, so they are emitted once as variables. */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  /* Size and line height travel together: text-sm sets both. The reset closes the scale. */
+  --text-*: initial;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+
+  --shadow-*: initial;
+  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.06), 0 1px 3px 0 oklch(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -4px oklch(0 0 0 / 0.1);
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+  --animate-fade-in: fade-in 150ms var(--ease-standard);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* Open state for Radix (data-state="open") and Base UI (data-open), so components survive a primitive swap. */
+@custom-variant data-open {
+  &:where([data-state="open"]),
+  &:where([data-open]:not([data-open="false"])) {
+    @slot;
+  }
+}
+
+/* Composite text styles. The type- prefix keeps them out of tailwind-merge's text-* colour group. */
+@utility type-heading {
+  font-size: var(--text-2xl);
+  line-height: var(--text-2xl--line-height);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@utility type-body {
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+}
+
+@utility type-label {
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  font-weight: 500;
+}
+
+@utility focus-ring {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* Stacking order. Tailwind has no z-index namespace, so use z-(--z-modal). */
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-overlay: 1200;
+  --z-modal: 1300;
+  --z-toast: 1400;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  /* A visible focus ring for every focusable element, at full strength, never faded. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

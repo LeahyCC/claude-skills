@@ -75,6 +75,7 @@ Each skill has its own page: install, what it covers, and the source it was chec
 | [code-readability](./skills/code-readability/) | Code a cold reader can follow: floating/magic numbers and strings, naming and units, function shape, nesting, honest comments, dead code, and balanced lint tuning |
 | [plain-docs](./skills/plain-docs/) | Docs cut to what the reader needs: a fixed 5 layer page shape, a cut ladder for sections, and the AI sound tells to fix |
 | [ascii-art](./skills/ascii-art/) | Text drawings for work and fun: diagrams, tables, charts, banners, pictures, kaomoji, boards and mazes. Scripts do the counting, a checker catches drift |
+| [tailwind-design-system](./skills/tailwind-design-system/) | Build and run a design system on Tailwind v4 at scale: token tiers, themes, measured contrast, component APIs, monorepo packaging, lint and CI enforcement, versioning and deprecation |
 
 ## Commands
 

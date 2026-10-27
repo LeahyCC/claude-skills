@@ -1,0 +1,1 @@
+{ "name": "acme", "private": true, "devDependencies": { "prettier-plugin-tailwindcss": "^0.8.1", "@changesets/cli": "^3.0.3" } }

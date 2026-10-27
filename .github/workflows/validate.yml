@@ -76,3 +76,16 @@ jobs:
           node-version: 22
       - name: Drawings line up, samples match the scripts, counts match
         run: node reviews/ascii-art/checks/check-skill.mjs
+
+  tailwind-design-system:
+    name: Tailwind design system checks
+    runs-on: ubuntu-latest
+    env:
+      TW_VERSION: 4.3.3
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: CSS samples compile, sample classes exist, theme passes contrast, scripts match fixtures
+        run: node reviews/tailwind-design-system/checks/check-skill.mjs

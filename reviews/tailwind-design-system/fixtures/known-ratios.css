@@ -1,0 +1,13 @@
+/* Pairs with known WCAG 2 ratios. check-skill.mjs compares the script's output with these. */
+:root {
+  --grey: #fff;
+  --grey-foreground: #767676; /* 4.54:1, the lightest grey that passes on white */
+  --pale: #ffffff;
+  --pale-foreground: #999; /* 2.85:1, fails */
+  --red: white;
+  --red-foreground: oklch(0.628 0.2577 29.23); /* sRGB #ff0000, 4.00:1 */
+  --half: #fff;
+  --half-foreground: rgb(0 0 0 / 50%); /* composited over white */
+  --max: black;
+  --max-foreground: white; /* 21:1 */
+}
