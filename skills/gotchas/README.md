@@ -10,6 +10,12 @@ TypeScript compiler flags stay in [typescript-safety](../typescript-safety/). Ma
 npx skills add LeahyCC/claude-skills@gotchas
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install gotchas --marketplace LeahyCC/claude-skills
+```
+
 ## What it does
 
 Use it before opening a PR, when reviewing an agent's diff, or when debugging a bug where every piece of code looks reasonable on its own. The entry file routes by what the diff touches. Each resource owns one failure class, with the broken pattern next to the fix.

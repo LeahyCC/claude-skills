@@ -8,6 +8,12 @@ Product management and marketing strategy — from discovery through launch. Cov
 npx skills add LeahyCC/claude-skills@product-marketing
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install product-marketing --marketplace LeahyCC/claude-skills
+```
+
 ## What It Does
 
 **When working on product strategy, marketing pages, or planning features**, this skill provides:

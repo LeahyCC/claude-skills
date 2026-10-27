@@ -10,6 +10,12 @@ Whether WebGPU will make a page faster is in [spa-performance](../spa-performanc
 npx skills add LeahyCC/claude-skills@webgpu
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install webgpu --marketplace LeahyCC/claude-skills
+```
+
 ## What it does
 
 Use it when you write or debug WebGPU code or `.wgsl` files. The entry file is a procedure and a symptom table. Each resource owns one part of the API. A bundled script prints struct byte offsets so nobody counts padding by hand.

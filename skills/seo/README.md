@@ -8,6 +8,12 @@ Production-ready SEO and GEO (Generative Engine Optimization) for Next.js — th
 npx skills add LeahyCC/claude-skills@seo
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install seo --marketplace LeahyCC/claude-skills
+```
+
 ## What It Does
 
 When you edit layout or page files, this skill auto-activates and provides SEO implementation guidance with production Next.js code. It covers both traditional search engines (Google) and AI search engines (ChatGPT, Perplexity, Google AI Overviews).

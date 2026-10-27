@@ -8,6 +8,12 @@ Turns a thin prompt into a deep one. Same scope, but it names the raw material t
 npx skills add LeahyCC/claude-skills@prompt-rewrite
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install prompt-rewrite --marketplace LeahyCC/claude-skills
+```
+
 ## What it does
 
 Ask "rewrite this prompt" and paste the draft. It reads the code the prompt points at, sizes the task (short prompt, full prompt with a plan step, or an interview for a new feature), asks a few questions only if the answers would change the prompt, then answers four questions:

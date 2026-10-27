@@ -10,6 +10,12 @@ React re-renders, bundles, the compiler, and Server Components stay in [react-pe
 npx skills add LeahyCC/claude-skills@spa-performance
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install spa-performance --marketplace LeahyCC/claude-skills
+```
+
 ## What it does
 
 Use it when a gesture, a keystroke, a live tick, or a document stalls the page. The entry file is a procedure. Each resource owns one decision.

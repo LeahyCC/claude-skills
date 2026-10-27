@@ -8,6 +8,12 @@ Defensive review when untrusted content can reach a model, or when tools, MCP, s
 npx skills add LeahyCC/claude-skills@llm-agent-security
 ```
 
+Or inside Claude Code:
+
+```text
+/plugin install llm-agent-security --marketplace LeahyCC/claude-skills
+```
+
 ## What It Does
 
 Two surfaces:
