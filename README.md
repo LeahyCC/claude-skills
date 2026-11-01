@@ -72,6 +72,7 @@ Each skill has its own page: install, what it covers, and the source it was chec
 | [prompt-rewrite](./skills/prompt-rewrite/) | Turn a thin prompt into a deep one: raw material, expert tools, an exemplar file, and a proof |
 | [typescript-safety](./skills/typescript-safety/) | TypeScript 6 and 7: tsconfig past strict, narrowing, generics, escape hatches, typed linting, the upgrade to TS 7 |
 | [gotchas](./skills/gotchas/) | Silent bugs that pass typecheck and happy-path tests: 200 HTML fallbacks, pre-await state, swallowed catches, singletons, fresh-clone gaps, false-green tests |
+| [react-testing](./skills/react-testing/) | React component tests with Vitest, Testing Library, user-event and MSW: role queries, awaited events, waits that don't flake, the Vitest fake-timer hang, jsdom gaps, Server Components. Every example runs in CI |
 | [code-readability](./skills/code-readability/) | Code a cold reader can follow: floating/magic numbers and strings, naming and units, function shape, nesting, honest comments, dead code, and balanced lint tuning |
 | [plain-docs](./skills/plain-docs/) | Docs cut to what the reader needs: a fixed 5 layer page shape, a cut ladder for sections, and the AI sound tells to fix |
 | [ascii-art](./skills/ascii-art/) | Text drawings for work and fun: diagrams, tables, charts, banners, pictures, kaomoji, boards and mazes. Scripts do the counting, a checker catches drift |

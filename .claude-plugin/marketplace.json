@@ -291,6 +291,28 @@
       }
     },
     {
+      "name": "react-testing",
+      "source": "./skills/react-testing",
+      "displayName": "React Testing",
+      "description": "React component tests with Vitest 5, Testing Library 16, user-event 14, jest-dom 7, and MSW 3: role queries, absence checks, awaited user events, findBy and waitFor rules, the Vitest fake-timer hang, cleanup without globals, jsdom gaps, MSW error paths, and Server Components.",
+      "version": "0.1.0",
+      "author": {
+        "name": "LeahyCC"
+      },
+      "license": "MIT",
+      "keywords": [
+        "testing",
+        "react",
+        "quality",
+        "web-development"
+      ],
+      "metadata": {
+        "verified_against": "Testing Library, user-event, jest-dom, React act, Vitest 5, MSW 3 and Next.js Vitest docs, plus probes and runnable examples on a pinned stack. Scoped in skills/react-testing/SOURCES.md (checked 2026-11-01).",
+        "resource_files": 6,
+        "install": "npx skills add LeahyCC/claude-skills@react-testing"
+      }
+    },
+    {
       "name": "code-readability",
       "source": "./skills/code-readability",
       "displayName": "Code Readability",
