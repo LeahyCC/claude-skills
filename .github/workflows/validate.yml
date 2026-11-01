@@ -77,6 +77,17 @@ jobs:
       - name: Drawings line up, samples match the scripts, counts match
         run: node reviews/ascii-art/checks/check-skill.mjs
 
+  react-testing:
+    name: React testing examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Every tsx test example passes on the pinned stack, links resolve, counts match
+        run: node reviews/react-testing/checks/check-skill.mjs
+
   tailwind-design-system:
     name: Tailwind design system checks
     runs-on: ubuntu-latest
