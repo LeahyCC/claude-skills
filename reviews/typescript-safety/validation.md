@@ -1,14 +1,14 @@
 # TypeScript safety validation
 
-Run on 2026-10-23 with Node 24.21.0.
+Run on 2026-10-23 with Node 24.21.0. The checker was run again on 2026-11-01 with Node 26.12.1 on Windows, after the catch, hidden `any`, enum, and `type` or `interface` additions.
 
 ## Snippet checker
 
 `node reviews/typescript-safety/checks/check-ts-snippets.mjs`
 
 ```
-ts 7.0.2: 56 blocks compiled
-ts 6.0.3: 55 blocks compiled
+ts 7.0.2: 67 blocks compiled
+ts 6.0.3: 66 blocks compiled
 4 blocks skipped by marker
 All TypeScript samples pass.
 ```
@@ -21,6 +21,10 @@ Two edits to generics.md, each made on its own and then reverted.
 | --- | --- |
 | A PASS sample reads `a.lenght` | `generics.md:67 (block line 2): error TS2551: Property 'lenght' does not exist on type 'T'`, exit 1 |
 | The FAIL sample gets the constraint that fixes it, so its `@ts-expect-error` has nothing to cover | `generics.md:58 (block line 2): error TS2578: Unused '@ts-expect-error' directive.`, exit 1 |
+
+On 2026-11-01, two edits made on a copy each failed the check as expected: a `.catch((e: unknown) => ...)` PASS sample reading `e.message` gave TS18046, and reading `items[0].x` on the `unknown[]` PASS sample gave TS2571.
+
+The 2026-11-01 run used a copy of the skill with LF line endings and `shell: true` added to the `npx` call. On Windows the checker as committed cannot run: the baseline regex expects a bare LF and finds no block in a CRLF checkout, and `execFileSync('npx', ...)` fails without a shell. CI on Linux is not affected.
 
 ## Claims checked by running them
 
@@ -38,6 +42,9 @@ Two edits to generics.md, each made on its own and then reverted.
 | `module: nodenext` does not imply `target: esnext`, and `module: node20` does not imply `es2023` | `using` and `Set.intersection` on `tsc` 7.0.2 |
 | `StrictOmit` on a union of objects collapses to `{}` when the only shared key is omitted | `tsc` 7.0.2 |
 | `JSON.parse`, an object literal, spread, and `Object.assign` can forge a `unique symbol` brand | `tsc` 7.0.2 |
+| `Array.isArray` on `unknown` gives `any[]`; `import()` of a non-literal specifier gives `any`; `.catch` callback parameters are `any` | `tsc` 7.0.2 and 6.0.3, 2026-11-01 |
+| An ambient `const enum` read gives TS2748 under `verbatimModuleSyntax`; `const enum` gives TS1294 under `erasableSyntaxOnly`; a conflicting `extends` gives TS2430 while the intersection gives `never` | `tsc` 7.0.2 and 6.0.3 (TS1294 on 7.0.2 only), 2026-11-01 |
+| `use-unknown-in-catch-callback-variable`, `only-throw-error` (and that `throw e` on `unknown` passes), `consistent-type-definitions`, and `no-restricted-syntax` with `TSEnumDeclaration[const=true]` each report the sample problem | ESLint 10.13.0, typescript-eslint 8.72.0, 2026-11-01 |
 
 ## Not run
 

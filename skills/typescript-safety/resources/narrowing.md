@@ -12,6 +12,7 @@ Sources are in [SOURCES.md](../SOURCES.md).
 - Type predicates
 - Assertion functions
 - Narrowing in callbacks
+- Errors in catch
 - Where narrowing is unsound
 - Checklist
 
@@ -198,6 +199,76 @@ function urlsFor(base: string | undefined, paths: string[]): string[] {
 
 It does not hold if the variable is assigned anywhere inside a nested function. Copy it to a `const` first in that case.
 
+## Errors in catch
+
+JavaScript can throw any value, not only an `Error`. Since TS 4.4, `useUnknownInCatchVariables` types the variable in `catch (e)` as `unknown`. It is one of the `strict` flags, so it is on by default since 6.0.
+
+FAIL. `e` is `unknown`, so reading a property is an error:
+
+```ts
+function save(write: () => void): string {
+  try {
+    write()
+    return 'saved'
+  } catch (e) {
+    // @ts-expect-error 'e' is of type 'unknown' (TS18046)
+    return e.message
+  }
+}
+```
+
+PASS. Narrow with `instanceof Error`, and give every other thrown value a path too. Wrap it with `cause` when it has to travel on as an `Error`:
+
+```ts
+function errorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message
+  return String(e) // a string, a number, or an object someone threw
+}
+
+function save(write: () => void): void {
+  try {
+    write()
+  } catch (e) {
+    throw new Error(`Save failed: ${errorMessage(e)}`, { cause: e })
+  }
+}
+```
+
+Do not write `catch (e: any)`. It turns the flag back off for that block.
+
+The flag covers `catch` clauses only. Promise rejection callbacks are typed `(reason: any)` in `lib.es5.d.ts`, so the parameter of `.catch()` and of the second `.then()` argument is still `any`.
+
+FAIL. The typo compiles, because `e` is `any`:
+
+```ts
+function load(task: Promise<string>): Promise<string | undefined> {
+  return task.catch((e) => {
+    console.error(e.mesage) // any: no error
+    return undefined
+  })
+}
+```
+
+PASS. Write `unknown` on the parameter and narrow:
+
+```ts
+function load(task: Promise<string>): Promise<string | undefined> {
+  return task.catch((e: unknown) => {
+    console.error(e instanceof Error ? e.message : String(e))
+    return undefined
+  })
+}
+```
+
+Two typescript-eslint rules close the gap. See [linting.md](./linting.md).
+
+| Rule | Reports | In |
+| --- | --- | --- |
+| `use-unknown-in-catch-callback-variable` | A `.catch()` or `.then()` rejection callback whose parameter is not `unknown` | `strictTypeChecked`. Turn it on by hand on `recommendedTypeChecked`. |
+| `only-throw-error` | `throw 'oops'` and other values that are not an `Error` | `recommendedTypeChecked` |
+
+By default `only-throw-error` still allows throwing a value typed `unknown` or `any`, and rethrowing a caught value. So `throw e` inside a `catch` passes, and code that receives it must still narrow.
+
 ## Where narrowing is unsound
 
 The compiler keeps a narrowed property narrowed after a function call, even if the call could change it. This is a deliberate trade-off, and it can hide a bug:
@@ -239,4 +310,6 @@ function hasDigits(s: string): boolean {
 - [ ] No hand-written predicate where the compiler can infer one
 - [ ] Every hand-written predicate checks every property it promises
 - [ ] Assertion functions are declarations or have an explicit type
+- [ ] `catch` variables stay `unknown` and are narrowed with `instanceof Error`, with a path for non-Error values
+- [ ] Promise rejection callbacks write `(e: unknown)`
 - [ ] Values that a call could change are copied to a `const` before the call

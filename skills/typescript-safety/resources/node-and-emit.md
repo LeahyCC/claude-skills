@@ -9,6 +9,7 @@ Sources are in [SOURCES.md](../SOURCES.md).
 - Three ways TS becomes JS
 - Node type stripping
 - Erasable syntax
+- Enums and const objects
 - Imports that survive output
 - Checklist
 
@@ -121,6 +122,69 @@ canDelete('member')
 
 Node itself rejects the enum with `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX: TypeScript enum is not supported in strip-only mode`.
 
+## Enums and const objects
+
+The handbook's "Objects vs Enums" section says modern TypeScript may not need an enum. An `as const` object with a derived union, as in the PASS above, does the same job and is plain JavaScript. If JavaScript ever gets enums, code in that form can move to them.
+
+Use an `as const` object when: you write new code, or the code may ever run through Node or a strip-only tool.
+Keep an existing enum when: the codebase is built by `tsc` or a full transpiler and does not have `erasableSyntaxOnly` on. Rewriting working enums buys little.
+
+### Numeric enums map both ways
+
+A numeric enum compiles to an object that maps names to numbers and numbers back to names. String members get no reverse entry. So the object holds more keys than you wrote, and indexing it by any number compiles:
+
+```ts
+enum Level {
+  Low,
+  High,
+}
+
+const name = Level[Level.High] // 'High', from the reverse mapping
+const missing = Level[7] // compiles. undefined at runtime.
+console.log(name, missing, Object.keys(Level)) // keys are '0', '1', 'Low', 'High'
+```
+
+Code that loops over `Object.keys` or `Object.values` of a numeric enum sees every value twice, once as a name and once as a number. An `as const` object has only the keys you wrote.
+
+### Avoid const enum
+
+A `const enum` has no runtime object. `tsc` replaces each use with the literal value. That breaks in three ways:
+
+- Tools that compile one file at a time cannot see a value declared in another file, so they cannot inline it. Under `isolatedModules` or `verbatimModuleSyntax`, reading an ambient `const enum` (from a `.d.ts` file or a `declare const enum`) is an error.
+- A library's `const enum` is copied into your build at compile time. If the installed version at runtime has other values, your code uses the old ones, and tests built against the same version will not catch it.
+- Strip-only tools reject it like any other enum.
+
+FAIL under the baseline, which has `isolatedModules` and `verbatimModuleSyntax` on:
+
+```ts
+declare const enum Color {
+  Red,
+  Green,
+}
+
+// @ts-expect-error cannot access ambient const enums (TS2748)
+const red = Color.Red
+```
+
+Ban it in one of two ways:
+
+| Setting | Rejects | Pick it when |
+| --- | --- | --- |
+| `erasableSyntaxOnly` | Every `enum`, `const enum` included (TS1294), plus the other syntax in [Erasable syntax](#erasable-syntax) | You can drop enums entirely |
+| ESLint `no-restricted-syntax` with the selector `TSEnumDeclaration[const=true]` | `const enum` only | Plain enums stay for now |
+
+```js
+// eslint.config.mjs, inside a config object
+rules: {
+  'no-restricted-syntax': [
+    'error',
+    { selector: 'TSEnumDeclaration[const=true]', message: 'Use an as const object instead of a const enum.' },
+  ],
+},
+```
+
+A library that must keep its own `const enum` can set `preserveConstEnums` and publish plain `enum` declarations, as the handbook describes. Most code should not need that.
+
 ## Imports that survive output
 
 `verbatimModuleSyntax` keeps every import without `type` and deletes every import with it. What you write is what runs.
@@ -152,5 +216,7 @@ export function greet(u: User): string {
 - [ ] CI runs `tsc --noEmit` when a bundler or Node does the stripping
 - [ ] Code run by Node directly has `erasableSyntaxOnly` and `rewriteRelativeImportExtensions` on
 - [ ] No `enum`, parameter properties, or runtime `namespace` in that code. Const objects with a derived union instead.
+- [ ] No `const enum`, banned by `erasableSyntaxOnly` or a lint rule
+- [ ] No loop over the keys or values of a numeric enum
 - [ ] `verbatimModuleSyntax` is on and type-only imports say `import type`
 - [ ] Import aliases use `package.json` `"imports"` (such as `"#/*": "./src/*"`), not `paths`, when Node resolves them
