@@ -14,6 +14,8 @@ One block per kind of task. Each answers the four questions. Use them as a start
 | Tests | [Testing](#testing) |
 | Security | [Security](#security) |
 | Accessibility | [Accessibility](#accessibility) |
+| Docs (README, guide, ADR) | [Docs](#docs) |
+| Planning (spec, design before code) | [Planning](#planning) |
 
 ## Refactoring
 
@@ -84,3 +86,17 @@ One block per kind of task. Each answers the four questions. Use them as a start
 - **Raw material:** the rendered page, its accessibility tree, the components with custom interaction.
 - **Method and tools:** axe (DevTools or `@axe-core/playwright`), keyboard-only walkthrough, VoiceOver or NVDA, WCAG 2.2 AA criteria.
 - **Proof:** axe reports zero violations, every action reachable and visible by keyboard, the screen reader announces name, role, and state. Repo skill: `wcag-accessibility`.
+
+## Docs
+
+- **Pros do:** name one reader and the one thing they need to do next, then cut everything that doesn't help them do it. Check every command in the doc by running it.
+- **Raw material:** the code the doc describes, the commands as they run today, the questions people actually ask (issues, chat threads), the doc's current text. Not "the docs are out of date".
+- **Method and tools:** the repo's docs format and an existing page that reads well as the exemplar. A fresh clone to run the setup steps from. A link checker.
+- **Proof:** every command in the doc runs from a fresh clone and gives the output shown. Every link resolves. A named reader can do the task from the doc alone. Repo skill: `plain-docs`.
+
+## Planning
+
+- **Pros do:** write down what must be true when it is done before choosing how. List what is unknown and settle the questions whose answers change the design first.
+- **Raw material:** the code the change touches, the ticket or request in the user's own words, the constraints already written down (CLAUDE.md, ADRs, the API contract).
+- **Method and tools:** the interview shape in [template.md](./template.md#interview), a SPEC.md with acceptance checks, a list of non-goals. Plan mode, so nothing is edited while the plan is open.
+- **Proof:** each acceptance check in the spec maps to a test or a command. Every open question is answered or marked as a decision for the user. The build runs in a fresh session from the spec alone.

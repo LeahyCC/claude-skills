@@ -1,9 +1,10 @@
 # Template
 
-Three shapes. Pick by size, not by how important the task feels.
+Three shapes, plus leaving it alone. Pick by size, not by how important the task feels.
 
 | Shape | Use when | Length |
 | --- | --- | --- |
+| Already good | The draft names the change, the files, and a proof that can fail | The draft, with at most one line changed |
 | [Short](#short) | The diff fits in one sentence | 3 to 6 lines |
 | [Full](#full) | Multi-file, unfamiliar code, or the approach is unclear | 15 to 35 lines, more if the raw material is long |
 | [Interview](#interview) | A new feature with open design questions | The interview prompt plus what you found |

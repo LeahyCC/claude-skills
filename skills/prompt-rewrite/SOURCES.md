@@ -1,6 +1,6 @@
 # Sources
 
-Checked 2026-10-22.
+Checked 2026-10-22. Rows added 2026-11-01 are marked.
 
 ## Anthropic
 
@@ -11,6 +11,9 @@ Checked 2026-10-22.
 | [Develop tests / success criteria](https://platform.claude.com/docs/en/test-and-evaluate/develop-tests) (the old define-success URL redirects here) | criteria and grading sections | Specific, measurable proof instead of "good performance". |
 | [Claude Code best practices](https://code.claude.com/docs/en/best-practices) | in full | Give a check Claude can run; `/goal`, Stop hook, verification subagent; show evidence rather than asserting success; "If you could describe the diff in one sentence, skip the plan"; reference existing patterns (exemplar file); the interview prompt and SPEC.md; adversarial review limited to correctness. |
 | Skill authoring best practices (platform.claude.com) and [Claude Code skills](https://code.claude.com/docs/en/skills) | in full / frontmatter sections | Third-person description with the use case first; one term per concept; table of contents over 100 lines; evaluations before shipping. |
+| [Prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices), checked again 2026-11-01 | "Control the format" and "Give Claude a role" sections | "Tell Claude what to do instead of what not to do". A role goes in the system prompt. |
+| [Run Claude Code programmatically](https://code.claude.com/docs/en/headless) (2026-11-01) | in full | `claude -p` runs with nobody to answer; `--permission-prompts none` removes AskUserQuestion; `--output-format json` with `--json-schema`; `--append-system-prompt`. |
+| [Subagents](https://code.claude.com/docs/en/sub-agents) (2026-11-01) | context and tool sections | A subagent starts with a fresh context and sees none of the conversation. AskUserQuestion is removed from every subagent. |
 | [Effective context engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) (2025-09-29) | in full | "Minimal does not necessarily mean short": length follows the material. |
 
 The old prompt generator, prompt improver, and prompt templates pages now redirect to best practices, so they could not be checked separately.
@@ -23,6 +26,7 @@ The old prompt generator, prompt improver, and prompt templates pages now redire
 | dotneet prompt-improver (skills.sh) | 508 installs | Size the task before deciding whether it needs a plan step. |
 | [obra/superpowers](https://github.com/obra/superpowers) brainstorming | 303.8k stars | One question at a time for open design work (the interview shape). |
 | [OpenAI GPT-5.5 prompting guide](https://developers.openai.com/api/docs/guides/latest-model/gpt-5.5) | official | Describe the destination, not every step; contradictory instructions waste reasoning; absolute words only for invariants. |
+| [gohypergiant/agent-skills](https://github.com/gohypergiant/agent-skills) prompt-manager (2026-11-01) | Apache-2.0 | Topics only, no text: per-task templates for docs and planning, separate handling for system prompts and batch runs. Not taken: CO-STAR, RISEN and RODES (no primary source), and its rule against reading files, which contradicts Claude Code best practices. |
 | [Kiro feature specs](https://kiro.dev/docs/specs/feature-specs/) | n/a | Behaviour written as WHEN/SHALL lines maps straight to tests. Noted, not adopted: too much ceremony for most prompts. |
 
 None of these had the raw-material rule or per-domain lenses with named tools, which is why this skill keeps both.

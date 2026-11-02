@@ -16,7 +16,7 @@ Or inside Claude Code:
 
 ## What it does
 
-Ask "rewrite this prompt" and paste the draft. It reads the code the prompt points at, sizes the task (short prompt, full prompt with a plan step, or an interview for a new feature), asks a few questions only if the answers would change the prompt, then answers four questions:
+Ask "rewrite this prompt" and paste the draft. It reads the code the prompt points at, sizes the task (leave a good draft alone, short prompt, full prompt with a plan step, or an interview for a new feature), checks where the prompt will run (a session, `claude -p`, a subagent, a system prompt), asks a few questions only if the answers would change the prompt, then answers four questions:
 
 1. What would top professionals do here that the draft does not ask for?
 2. What is the rawest material they would start from?
@@ -31,10 +31,10 @@ Version 0.1.0.
 
 | Resource | Topics |
 | --- | --- |
-| [lenses.md](./resources/lenses.md) | The four answers for 10 kinds of task: refactoring, performance, UI, UX, API, frontend, debugging, testing, security, accessibility |
-| [template.md](./resources/template.md) | Short, full, and interview shapes; how to enforce the proof; why each section is there |
+| [lenses.md](./resources/lenses.md) | The four answers for 12 kinds of task: refactoring, performance, UI, UX, API, frontend, debugging, testing, security, accessibility, docs, planning |
+| [template.md](./resources/template.md) | Already good, short, full, and interview shapes; how to enforce the proof; why each section is there |
 | [examples.md](./resources/examples.md) | Four rewrites: a short one, performance, refactoring, UX |
-| [evals.md](./resources/evals.md) | Three test cases for changing this skill, with pass checks |
+| [evals.md](./resources/evals.md) | Eight test cases for changing this skill, with pass checks |
 
 4 resource files.
 
