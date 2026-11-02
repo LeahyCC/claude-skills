@@ -38,11 +38,11 @@ Most React performance skills say "use React.memo everywhere."
 | Resource | Topics |
 |----------|--------|
 | [profiling.md](./resources/profiling.md) | React DevTools Profiler, Chrome Performance, dev-build symbols, web-vitals, bundle analysis, CI testing |
-| [rendering.md](./resources/rendering.md) | State colocation, children pattern, useTransition, useDeferredValue, memo, context, a per-asset update under a large tree |
+| [rendering.md](./resources/rendering.md) | State colocation, children pattern, components declared at top level, useTransition (including async), useDeferredValue, Activity, memo, useCallback, context, a per-asset update under a large tree, lazy useState and updaters, narrow effect dependencies, useEffectEvent, app-wide init |
 | [bundle.md](./resources/bundle.md) | Code splitting, tree shaking, dynamic imports, Server Components for zero-JS |
 | [web-vitals.md](./resources/web-vitals.md) | LCP, INP, CLS — causes, thresholds, React-specific fixes |
-| [server-components.md](./resources/server-components.md) | Server vs Client decision, composition, streaming, parallel fetching |
-| [data-and-lists.md](./resources/data-and-lists.md) | Virtualization, pagination, infinite scroll, Web Workers |
+| [server-components.md](./resources/server-components.md) | Server vs Client decision, composition, streaming, parallel fetching, hydration mismatch cost |
+| [data-and-lists.md](./resources/data-and-lists.md) | Virtualization (react-window 2, react-virtuoso), pagination, infinite scroll, Web Workers |
 | [assets.md](./resources/assets.md) | next/image, next/font, Script loading, video, preloading |
 | [react-compiler.md](./resources/react-compiler.md) | Setup, what it replaces, Rules of React, migration strategy |
 
@@ -52,7 +52,7 @@ Most React performance skills say "use React.memo everywhere."
 - [Web Vitals specification](https://web.dev/articles/vitals)
 - [Next.js optimization docs](https://nextjs.org/docs/app/building-your-application/optimizing)
 
-Earlier targeted review: October 2026. [Scoped follow-up sources and checks](SOURCES.md) were checked on 2026-10-21; this is not blanket verification of all resources.
+Earlier targeted review: October 2026. [Scoped follow-up sources and checks](SOURCES.md) were checked on 2026-10-21, and the rendering, effects, hydration and API fixes on 2026-11-01; this is not blanket verification of all resources.
 
 ## License
 

@@ -1,5 +1,15 @@
 # Server Components
 
+## Contents
+
+- Performance Benefits
+- Decision Matrix: Server vs Client
+- Composition Pattern
+- Parallel Data Fetching
+- Server Actions for Mutations
+- Hydration Mismatches Cost Time
+- Common Mistakes
+
 ## Performance Benefits
 
 1. **Zero client JavaScript** — libraries used only for rendering stay on the server
@@ -31,8 +41,9 @@ import { getListing } from '@/lib/db'
 import LikeButton from './LikeButton'       // Client Component
 import ShareButton from './ShareButton'     // Client Component
 
-export default async function ListingPage({ params }: { params: { id: string } }) {
-  const listing = await getListing(params.id)  // Direct DB access
+export default async function ListingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params                  // Next.js 15+: params is a Promise
+  const listing = await getListing(id)         // Direct DB access
 
   return (
     <article>
@@ -202,6 +213,39 @@ export function LikeButton({ listingId }: { listingId: string }) {
   )
 }
 ```
+
+## Hydration Mismatches Cost Time
+
+Hydration reuses the server HTML. That only works when the first client render produces the same output. When it does not, React re-renders that tree on the client instead (React 19 logs that the tree "will be regenerated on the client"). The server work for it is wasted, and the client pays a second render before the page is interactive. react.dev calls a slowdown the best case. In the worst case, event handlers attach to the wrong elements. React does not patch mismatched text, and attribute fixes are not guaranteed.
+
+How much of the tree is re-rendered is not spelled out in the docs. Treat every mismatch as a bug, not a warning to silence.
+
+Common causes: `Date` and locale formatting, `Math.random()`, `typeof window` branches in render, and reading `localStorage` or `window` during render.
+
+```tsx
+// BAD: the server and the browser are in different time zones,
+// so the text differs and React redoes this tree on the client
+'use client'
+export function LocalTime({ iso }: { iso: string }) {
+  return <time dateTime={iso}>{new Date(iso).toLocaleTimeString()}</time>
+}
+
+// GOOD: the first client render matches the server. The local time fills in after hydration.
+'use client'
+import { useEffect, useState } from 'react'
+
+export function LocalTime({ iso }: { iso: string }) {
+  const [label, setLabel] = useState<string | null>(null)
+  useEffect(() => {
+    setLabel(new Date(iso).toLocaleTimeString())
+  }, [iso])
+  return <time dateTime={iso} className="inline-block min-w-20">{label ?? ' '}</time>
+}
+```
+
+The two-pass fix has its own cost: the component renders twice, and the content changes right after hydration. Reserve the space so the swap does not shift layout. Use it only for the parts that must differ. `suppressHydrationWarning` silences one element, one level deep, for unavoidable text such as a timestamp. React still does not patch that text.
+
+Sources: [hydrateRoot](https://react.dev/reference/react-dom/client/hydrateRoot), [React 19 release notes, hydration errors](https://react.dev/blog/2024/12/05/react-19).
 
 ## Common Mistakes
 
