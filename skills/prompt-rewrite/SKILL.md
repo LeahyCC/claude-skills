@@ -5,7 +5,8 @@ description: >
   plus the raw material to start from, the tools an expert would use, an
   existing file to copy, and a proof a third party can check. Covers
   refactoring, performance, UI, UX, API, frontend, debugging, testing,
-  security, and accessibility. Use when the user says "rewrite my prompt",
+  security, accessibility, docs, and planning, for a session, a `claude -p`
+  run, a subagent brief, or a system prompt. Use when the user says "rewrite my prompt",
   "improve this prompt", "make this prompt better", "deeper version of this
   task", or pastes a rough task and asks for a proper prompt.
 ---
@@ -45,6 +46,7 @@ draft prompt
 
 1. **Look first.** Read what the draft points at: the files, `package.json` scripts, the test setup, docs that govern the area. Take the package manager from the lockfile (`pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `package-lock.json`); with no lockfile, write `npm run`. Find one existing file that already does this kind of thing well; it becomes the exemplar. Never invent a path, script, or number. When something is out of reach, write a marked placeholder (`<path to the slow page>`).
 2. **Size it.** Pick one shape from [template.md](./resources/template.md):
+   - **Already good:** the draft names the change, the files, and a proof that can fail. Say so, change at most one line (usually the proof), and hand it back. A rewrite that only adds words makes it worse.
    - **Short:** the diff fits in one sentence. Return 3 to 6 lines: the change, the exemplar, the proof.
    - **Full:** multi-file, unfamiliar code, or the approach is unclear. Use the full template and add "plan first and wait for approval".
    - **Interview:** a new feature with open design questions. Return Claude Code's interview prompt seeded with what you found, ending in a SPEC.md and a fresh session to build it.
@@ -72,6 +74,7 @@ Worked rewrites: [examples.md](./resources/examples.md).
 | Name the proof as a command, number, or pass/fail, and ask for its output as evidence | "Double-check your work" (adds cost on models that already self-check, and proves nothing) |
 | Make sure the proof can fail: new tests fail before the change, numbers beat run-to-run noise, the check hits the real thing | A proof a stub, mock, or lucky run would pass anyway |
 | Give the reason behind a constraint | Bare "NEVER" rules; absolute words are for true invariants only |
+| Say what to do ("reply in plain paragraphs") | Only what not to do ("no markdown"), which leaves the target open |
 | Name the tools and the evidence available | A fixed step list the model must follow (current models plan better than a prescribed order) |
 | Point at one exemplar file to follow | Describe a pattern the repo already shows |
 | Say "change the code" when edits are wanted | "Suggest improvements" when you want edits |
@@ -85,9 +88,22 @@ Worked rewrites: [examples.md](./resources/examples.md).
 
 For long unattended runs, add one line: a fresh subagent reviews the diff against the proof and reports gaps that affect correctness only.
 
+## Where it runs
+
+Who reads the prompt changes what it must carry. Step 3's questions are only possible when someone can answer them.
+
+| Runs as | Can it ask the user? | What the prompt must carry |
+| --- | --- | --- |
+| A message in an interactive session | Yes | The four answers. Questions can wait for the run. |
+| `claude -p` in a script or CI | No, nobody is there | Every answer up front, the output format (`--output-format json` with a schema if a script reads it), and what to do when a check fails. |
+| A subagent brief | No, and it sees none of the conversation | What was already found or ruled out, the files, the scope, and what to send back. |
+| A system prompt or `--append-system-prompt` | Not per task | Lasting rules and a role, with no "today" or "the bug we just found". |
+
 ## Review checklist
 
 - [ ] Same scope as the draft; anything wider is a non-goal or a follow-up
+- [ ] A draft that was already good came back nearly unchanged
+- [ ] The prompt carries what its runner cannot ask for (see Where it runs)
 - [ ] Shape matches size: short prompt for a one-sentence diff, plan gate for multi-file work
 - [ ] Every path, script, and tool was seen in the repo or is a marked placeholder
 - [ ] Raw material is raw (trace, log, code, data, recording), not a summary, and an exemplar file is named
