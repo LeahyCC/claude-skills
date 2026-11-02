@@ -1,5 +1,12 @@
 # Core Web Vitals
 
+## Contents
+
+- LCP (Largest Contentful Paint)
+- INP (Interaction to Next Paint)
+- CLS (Cumulative Layout Shift)
+- Measuring in Production
+
 ## LCP — Largest Contentful Paint
 
 **What:** Time until the largest visible content element renders. Indicates when main content has loaded.
@@ -15,17 +22,21 @@
 // BAD — raw <img> with no optimization
 <img src="/hero.jpg" alt="Hero" />
 
-// GOOD — next/image with priority for LCP element
+// GOOD: next/image, loaded eagerly at high priority (Next.js 16)
 import Image from 'next/image'
-import heroImg from './hero.png'  // Static import = auto dimensions
+import heroImg from './hero.png'  // Static import: dimensions and blurDataURL are inferred
 
 <Image
   src={heroImg}
   alt="Hero banner"
-  priority              // Preloads — disables lazy loading
-  placeholder="blur"    // Blur-up while loading
+  sizes="100vw"
+  loading="eager"       // Do not lazy-load the LCP image
+  fetchPriority="high"  // Ask the browser to fetch it first
+  placeholder="blur"
 />
 ```
+
+Next.js 16 deprecates `priority` in favour of `preload`. The [Image docs](https://nextjs.org/docs/app/api-reference/components/image) say `loading="eager"` or `fetchPriority="high"` is enough in most cases. Use `preload` only when the fetch must start from the `<head>`, never together with `loading` or `fetchPriority`, and not when different images are LCP at different viewports. On Next.js 15 and earlier, use that version's `priority` prop. See [assets.md](./assets.md).
 
 **Cause: Client-side data fetching delays content**
 ```tsx
@@ -52,7 +63,8 @@ async function Page() {
 // BAD — external font causes FOIT (invisible text until font loads)
 <link href="https://fonts.googleapis.com/css2?family=Inter" rel="stylesheet" />
 
-// GOOD — next/font self-hosts with zero layout shift
+// GOOD: next/font self-hosts the font, so there is no request to a font CDN.
+// By default it adds an adjusted fallback font to reduce layout shift.
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
@@ -262,10 +274,12 @@ function Page() {
 // BAD — system font renders, then swaps to web font (different metrics)
 @import url('https://fonts.googleapis.com/css2?family=Inter');
 
-// GOOD — next/font applies size-adjust for zero-shift swap
+// GOOD: next/font sizes a fallback font to match (adjustFontFallback, on by default)
 import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 ```
+
+This reduces the shift when the web font swaps in. It does not promise zero CLS. The default `display` is `swap`, so the fallback still shows first. Measure CLS after the change. Source: [Font API](https://nextjs.org/docs/app/api-reference/components/font).
 
 ---
 

@@ -2,6 +2,16 @@
 
 **Rule: Never optimize without measuring first.** Premature optimization adds complexity for no proven benefit. The React team recommends measuring in production builds with CPU throttling to simulate real user devices.
 
+## Contents
+
+- React DevTools Profiler
+- Chrome Performance Panel
+- console.time for Specific Calculations
+- web-vitals Library (Production Monitoring)
+- Bundle Analysis
+- Performance Testing in CI
+- Measurement Workflow
+
 ## React DevTools Profiler
 
 ### Setup

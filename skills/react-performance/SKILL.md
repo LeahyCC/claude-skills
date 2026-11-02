@@ -1,6 +1,6 @@
 ---
 name: react-performance
-description: Use when optimizing React component rendering, fixing Core Web Vitals (LCP, INP, CLS), reducing bundle size, diagnosing re-renders, a store update under a large tree, code splitting, memoization decisions, Server Component patterns, or profiling React apps. Covers React 19, React Compiler, useTransition, useDeferredValue, Suspense, and Next.js optimization.
+description: Use when optimizing React component rendering, fixing Core Web Vitals (LCP, INP, CLS), reducing bundle size, diagnosing re-renders, a store update under a large tree, code splitting, memoization decisions, Server Component patterns, or profiling React apps. Covers React 19, React Compiler, useTransition, useDeferredValue, useEffectEvent, Activity, Suspense, hydration mismatches, and Next.js optimization.
 ---
 
 # React Performance
@@ -8,6 +8,14 @@ description: Use when optimizing React component rendering, fixing Core Web Vita
 Comprehensive React performance guidance covering measurement, rendering optimization, bundle size, Core Web Vitals, and Server Component patterns. Verified against React docs and Web Vitals specifications.
 
 **First principle: Measure before you optimize.** This skill teaches you to find problems before fixing them.
+
+## Contents
+
+- Architecture Overview
+- Quick Reference
+- Decision Matrix: Which Optimization?
+- Choose a proportional fix
+- Anti-Patterns Checklist
 
 ## Architecture Overview
 
@@ -70,6 +78,10 @@ Before prescribing an API, inspect the app's installed React/Next versions, bund
 | INP > 200ms on navigation | Route transition re-renders | `useTransition` for navigation | rendering |
 | Scrolling stutter | Large list rendering | Virtualization | data-and-lists |
 | Input lag | Context re-rendering entire tree | Split context, selector pattern | rendering |
+| Input loses focus, state resets or an animation restarts on each render | Component declared inside another component, so React remounts it | Declare it at module top level, pass props | rendering |
+| Effect tears down and re-subscribes on every render | Object, function or read-only value in its dependencies | Depend on primitives or a derived boolean; `useEffectEvent` for values only read when it fires | rendering |
+| Switching tabs loses state or remounts slowly | Hidden panel is unmounted | `<Activity mode="hidden">` | rendering |
+| Slow first interaction after load, hydration error in console | Server HTML and first client render differ | Make them match; client-only parts after hydration | server-components |
 
 ### "Layout is jumping around"
 
@@ -105,3 +117,7 @@ When reviewing code, watch for these performance killers:
 - [ ] **Manual memo/useMemo/useCallback** without measuring first — adds complexity for no proven benefit
 - [ ] **Per-asset state or store hook under thousands of siblings.** The cost is the walk from the root. Subscribe in an effect and write the DOM. See [rendering.md](./resources/rendering.md).
 - [ ] **`new ExpensiveThing()` in `useRef` initializer** — runs every render (use lazy init pattern)
+- [ ] **`useState(expensive())`.** The call runs on every render. Pass `() => expensive()`.
+- [ ] **A component declared inside another component.** It remounts on every parent render. Declare it at module level.
+- [ ] **App-wide setup in a mount Effect.** It runs twice in development. Use a module-level flag or module top-level code.
+- [ ] **State set after `await` inside `startTransition`.** It is not a transition. Wrap it in another `startTransition`.

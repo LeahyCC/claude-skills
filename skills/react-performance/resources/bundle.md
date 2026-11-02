@@ -1,5 +1,14 @@
 # Bundle Optimization
 
+## Contents
+
+- Diagnosis First
+- Code Splitting with Dynamic Imports
+- Tree Shaking
+- Server Components for Zero-JS
+- Measuring Bundle Impact
+- Third-Party Script Loading
+
 ## Diagnosis First
 
 Before optimizing, understand what's in your bundle:
@@ -34,7 +43,10 @@ npx source-map-explorer 'build/static/js/*.js'
 
 ### next/dynamic (Next.js)
 
+Call `dynamic()` at the top level of the module, like `React.lazy`. Next.js needs it there to match and preload the chunk. A call inside a component also makes a new component type on every render, which remounts it.
+
 ```tsx
+'use client'  // ssr: false only works in a Client Component
 import dynamic from 'next/dynamic'
 
 // Heavy chart library — only loaded when component is needed
@@ -48,13 +60,22 @@ const Modal = dynamic(
   () => import('../components/Dialogs').then(mod => mod.ConfirmModal)
 )
 
-// Conditional loading — never loads if condition is false
+// BAD: dynamic() inside the component
 function Dashboard({ showAnalytics }: { showAnalytics: boolean }) {
   const Analytics = dynamic(() => import('../components/Analytics'))
+  return showAnalytics ? <Analytics /> : null
+}
 
+// GOOD: declared once at module level, rendered conditionally.
+// The chunk is only fetched when Analytics first renders.
+const Analytics = dynamic(() => import('../components/Analytics'))
+
+function Dashboard({ showAnalytics }: { showAnalytics: boolean }) {
   return showAnalytics ? <Analytics /> : null
 }
 ```
+
+Sources: [Lazy loading (App Router)](https://nextjs.org/docs/app/guides/lazy-loading), [Lazy loading (Pages Router), top-level rule](https://nextjs.org/docs/pages/guides/lazy-loading).
 
 ### React.lazy (Any React app)
 
@@ -109,7 +130,7 @@ export default function Search({ items }: { items: Item[] }) {
 'use client'
 
 // Start loading when user hovers (before they click)
-function EditButton({ listingId }: { listingId: string }) {
+function EditButton({ onEdit }: { onEdit: () => void }) {
   function handleMouseEnter() {
     // Preload the editor chunk
     import('../components/ListingEditor')
@@ -118,7 +139,7 @@ function EditButton({ listingId }: { listingId: string }) {
   return (
     <button
       onMouseEnter={handleMouseEnter}
-      onClick={() => setEditing(true)}
+      onClick={onEdit}
     >
       Edit
     </button>

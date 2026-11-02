@@ -1,5 +1,13 @@
 # Data and Lists
 
+## Contents
+
+- Virtualization (react-window, react-virtuoso, CSS content-visibility)
+- Efficient Key Usage
+- Pagination vs Infinite Scroll
+- Expensive Computations
+- Web Workers for Heavy Computation
+
 ## Virtualization — Rendering Large Lists
 
 For lists with 100+ items, rendering all DOM nodes is a performance killer. Virtualization renders only the visible items.
@@ -19,29 +27,38 @@ For lists with 100+ items, rendering all DOM nodes is a performance killer. Virt
 npm install react-window
 ```
 
-```tsx
-import { FixedSizeList } from 'react-window'
+This is the react-window 2 API (2.5.3 when checked). Version 1's `FixedSizeList`, `itemCount` and `itemSize` are gone. Check the installed major before copying.
 
-function VirtualizedList({ items }: { items: Item[] }) {
-  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
-    <div style={style} className="flex items-center px-4 border-b">
-      <span>{items[index].name}</span>
-      <span className="ml-auto text-muted-foreground">{items[index].price}</span>
+```tsx
+import { List, type RowComponentProps } from 'react-window'
+
+// Declared at module level. A row component declared inside the list
+// would be a new type each render and remount every row.
+function ItemRow({ index, style, ariaAttributes, items }: RowComponentProps<{ items: Item[] }>) {
+  const item = items[index]
+  if (!item) return null
+  return (
+    <div style={style} {...ariaAttributes} className="flex items-center px-4 border-b">
+      <span>{item.name}</span>
+      <span className="ml-auto text-muted-foreground">{item.price}</span>
     </div>
   )
+}
 
+function VirtualizedList({ items }: { items: Item[] }) {
   return (
-    <FixedSizeList
-      height={600}
-      width="100%"
-      itemCount={items.length}
-      itemSize={48}  // Fixed row height
-    >
-      {Row}
-    </FixedSizeList>
+    <List
+      rowComponent={ItemRow}
+      rowCount={items.length}
+      rowHeight={48}           // Fixed pixel height is the cheapest option
+      rowProps={{ items }}     // Extra props for each row
+      style={{ height: 600 }}  // The list's own height
+    />
   )
 }
 ```
+
+`rowProps` must not contain `index`, `style` or `ariaAttributes`. Rows re-render when its values change. For rows of unknown height, `useDynamicRowHeight` measures them, at some cost. Source: [react-window README](https://github.com/bvaughn/react-window).
 
 ### react-virtuoso (Feature-Rich)
 
@@ -126,11 +143,18 @@ function ListItem({ item }: { item: Item }) {
 ### Cursor-Based Pagination (Preferred)
 
 ```tsx
-// Server Component — efficient cursor pagination
-async function ListingsPage({ searchParams }: { searchParams: { cursor?: string } }) {
+// Server Component page. In Next.js 15+ searchParams is a Promise, so await it.
+// Reading it makes the page render per request.
+export default async function ListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const { cursor } = await searchParams
+  const after = typeof cursor === 'string' ? cursor : undefined
   const { items, nextCursor } = await db.listings.findMany({
     take: 20,
-    cursor: searchParams.cursor ? { id: searchParams.cursor } : undefined,
+    cursor: after ? { id: after } : undefined,
     orderBy: { createdAt: 'desc' },
   })
 
@@ -147,11 +171,13 @@ async function ListingsPage({ searchParams }: { searchParams: { cursor?: string 
 }
 ```
 
+Source: [page.js, searchParams](https://nextjs.org/docs/app/api-reference/file-conventions/page#searchparams-optional).
+
 ### Infinite Scroll with Intersection Observer
 
 ```tsx
 'use client'
-import { useCallback, useRef, useTransition } from 'react'
+import { useCallback, useRef, useState, useTransition } from 'react'
 
 function InfiniteList({ initialItems }: { initialItems: Item[] }) {
   const [items, setItems] = useState(initialItems)
@@ -168,9 +194,12 @@ function InfiniteList({ initialItems }: { initialItems: Item[] }) {
       if (entries[0].isIntersecting && hasMore) {
         startTransition(async () => {
           const { items: newItems, nextCursor } = await fetchMore(cursor)
-          setItems(prev => [...prev, ...newItems])
-          setCursor(nextCursor)
-          if (!nextCursor) setHasMore(false)
+          // Updates after an await need their own startTransition (see rendering.md)
+          startTransition(() => {
+            setItems(prev => [...prev, ...newItems])
+            setCursor(nextCursor)
+            if (!nextCursor) setHasMore(false)
+          })
         })
       }
     })

@@ -2,6 +2,19 @@
 
 React Compiler (formerly "React Forget") is a build-time tool that automatically memoizes components, hooks, JSX elements, and expensive calculations. It eliminates the need for most manual `memo`, `useMemo`, and `useCallback`.
 
+## Contents
+
+- Status
+- What It Replaces
+- What It Does NOT Handle
+- Setup: Next.js
+- Setup: Vite
+- ESLint
+- Rules of React (Required for Compiler)
+- Opting Out (Per-Component)
+- Migration Strategy
+- Verify adoption
+
 ## Status
 
 - **Stable build-time optimizer**; verify compatibility, diagnostics and rollout behavior in the target app
