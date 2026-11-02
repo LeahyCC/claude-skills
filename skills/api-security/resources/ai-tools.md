@@ -18,6 +18,18 @@ Browser  →  chat route (session)  →  model
 
 Untrusted: the user text, the message history, MCP tool definitions, tool results, and every argument. Trusted: the `execute` function you wrote, and only for the user your server already authenticated.
 
+## Contents
+
+- [Three ways a tool is too powerful](#three-ways-a-tool-is-too-powerful)
+- [Rule 1: The user comes from the session](#rule-1-the-user-comes-from-the-session)
+- [Rule 2: One action per tool](#rule-2-one-action-per-tool)
+- [Rule 3: A write needs an approval the browser cannot forge](#rule-3-a-write-needs-an-approval-the-browser-cannot-forge)
+- [Rule 4: Tool results are data](#rule-4-tool-results-are-data)
+- [Rule 5: An MCP server is a supply chain](#rule-5-an-mcp-server-is-a-supply-chain)
+- [Audit Patterns](#audit-patterns)
+- [What this file does not cover](#what-this-file-does-not-cover)
+- [Sources](#sources)
+
 ## Three ways a tool is too powerful
 
 | Excess | What it looks like | Fix |

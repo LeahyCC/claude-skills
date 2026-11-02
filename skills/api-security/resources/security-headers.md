@@ -4,6 +4,18 @@
 
 Security headers are the cheapest, highest-impact security measure. Set them once in `next.config.ts` and they protect every response.
 
+## Contents
+
+- [Required Headers](#required-headers)
+- [Setting Headers in next.config.ts](#setting-headers-in-nextconfigts)
+- [Content Security Policy (CSP)](#content-security-policy-csp)
+- [CORS Configuration](#cors-configuration)
+- [CSRF Protection](#csrf-protection)
+- [Cache-Control for Sensitive Data](#cache-control-for-sensitive-data)
+- [Testing Headers](#testing-headers)
+- [Audit Patterns](#audit-patterns)
+- [Sources](#sources)
+
 ## Required Headers
 
 These five headers are required by Vercel's conformance rules (`NEXTJS_MISSING_SECURITY_HEADERS`):
@@ -247,49 +259,89 @@ export async function GET(request: Request) {
 
 ## CSRF Protection
 
-### Server Actions (Built-in)
+### Server Actions (Built-in, With Limits)
 
-Next.js Server Actions have built-in CSRF protection:
-- POST-only (no GET-based CSRF)
-- Origin header checked against Host/X-Forwarded-Host
-- SameSite cookies block cross-origin submissions
+What Next.js does for every Server Action:
+- Only a POST can invoke an action
+- It compares the host in the `Origin` header with `x-forwarded-host`, or `host`, and rejects the action when they differ
+- A request with no `Origin` header at all is let through with a warning, not rejected
+- POST-only plus `SameSite` cookies stops most CSRF in modern browsers
 
-No additional CSRF protection needed for Server Actions.
+That covers actions only. A Route Handler, or a GET page that changes state, gets none of it. The check also fails when a proxy forwards its own host, or when another host you own posts to the action. List the public host, as the browser shows it, in `serverActions.allowedOrigins`:
+
+```tsx
+// next.config.ts
+const config: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Host (plus port if not default), not a full URL. * is one label, ** is one or more.
+      allowedOrigins: ['shop.example.com', '*.shop.example.com'],
+    },
+  },
+}
+```
+
+Leave it out when the proxy forwards the public host in `x-forwarded-host`. Every action still checks the session and ownership. The origin check stops a forged request, not a logged-in attacker.
 
 ### Route Handlers (Not Built-in)
 
-Route Handlers do NOT have automatic CSRF protection. For state-changing endpoints accessed by your own frontend:
+Route Handlers have no CSRF check. For state-changing handlers called from your own pages, check `Sec-Fetch-Site` first. The browser sets it and page script cannot change it. Older browsers do not send it, so an exact `Origin` match is the required fallback.
 
 ```tsx
 // lib/csrf.ts
-import { headers } from 'next/headers'
+import 'server-only'
 
-export async function verifyCsrf(): Promise<boolean> {
-  const headerList = await headers()
-  const origin = headerList.get('origin')
-  // Server Actions compare Origin to x-forwarded-host, then host.
-  const host = headerList.get('x-forwarded-host') ?? headerList.get('host')
+const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+const TRUSTED_ORIGINS = new Set(['https://myapp.com']) // full origins, exact match
 
-  // Missing Origin fails closed. Server Actions only warn. That is fine for Route Handlers.
-  if (!origin || !host) return false
+export function isTrustedRequest(request: Request): boolean {
+  if (!UNSAFE_METHODS.has(request.method)) return true // GET must never change state
 
-  const originUrl = new URL(origin)
-  return originUrl.host === host
+  // same-site is rejected too: a sibling subdomain is not your origin.
+  const site = request.headers.get('sec-fetch-site')
+  if (site !== null) return site === 'same-origin'
+
+  // No Fetch Metadata: fall back to Origin. Missing or "null" is not proof of same origin.
+  const origin = request.headers.get('origin')
+  if (!origin || origin === 'null') return false
+  return TRUSTED_ORIGINS.has(origin)
 }
 ```
 
 ```tsx
-// app/api/settings/route.ts
-import { verifyCsrf } from '@/lib/csrf'
+// FAIL: prefix match. https://myapp.com.attacker.net passes.
+if (origin?.startsWith('https://myapp.com')) { /* ... */ }
+
+// PASS: app/api/settings/route.ts
+import { isTrustedRequest } from '@/lib/csrf'
 
 export async function POST(request: Request) {
-  if (!await verifyCsrf()) {
-    return Response.json({ error: 'CSRF validation failed' }, { status: 403 })
+  if (!isTrustedRequest(request)) {
+    return Response.json({ error: 'Cross-site request blocked' }, { status: 403 })
   }
 
-  // Process request...
+  // Auth, validation, then the write...
 }
 ```
+
+A client that sends a bearer token in a header, not a cookie, is not a CSRF target. The browser never adds that header for another site.
+
+### Cookies: `__Host-` Prefix and SameSite
+
+```tsx
+// PASS: __Host- means Secure, Path=/, and no Domain.
+// A sibling subdomain cannot set or overwrite it. Read the same name everywhere.
+cookieStore.set('__Host-session', token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'lax',
+  path: '/',
+})
+```
+
+`SameSite` is defence in depth, not the fix. `Lax` still sends the cookie on a top-level GET from another site, and "site" means the registrable domain, so every subdomain counts as same-site. Keep the origin checks above.
+
+XSS defeats every CSRF defence. Script running on your origin sends same-origin requests. The CSP above and the sinks in [Input Validation](input-validation.md) are the other half.
 
 ## Cache-Control for Sensitive Data
 
@@ -340,8 +392,12 @@ grep -rn "Response.json" --include="route.ts" | grep -v "Cache-Control\|no-store
 
 ## Sources
 
-- [OWASP API8:2023 — Security Misconfiguration](https://owasp.org/API-Security/editions/2023/en/0xa8-security-misconfiguration/)
-- [OWASP A02:2025 — Security Misconfiguration](https://owasp.org/Top10/2025/A02_2025-Security_Misconfiguration/)
+- [OWASP API8:2023 — Security Misconfiguration](https://api-security.owasp.org/editions/2023/en/0xa8-security-misconfiguration/)
+- [OWASP A02:2025 — Security Misconfiguration](https://top10.owasp.org/2025/A02_2025-Security_Misconfiguration/)
 - [Next.js Content Security Policy Guide](https://nextjs.org/docs/app/guides/content-security-policy)
 - [Vercel Conformance — NEXTJS_MISSING_SECURITY_HEADERS](https://vercel.com/docs/workflow-collaboration/conformance/rules/NEXTJS_MISSING_SECURITY_HEADERS)
 - [MDN — Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
+- [OWASP CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+- [Next.js `serverActions` config: `allowedOrigins`](https://nextjs.org/docs/app/api-reference/config/next-config-js/serverActions)
+- [Next.js data security: allowed origins](https://nextjs.org/docs/app/guides/data-security#allowed-origins-advanced)
+- [MDN Sec-Fetch-Site](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Sec-Fetch-Site)

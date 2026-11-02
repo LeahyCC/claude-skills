@@ -4,6 +4,19 @@
 
 Access control is the #1 API vulnerability. Every API endpoint — Route Handler or Server Action — must verify both **authentication** (who are you?) and **authorization** (can you do this to this resource?).
 
+## Contents
+
+- [The Two Authorization Failures](#the-two-authorization-failures)
+- [Rule 1: Never Trust Client-Supplied IDs](#rule-1-never-trust-client-supplied-ids)
+- [Rule 2: Auth in Every Server Action](#rule-2-auth-in-every-server-action)
+- [Rule 3: Auth in Every Route Handler](#rule-3-auth-in-every-route-handler)
+- [Rule 4: Role-Based Function Authorization](#rule-4-role-based-function-authorization)
+- [Rule 5: Use Unpredictable IDs](#rule-5-use-unpredictable-ids)
+- [CORS in Route Handlers](#cors-in-route-handlers)
+- [Multi-Tenant Authorization](#multi-tenant-authorization)
+- [Audit Patterns for Access Control](#audit-patterns-for-access-control)
+- [Sources](#sources)
+
 ## The Two Authorization Failures
 
 | Failure | OWASP | What Happens | Example |
@@ -306,7 +319,7 @@ grep -rn "Access-Control-Allow-Origin.*\*" --include="*.ts"
 
 ## Sources
 
-- [OWASP API1:2023 — Broken Object Level Authorization](https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/)
-- [OWASP API5:2023 — Broken Function Level Authorization](https://owasp.org/API-Security/editions/2023/en/0xa5-broken-function-level-authorization/)
-- [OWASP A01:2025 — Broken Access Control](https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/)
+- [OWASP API1:2023 — Broken Object Level Authorization](https://api-security.owasp.org/editions/2023/en/0xa1-broken-object-level-authorization/)
+- [OWASP API5:2023 — Broken Function Level Authorization](https://api-security.owasp.org/editions/2023/en/0xa5-broken-function-level-authorization/)
+- [OWASP A01:2025 — Broken Access Control](https://top10.owasp.org/2025/A01_2025-Broken_Access_Control/)
 - [Next.js Security: Server Components and Actions](https://nextjs.org/blog/security-nextjs-server-components-actions)

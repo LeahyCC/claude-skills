@@ -6,11 +6,24 @@ APIs without rate limits are vulnerable to brute force, credential stuffing, cos
 
 The numbers below are starting points. OWASP does not publish them.
 
+## Contents
+
+- [Where to Rate Limit](#where-to-rate-limit)
+- [Upstash Redis Rate Limiting](#upstash-redis-rate-limiting)
+- [Per-Account Login Throttling](#per-account-login-throttling)
+- [Rate Limiting in proxy.ts](#rate-limiting-in-proxyts)
+- [Cost Attack Prevention](#cost-attack-prevention)
+- [Algorithm Comparison](#algorithm-comparison)
+- [Rate Limit Headers](#rate-limit-headers)
+- [GraphQL Rate Limiting](#graphql-rate-limiting)
+- [Audit Patterns](#audit-patterns)
+- [Sources](#sources)
+
 ## Where to Rate Limit
 
 | Endpoint Type | Why | Strictness |
 |---------------|-----|------------|
-| Login / auth | Brute force, credential stuffing | Strict (5-10/min) |
+| Login / auth | Brute force, credential stuffing | Strict (5-10/min) per IP, plus failures per account |
 | Password reset | Account takeover, SMS/email cost | Very strict (3-5/hour) |
 | Signup | Spam accounts | Moderate (10-20/hour) |
 | OTP / verification | Cost attack (SMS at $0.05 each) | Very strict (3/hour) |
@@ -162,6 +175,77 @@ export async function createPost(input: unknown) {
   // Create post...
 }
 ```
+
+## Per-Account Login Throttling
+
+An IP limit alone misses credential stuffing. The attacker spreads one password list across thousands of proxy IPs, so each IP stays under the limit. Count failures per account as well. Then rotating IPs does not help.
+
+A hard lockout turns that counter into a weapon: anyone who knows an email address can lock its owner out. So slow the account down instead of shutting it.
+
+| Rule | Why |
+|------|-----|
+| Key the failure counter on the normalised account name | Rotating IPs does not reset it |
+| Count failures only, and clear the count on success | A real user who types well is never slowed |
+| Back off (delay, then CAPTCHA), not a permanent lock | Someone else's failures cannot lock the owner out |
+| Same message for wrong password, throttled, or no account | The response does not reveal which accounts exist |
+| Keep the password reset path open while throttled | The owner always has a way back in |
+| Alert the user when the password was right but MFA failed | Their password is known to someone else |
+
+```tsx
+// lib/rate-limit.ts (continued)
+// Per account: 10 failures an hour. Per IP stays as authLimiter above.
+export const accountFailLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '1 h'),
+  prefix: 'ratelimit:login-fail',
+})
+```
+
+```tsx
+// FAIL: IP limit only. 5,000 proxies times 5 tries a minute each.
+const { success } = await authLimiter.limit(ip)
+
+// FAIL: hard lockout after 5 failures. Anyone can lock any account.
+if (user.failedLogins >= 5) await db.update(users).set({ locked: true })
+
+// PASS: app/login/actions.ts
+'use server'
+import { headers } from 'next/headers'
+import { z } from 'zod'
+import { accountFailLimiter, authLimiter, clientIp } from '@/lib/rate-limit'
+
+const LoginSchema = z.object({ email: z.email(), password: z.string().min(1).max(1024) })
+const GENERIC = 'Invalid email or password'
+
+export async function login(formData: FormData) {
+  const parsed = LoginSchema.safeParse({ email: formData.get('email'), password: formData.get('password') })
+  if (!parsed.success) return { error: GENERIC }
+
+  const email = parsed.data.email.toLowerCase()
+  const ip = clientIp(await headers())
+
+  const byIp = await authLimiter.limit(ip)
+  if (!byIp.success) return { error: 'Too many attempts. Try again later.' }
+
+  // getRemaining reads the count without spending a token
+  const { remaining } = await accountFailLimiter.getRemaining(email)
+  if (remaining <= 0) {
+    // Throttled: same message, and the reset link still works.
+    return { error: GENERIC, captchaRequired: true }
+  }
+
+  const [user] = await db.select().from(users).where(eq(users.email, email))
+  if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+    await accountFailLimiter.limit(email) // spend one token per failure only
+    return { error: GENERIC }
+  }
+
+  await accountFailLimiter.resetUsedTokens(email)
+  await startMfaOrSession(user.id) // MFA next: see authentication.md
+}
+```
+
+The `captchaRequired` flag lets the form ask for a challenge on the next try. OWASP calls CAPTCHA defence in depth, not a fix, so it slows a bot without blocking the owner. Multi-factor authentication is the strongest defence against credential stuffing. Check new passwords against a breached-password list too.
 
 ## Rate Limiting in proxy.ts
 
@@ -323,8 +407,11 @@ grep -rn "generateText\|streamText\|openai\|anthropic" --include="route.ts" -l |
 
 ## Sources
 
-- [OWASP API4:2023 — Unrestricted Resource Consumption](https://owasp.org/API-Security/editions/2023/en/0xa4-unrestricted-resource-consumption/)
-- [OWASP A06:2025 — Insecure Design](https://owasp.org/Top10/2025/A06_2025-Insecure_Design/)
+- [OWASP API4:2023 — Unrestricted Resource Consumption](https://api-security.owasp.org/editions/2023/en/0xa4-unrestricted-resource-consumption/)
+- [OWASP A06:2025 — Insecure Design](https://top10.owasp.org/2025/A06_2025-Insecure_Design/)
 - [Upstash Rate Limiting Documentation](https://upstash.com/docs/oss/sdks/ts/ratelimit/overview)
 - [Next.js data security: Server Actions](https://nextjs.org/docs/app/guides/data-security)
 - [OWASP GraphQL security](https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html)
+- [OWASP Authentication Cheat Sheet: login throttling and account lockout](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
+- [OWASP Credential Stuffing Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html)
+- [Upstash Ratelimit methods: `getRemaining`, `resetUsedTokens`](https://upstash.com/docs/redis/sdks/ratelimit-ts/methods)

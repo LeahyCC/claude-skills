@@ -4,6 +4,20 @@
 
 Authentication verifies identity. Get it wrong and every other security control is meaningless — the attacker is "you."
 
+## Contents
+
+- [Authentication Architecture in Next.js](#authentication-architecture-in-nextjs)
+- [Session Management](#session-management)
+- [JWT Security](#jwt-security)
+- [Auth with Clerk (Optional Provider)](#auth-with-clerk-optional-provider)
+- [Password Security](#password-security)
+- [Re-Authentication for Sensitive Operations](#re-authentication-for-sensitive-operations)
+- [Account Enumeration Prevention](#account-enumeration-prevention)
+- [Password Reset](#password-reset)
+- [Multi-Factor Authentication](#multi-factor-authentication)
+- [Webhook Authentication](#webhook-authentication)
+- [Sources](#sources)
+
 ## Authentication Architecture in Next.js
 
 ```
@@ -91,9 +105,12 @@ export const getCurrentUser = cache(async () => {
       .where(and(eq(sessions.id, payload.sid), eq(sessions.userId, payload.sub)))
     if (!session) return null
 
+    const role = typeof payload.role === 'string' ? payload.role : 'user'
     return {
       id: payload.sub,
-      role: typeof payload.role === 'string' ? payload.role : 'user',
+      sessionId: session.id,
+      role,
+      isAdmin: role === 'admin',
     }
   } catch {
     return null  // expired, tampered, or invalid
@@ -140,7 +157,8 @@ export async function createSession(userId: string) {
 ### Session Invalidation
 
 ```tsx
-// Logout deletes the session row. The JWT cookie is useless once that row is gone.
+// Logout deletes this session's row. The JWT cookie is useless once that row is gone.
+// Other devices stay signed in; "sign out everywhere" deletes by userId instead.
 'use server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -148,7 +166,7 @@ import { redirect } from 'next/navigation'
 export async function logout() {
   const user = await getCurrentUser()
   if (user) {
-    await db.delete(sessions).where(eq(sessions.userId, user.id))
+    await db.delete(sessions).where(eq(sessions.id, user.sessionId))
   }
 
   const cookieStore = await cookies()
@@ -314,20 +332,218 @@ if (!user || !await verifyPassword(password, user.passwordHash)) {
 }
 ```
 
-Apply the same principle to password reset:
+Apply the same principle to password reset. The full flow, including `generateResetToken`, is in [Password Reset](#password-reset).
+
+## Password Reset
+
+A reset link is a password that arrives by email. Treat the token like one.
+
+| Rule | Why |
+|------|-----|
+| 32 random bytes from `node:crypto` | Long enough that guessing fails |
+| Store only its SHA-256 hash | A database leak does not hand out live links |
+| Single use, deleted as it is spent | A link in an old email or a log cannot be replayed |
+| Short expiry (30 minutes here) | Limits how long a leaked link works |
+| Same response and timing, account or not | No account enumeration |
+| Build the link from a fixed origin | A forged `Host` header cannot point the link at an attacker |
+| Revoke every session after the reset, no auto-login | An attacker already signed in is thrown out. The user signs in again, MFA included |
 
 ```tsx
-// PASS — always show success, even if email doesn't exist
-// Note: add rate limiting for production — see rate-limiting.md
-export async function requestPasswordReset(email: string) {
-  const [user] = await db.select().from(users).where(eq(users.email, email))
-  if (user) {
-    await sendPasswordResetEmail(user.email, await generateResetToken(user.id))
-  }
-  // Always return success — don't reveal if email exists
-  return { success: 'If an account exists, a reset email has been sent' }
+// data/password-reset.ts
+import 'server-only'
+import { createHash, randomBytes } from 'node:crypto'
+import { and, eq, gt } from 'drizzle-orm'
+
+const RESET_TTL_MS = 30 * 60 * 1000
+const APP_ORIGIN = 'https://myapp.com' // never read from the Host header
+
+// The token has 256 bits of randomness, so a fast hash is enough. It is not a password.
+const hashToken = (token: string) => createHash('sha256').update(token).digest('hex')
+
+export async function generateResetToken(userId: string): Promise<string> {
+  const token = randomBytes(32).toString('base64url')
+
+  // One live token per user. A new request replaces the old link.
+  await db.delete(passwordResets).where(eq(passwordResets.userId, userId))
+  await db.insert(passwordResets).values({
+    userId,
+    tokenHash: hashToken(token),
+    expiresAt: new Date(Date.now() + RESET_TTL_MS),
+  })
+
+  return token // goes into the email link only. Never stored or logged in plain form
+}
+
+export const resetUrl = (token: string) => `${APP_ORIGIN}/reset-password?token=${token}`
+
+export async function consumeResetToken(token: string): Promise<string | null> {
+  // Delete and return in one statement, so two concurrent requests cannot both spend it.
+  const [record] = await db
+    .delete(passwordResets)
+    .where(and(eq(passwordResets.tokenHash, hashToken(token)), gt(passwordResets.expiresAt, new Date())))
+    .returning({ userId: passwordResets.userId })
+  return record?.userId ?? null
 }
 ```
+
+```tsx
+// app/reset-password/actions.ts
+'use server'
+import { after } from 'next/server'
+import { redirect } from 'next/navigation'
+import { z } from 'zod'
+import { consumeResetToken, generateResetToken, resetUrl } from '@/data/password-reset'
+
+export async function requestPasswordReset(formData: FormData) {
+  // Rate limit by IP and by email first: see rate-limiting.md
+  const parsed = z.email().safeParse(formData.get('email'))
+
+  if (parsed.success) {
+    const email = parsed.data.toLowerCase()
+    // after() runs once the response is sent, so a real account does not answer slower.
+    after(async () => {
+      const [user] = await db
+        .select({ id: users.id, email: users.email })
+        .from(users)
+        .where(eq(users.email, email))
+      if (user) await sendPasswordResetEmail(user.email, resetUrl(await generateResetToken(user.id)))
+    })
+  }
+
+  return { success: 'If an account exists, a reset email has been sent.' }
+}
+
+const ResetSchema = z.object({
+  token: z.string().min(40).max(64),
+  password: z.string().min(15).max(128),
+})
+
+export async function resetPassword(formData: FormData) {
+  const parsed = ResetSchema.safeParse({
+    token: formData.get('token'),
+    password: formData.get('password'),
+  })
+  if (!parsed.success) return { error: 'This reset link is invalid or has expired.' }
+
+  const userId = await consumeResetToken(parsed.data.token)
+  if (!userId) return { error: 'This reset link is invalid or has expired.' }
+
+  await db
+    .update(users)
+    .set({ passwordHash: await hashPassword(parsed.data.password) })
+    .where(eq(users.id, userId))
+  await db.delete(sessions).where(eq(sessions.userId, userId)) // every device signs in again
+  after(() => sendPasswordChangedEmail(userId)) // tell the owner, without the password
+
+  redirect('/login') // no auto-login, so MFA still applies
+}
+```
+
+Serve the reset page with `Referrer-Policy: no-referrer`, so the token in the URL does not leak through the `Referer` header. A reset never turns off MFA. Lost factors go through [MFA recovery](#recovery-without-bypassing-mfa).
+
+## Multi-Factor Authentication
+
+A password-only sign-in is half a login. Keep the session in a "password checked, MFA pending" state, and have `getCurrentUser()` return `null` until the second factor passes. Ask for MFA again before changing the password, the email, or the MFA settings.
+
+| Factor | Phishing-resistant | Notes |
+|--------|--------------------|-------|
+| Passkey / WebAuthn | Yes | The credential is bound to your origin, so a lookalike site gets nothing usable |
+| TOTP app | No | A user can type the code into a phishing page. Still far better than none |
+| Backup codes | No | For recovery only. Single use, stored hashed |
+| SMS | No | SIM swap and interception. NIST restricts it. Avoid for high-value accounts |
+
+### TOTP: Attempt Limits and No Reuse
+
+```tsx
+// data/totp.ts
+import 'server-only'
+import { createHmac, timingSafeEqual } from 'node:crypto'
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+
+const STEP_SECONDS = 30
+const mfaLimiter = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.fixedWindow(5, '15 m'), // per account, not per IP
+  prefix: 'ratelimit:mfa',
+})
+
+// RFC 6238: an HMAC-SHA1 of the 30-second step counter, cut to 6 digits.
+function totpAt(secret: Buffer, step: number): string {
+  const counter = Buffer.alloc(8)
+  counter.writeBigUInt64BE(BigInt(step))
+  const mac = createHmac('sha1', secret).update(counter).digest()
+  const offset = (mac.at(-1) ?? 0) & 0x0f
+  return ((mac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000).toString().padStart(6, '0')
+}
+
+export async function verifyTotp(userId: string, code: string): Promise<boolean> {
+  const { success } = await mfaLimiter.limit(userId)
+  if (!success || !/^\d{6}$/.test(code)) return false
+
+  // The server must read the secret, so it is encrypted at rest, not hashed.
+  const factor = await getTotpFactor(userId) // { secret: Buffer, lastStep: number }
+  if (!factor) return false
+
+  const now = Math.floor(Date.now() / 1000 / STEP_SECONDS)
+  // Accept this step and one step back for network delay. Never a step already used.
+  for (const step of [now, now - 1]) {
+    if (step <= factor.lastStep) continue
+    if (timingSafeEqual(Buffer.from(totpAt(factor.secret, step)), Buffer.from(code))) {
+      await setTotpLastStep(userId, step) // the same code cannot be replayed
+      return true
+    }
+  }
+  return false
+}
+```
+
+Tell the user out of band when the password was right but the second factor failed. Their password may be known to someone else.
+
+### Backup Codes: Single Use, Stored Hashed
+
+```tsx
+// data/backup-codes.ts
+import 'server-only'
+import { createHash, randomBytes } from 'node:crypto'
+import { and, eq } from 'drizzle-orm'
+
+// 128 random bits per code. NIST requires a salt only for look-up secrets under 112 bits.
+const hashCode = (code: string) => createHash('sha256').update(code).digest('hex')
+
+export async function createBackupCodes(userId: string): Promise<string[]> {
+  const codes = Array.from({ length: 10 }, () => randomBytes(16).toString('base64url'))
+  await db.transaction(async (tx) => {
+    await tx.delete(backupCodes).where(eq(backupCodes.userId, userId)) // a new set replaces the old
+    await tx.insert(backupCodes).values(codes.map((code) => ({ userId, codeHash: hashCode(code) })))
+  })
+  return codes // shown once, never stored in plain form
+}
+
+export async function useBackupCode(userId: string, code: string): Promise<boolean> {
+  // Delete and return in one statement: a code works once, even under concurrent requests.
+  const [spent] = await db
+    .delete(backupCodes)
+    .where(and(eq(backupCodes.userId, userId), eq(backupCodes.codeHash, hashCode(code.trim()))))
+    .returning({ id: backupCodes.id })
+  return spent !== undefined
+}
+```
+
+Rate limit `useBackupCode` with the same per-account limiter as TOTP.
+
+### Recovery Without Bypassing MFA
+
+Any way to reset MFA is a way an attacker will try first. Email alone is weak: if the inbox is taken, so is the account.
+
+- Recovery takes a backup code, another enrolled factor, or a real identity check by support
+- A password reset does not remove MFA
+- Adding, removing, or replacing a factor needs MFA with a factor the user already has, not only a live session
+- Notify the user through another channel when a factor changes. Consider a delay before a new factor works on high-value accounts
+
+### Passkeys (WebAuthn)
+
+Use a maintained WebAuthn server library, not hand-written parsing. On the server, check the challenge, the origin, and the relying party ID. Require user verification (PIN or biometric) and check its flag on the server. A touch that only proves presence is not a second factor. Offer passkeys first. Keep TOTP and backup codes for users without them.
 
 ## Webhook Authentication
 
@@ -367,10 +583,14 @@ export async function POST(request: Request) {
 
 ## Sources
 
-- [OWASP API2:2023 — Broken Authentication](https://owasp.org/API-Security/editions/2023/en/0xa2-broken-authentication/)
-- [OWASP A07:2025 — Authentication Failures](https://owasp.org/Top10/2025/A07_2025-Authentication_Failures/)
-- [OWASP A04:2025 — Cryptographic Failures](https://owasp.org/Top10/2025/A04_2025-Cryptographic_Failures/)
+- [OWASP API2:2023 — Broken Authentication](https://api-security.owasp.org/editions/2023/en/0xa2-broken-authentication/)
+- [OWASP A07:2025 — Authentication Failures](https://top10.owasp.org/2025/A07_2025-Authentication_Failures/)
+- [OWASP A04:2025 — Cryptographic Failures](https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/)
 - [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
 - [Next.js Security Blog — Server Components and Actions](https://nextjs.org/blog/security-nextjs-server-components-actions)
 - [CVE-2025-29927 — Next.js Middleware Bypass](https://github.com/advisories/GHSA-f82v-jwr5-mffw)
 - [NIST 800-63b — Digital Identity Guidelines](https://pages.nist.gov/800-63-4/sp800-63b.html)
+- [OWASP Forgot Password Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html)
+- [OWASP Multifactor Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html)
+- [RFC 6238 TOTP](https://datatracker.ietf.org/doc/html/rfc6238)
+- [Next.js `after`](https://nextjs.org/docs/app/api-reference/functions/after)
