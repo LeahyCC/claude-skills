@@ -8,6 +8,7 @@ Sources are in [SOURCES.md](../SOURCES.md).
 
 - The ranking
 - any
+- any nobody wrote
 - as
 - Non-null assertion
 - ts-expect-error and ts-ignore
@@ -73,6 +74,68 @@ function logged<A extends unknown[], R>(fn: (...args: A) => R): (...args: A) => 
 const greet = logged((name: string) => `hello ${name}`) // (name: string) => string
 greet('Ada')
 ```
+
+## any nobody wrote
+
+Some `any` comes from the standard library or the compiler, not from your code. A grep for `any` does not find it. Each of these was checked on 7.0.2 and 6.0.3:
+
+| Source | Gives `any` because | Where it is covered |
+| --- | --- | --- |
+| `JSON.parse(text)` | `lib.es5.d.ts` declares the return as `any` | [as](#as) below |
+| `await res.json()` | `lib.dom.d.ts` declares `Promise<any>` | [domain-types.md](./domain-types.md) |
+| `Array.isArray(x)` on `unknown` | `lib.es5.d.ts` declares `isArray(arg: any): arg is any[]`, so `x` narrows to `any[]` | Below |
+| `await import(name)` with a specifier that is not a string literal | The compiler cannot know which module loads, so the result is `any` | Below |
+| `.catch((e) => ...)` and the second `.then()` argument | `lib.es5.d.ts` types `reason` as `any` | [narrowing.md](./narrowing.md) |
+
+FAIL. After `Array.isArray`, every element is `any`, and the typo compiles:
+
+```ts
+function countActive(input: unknown): number {
+  if (!Array.isArray(input)) return 0
+  return input.filter((item) => item.actve).length // item is any: no error
+}
+```
+
+PASS. Assign the array to `unknown[]` right after the check, then narrow each element:
+
+```ts
+function countActive(input: unknown): number {
+  if (!Array.isArray(input)) return 0
+  const items: readonly unknown[] = input
+  return items.filter(
+    (item) => typeof item === 'object' && item !== null && 'active' in item && item.active === true,
+  ).length
+}
+```
+
+FAIL. A dynamic import of a computed name returns `any`, so nothing checks the plugin:
+
+```ts
+async function startPlugin(name: string): Promise<void> {
+  const mod = await import(`./plugins/${name}.js`)
+  mod.default.strat() // any: no error
+}
+```
+
+PASS. Store the module as `unknown` and check the shape you need:
+
+```ts
+async function startPlugin(name: string): Promise<void> {
+  const mod: unknown = await import(`./plugins/${name}.js`)
+  if (
+    typeof mod === 'object' &&
+    mod !== null &&
+    'start' in mod &&
+    typeof mod.start === 'function'
+  ) {
+    mod.start()
+    return
+  }
+  throw new Error(`Plugin ${name} has no start function`)
+}
+```
+
+The `no-unsafe-*` rules in `recommendedTypeChecked` report every one of these at the point of use. See [linting.md](./linting.md).
 
 ## as
 
@@ -181,6 +244,7 @@ The lint rules that report them as you write are in [linting.md](./linting.md): 
 ## Checklist
 
 - [ ] No `any` in new code. `unknown` at the edges, then narrowing.
+- [ ] `Array.isArray` results and computed `import()` results are moved to `unknown` before use
 - [ ] Every `as T` sits behind a runtime check
 - [ ] No `as unknown as T`
 - [ ] No `@ts-ignore` or `@ts-nocheck`. `@ts-expect-error` has a reason.

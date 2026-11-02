@@ -38,8 +38,11 @@ function markdownFiles(dir) {
   })
 }
 
+// Windows checkouts get CRLF endings, and the patterns below expect \n.
+const readText = (file) => readFileSync(file, 'utf8').replace(/\r\n/g, '\n')
+
 const baselinePattern = /<!--\s*ts-config: baseline\s*-->\n\s*```jsonc\n([\s\S]*?)```/
-const baselineMatch = readFileSync(join(skill, 'resources/config.md'), 'utf8').match(baselinePattern)
+const baselineMatch = readText(join(skill, 'resources/config.md')).match(baselinePattern)
 if (!baselineMatch) {
   console.error('No <!-- ts-config: baseline --> jsonc block in resources/config.md')
   process.exit(1)
@@ -48,7 +51,7 @@ if (!baselineMatch) {
 const blocks = []
 let skipped = 0
 for (const file of markdownFiles(skill)) {
-  const text = readFileSync(file, 'utf8')
+  const text = readText(file)
   // An optional HTML comment, blank lines, then the ts block.
   const block = /(?:<!--\s*(ts-prelude\n[\s\S]*?|ts-check:[^\n]*?|ts-only:[^\n]*?)\s*-->\n\s*)?```ts\n([\s\S]*?)```/g
   for (const m of text.matchAll(block)) {
@@ -91,6 +94,8 @@ for (const version of versions) {
       cwd: work,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      // npx is npx.cmd on Windows, which Node only starts through a shell.
+      shell: process.platform === 'win32',
     })
   } catch (err) {
     out = `${err.stdout ?? ''}${err.stderr ?? ''}`

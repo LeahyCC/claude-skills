@@ -50,6 +50,15 @@ These are in none of the recommended, strict, or stylistic configs (only in `all
 | `consistent-type-imports` | Type-only imports without `import type`. With `verbatimModuleSyntax`, `tsc` already reports TS1484, and the two can double-report. Keep the rule if you want the autofix. Turn it off if the compiler error is enough. |
 | `strict-boolean-expressions` | `if (count)` where `0` is a valid count, `if (name)` where `''` is valid. Noisy on old code. |
 
+Rules other files in this skill point to:
+
+| Rule | Where it is set | Why | Read |
+| --- | --- | --- | --- |
+| `use-unknown-in-catch-callback-variable` | `strictTypeChecked`. Turn it on by hand on `recommendedTypeChecked`, as the sample below does. | `.catch((e) => ...)` gives `e` the type `any` | [narrowing.md](./narrowing.md) |
+| `only-throw-error` | `recommendedTypeChecked` | Throwing a value that is not an `Error` | [narrowing.md](./narrowing.md) |
+| `consistent-type-definitions` | `stylistic` and `stylisticTypeChecked`, default `interface` | Mixed `type` and `interface` for object shapes | [type-level.md](./type-level.md) |
+| ESLint core `no-restricted-syntax`, selector `TSEnumDeclaration[const=true]` | By hand | `const enum` breaks single-file tools | [node-and-emit.md](./node-and-emit.md) |
+
 ## Setup
 
 Typed linting needs `parserOptions.projectService`, which reads the nearest tsconfig for each file. Use ESLint's `defineConfig`: typescript-eslint's own `tseslint.config()` helper is deprecated in its favour.
@@ -78,6 +87,7 @@ export default defineConfig(
     rules: {
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/no-unsafe-type-assertion': 'error',
+      '@typescript-eslint/use-unknown-in-catch-callback-variable': 'error',
     },
   },
   {
@@ -93,6 +103,6 @@ Type-aware rules are slower than syntax rules because they build the program. Ru
 
 - [ ] typescript-eslint is on a `*TypeChecked` config with `projectService`
 - [ ] On TS 7, the linter gets TS 6 through the alias, and `tsc` runs 7
-- [ ] `switch-exhaustiveness-check` and `no-unsafe-type-assertion` are turned on
+- [ ] `switch-exhaustiveness-check`, `no-unsafe-type-assertion`, and `use-unknown-in-catch-callback-variable` are turned on
 - [ ] `ban-ts-comment` is not turned off
 - [ ] CI runs `tsc --noEmit` and `eslint`, and fails on either

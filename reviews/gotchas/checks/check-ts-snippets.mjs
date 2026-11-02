@@ -71,6 +71,8 @@ for (const version of versions) {
       cwd: work,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
+      // npx is npx.cmd on Windows, which Node only starts through a shell.
+      shell: process.platform === 'win32',
     })
   } catch (err) {
     out = `${err.stdout ?? ''}${err.stderr ?? ''}`

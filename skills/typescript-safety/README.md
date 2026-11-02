@@ -1,6 +1,6 @@
 # typescript-safety
 
-Getting TypeScript 6 and 7 to catch bugs at compile time. tsconfig past `strict`, narrowing, generics, types from types, branded types, data at the edges, escape hatches, typed linting, Node type stripping, and the upgrade to TS 7.
+Getting TypeScript 6 and 7 to catch bugs at compile time. tsconfig past `strict`, narrowing, errors in `catch`, generics, types from types, branded types, data at the edges, escape hatches, typed linting, Node type stripping, and the upgrade to TS 7.
 
 React rendering is in [react-performance](../react-performance/). Validating request bodies with Zod is in [api-security](../api-security/).
 
@@ -30,13 +30,13 @@ Version 0.1.0. Nine resources.
 | --- | --- |
 | [config.md](./resources/config.md) | 6.0 default changes, `es2025` and `dom` (`dom.iterable` included), the baseline tsconfig, flags past strict, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `module` by runtime, the empty `types` default |
 | [upgrade-6-to-7.md](./resources/upgrade-6-to-7.md) | The upgrade path, `ignoreDeprecations`, `ts5to6`, `stableTypeOrdering`, removed options and syntax with error codes, type changes in 6.0 to 7.1, what 7.0 does not do yet |
-| [narrowing.md](./resources/narrowing.md) | Which narrowing tool to use, discriminated unions, exhaustive switches, inferred and hand-written predicates, assertion functions, narrowing in callbacks, unsound spots |
+| [narrowing.md](./resources/narrowing.md) | Which narrowing tool to use, discriminated unions, exhaustive switches, inferred and hand-written predicates, assertion functions, narrowing in callbacks, `unknown` in `catch` and `.catch()` callbacks with the two lint rules, unsound spots |
 | [generics.md](./resources/generics.md) | When a type parameter earns its place, constraints, `keyof`, `satisfies`, `const` type parameters, `NoInfer`, `this`-less method inference |
-| [type-level.md](./resources/type-level.md) | Utility types, the `Omit` trap, mapped types and key remapping, conditional types and distribution, template literal types and the union limit, augmentation |
+| [type-level.md](./resources/type-level.md) | Utility types, the `Omit` trap, mapped types and key remapping, conditional types and distribution, template literal types and the union limit, `type` or `interface` and `consistent-type-definitions`, augmentation |
 | [domain-types.md](./resources/domain-types.md) | Where types stop being true, untyped data at the edges, branded IDs and units, `readonly` inputs |
-| [escape-hatches.md](./resources/escape-hatches.md) | A ranking of `any`, `as`, `!`, and comment directives, with what to use instead (including `Map.getOrInsert`), and a grep to find them |
-| [linting.md](./resources/linting.md) | Running typescript-eslint on TS 7 via the TS 6 alias, which config, rules no config turns on, a tested flat config |
-| [node-and-emit.md](./resources/node-and-emit.md) | Three ways TS becomes JS, Node type stripping by version, `#/` subpath imports, erasable syntax, `verbatimModuleSyntax` |
+| [escape-hatches.md](./resources/escape-hatches.md) | A ranking of `any`, `as`, `!`, and comment directives, with what to use instead (including `Map.getOrInsert`), `any` nobody wrote (`Array.isArray`, computed `import()`), and a grep to find them |
+| [linting.md](./resources/linting.md) | Running typescript-eslint on TS 7 via the TS 6 alias, which config, rules no config turns on, rules the other files point to, a tested flat config |
+| [node-and-emit.md](./resources/node-and-emit.md) | Three ways TS becomes JS, Node type stripping by version, `#/` subpath imports, erasable syntax, enums or `as const` objects, numeric reverse mapping, why to ban `const enum`, `verbatimModuleSyntax` |
 
 9 resource files.
 

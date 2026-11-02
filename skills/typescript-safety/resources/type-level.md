@@ -12,6 +12,7 @@ Sources are in [SOURCES.md](../SOURCES.md).
 - Mapped types
 - Conditional types
 - Template literal types
+- type or interface
 - Augmenting globals and modules
 - Checklist
 
@@ -196,6 +197,33 @@ type HeadTail<S extends string> = S extends `${infer H}${infer T}` ? [H, T] : ne
 const split: HeadTail<'😀abc'> = ['😀', 'abc'] // in TS 6 the head was half of the emoji
 ```
 
+## type or interface
+
+For an object shape, the two are close to interchangeable. The handbook calls the choice mostly personal preference. Its rule of thumb is to use `interface` until you need something only `type` can do.
+
+Only `type` can name a union, a tuple, a primitive, or a mapped or conditional type. Only `interface` can be declared twice and merged (see [Augmenting globals and modules](#augmenting-globals-and-modules)).
+
+The difference that catches bugs is how each handles a clash. `extends` checks the new members against the base. An intersection does not, and a property whose types cannot both hold becomes `never`:
+
+```ts
+interface Base {
+  id: string
+}
+
+// @ts-expect-error Interface 'Sub' incorrectly extends interface 'Base' (TS2430)
+interface Sub extends Base {
+  id: number
+}
+
+type Mixed = Base & { id: number } // no error here
+declare const m: Mixed
+const id: never = m.id // the clash only shows up as never, at the point of use
+```
+
+The handbook also notes that `extends` can be faster for the compiler than a large intersection.
+
+Pick one style for object shapes and let the linter hold it. typescript-eslint's `consistent-type-definitions` does that. It is in the `stylistic` configs (so `stylisticTypeChecked` in [linting.md](./linting.md) turns it on), it defaults to `interface`, and it has an autofix. Pass `'type'` to prefer type aliases. It only reports object type literals, so unions and other `type`-only forms are left alone.
+
 ## Augmenting globals and modules
 
 Use when: a library or the platform has a value your code adds, such as a field set by middleware, or a global set by a script tag.
@@ -236,4 +264,6 @@ An `interface` merges with another `interface`. A `namespace` also merges with a
 - [ ] `Omit` keys are checked (`StrictOmit` or `Pick`)
 - [ ] Conditional types meant for the whole union wrap the parameter in a tuple
 - [ ] Template literal unions stay small
+- [ ] Object shapes use one of `type` or `interface`, held by `consistent-type-definitions`
+- [ ] Types that extend a base use `extends`, so clashes are errors, not `never`
 - [ ] Augmentation files are modules and are in the tsconfig `include`

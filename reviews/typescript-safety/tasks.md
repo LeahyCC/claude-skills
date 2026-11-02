@@ -14,10 +14,14 @@ Status: **not run.** Model runs need Colin's approval first.
 | T4 | "Add a 'refunded' status to this order flow." Fixture: `interface Order { status: 'paid' \| 'shipped'; trackingId?: string; refundId?: string }` and a switch over `status` with a `default` that returns `''`. | Suggests or makes a discriminated union so `trackingId` exists only on `shipped`. Adds an exhaustive check (`satisfies never` or `assertNever`) so the new member is enforced. Flags the silent `default`. |
 | T5 | "Run this script with `node script.ts`, it errors." Fixture: a `.ts` file with `enum Level`, a class with `constructor(private db: Db)`, and `import { Config } from './config'` where `Config` is an interface. | Names Node type stripping. Replaces the enum with a const object and derived union, and the parameter property with a field. Adds `import type` and the `.ts` extension. Recommends `erasableSyntaxOnly` and `rewriteRelativeImportExtensions`. Says Node does not type-check, so run `tsc --noEmit`. |
 | T6 | "Make these IDs safer, we keep passing the wrong one." Fixture: `function refund(orderId: string, customerId: string, amount: number)` called with arguments in the wrong order in one place. | Introduces branded types with one checking constructor each. Shows the wrong call failing to compile. Keeps the cast inside the constructor only. Mentions that JSON drops the brand. |
+| T7 | "Fix the type errors in this error handler." Fixture (added 2026-11-01): `try { await save() } catch (e) { log(e.message) }`, a `promise.catch((err) => log(err.mesage))` with a typo, and `throw 'not found'` in a helper. | Explains `catch` variables are `unknown` under `strict`. Narrows with `instanceof Error` and handles non-Error values. Does not write `catch (e: any)`. Annotates the `.catch` parameter as `unknown`, says that flag does not cover it, and names `use-unknown-in-catch-callback-variable`. Replaces the string throw with an `Error` and names `only-throw-error`. Answers directly, without a formal report. |
+| T8 | "Why does this compile? `item.actve` is a typo." Fixture (added 2026-11-01): `function f(input: unknown) { if (Array.isArray(input)) return input.filter((item) => item.actve) }`, plus `` const mod = await import(`./plugins/${name}.js`) `` used without checks. | Says `Array.isArray` narrows `unknown` to `any[]` because of its `lib.es5.d.ts` signature. Assigns to `unknown[]` and narrows each element. Says the computed `import()` is `any` and stores it as `unknown` before checking. Names the `no-unsafe-*` rules. Adds no `any`. |
+| T9 | "Should we use enums here?" Fixture (added 2026-11-01): a `const enum Status { Open, Closed }` exported from a library, and code that loops `Object.values(Status)` on a plain numeric enum. | Recommends an `as const` object with a derived union, citing the handbook's Objects vs Enums. Explains the numeric reverse mapping and the doubled values in the loop. Explains why `const enum` breaks under `isolatedModules` and across versions. Bans it with `erasableSyntaxOnly` or `no-restricted-syntax`. Does not repeat the Node type stripping section in full. |
+| T10 | "Review the types in this module." Fixture (added 2026-11-01): a mix of `type X = {...}` and `interface Y {...}`, `type Staff = Person & { name: number }` where `Person.name` is a string, and an `as` cast on `JSON.parse`. | Reports as Must fix / Should fix / Leave with file and line. The cast is Must fix. The intersection clash (`never`) is Must or Should fix, with `extends` as the fix because it reports TS2430. The mixed styles are Should fix or Leave, with `consistent-type-definitions`, and the answer says the choice is mostly preference per the handbook. |
 
 ## Selection
 
-The skill should load for the first ten and not for the last ten. TypeScript is in almost every repo, so the last ten are TypeScript files on other topics.
+The skill should load for S1 to S10 and S21 to S24, and not for S11 to S20. TypeScript is in almost every repo, so the last ten are TypeScript files on other topics.
 
 | ID | Prompt | Should load |
 | --- | --- | --- |
@@ -41,3 +45,7 @@ The skill should load for the first ten and not for the last ten. TypeScript is 
 | S18 | Write a unit test for formatPrice in utils.ts | no |
 | S19 | Rename the `user` variable to `account` across this file | no |
 | S20 | Add rate limiting to this Express route written in TypeScript | no (api-security) |
+| S21 | Why is `e` unknown in my catch block? | yes |
+| S22 | Array.isArray turned my unknown into any[], is that right? | yes |
+| S23 | Should I replace our const enums with something else? | yes |
+| S24 | Type alias or interface for this props object? | yes |
