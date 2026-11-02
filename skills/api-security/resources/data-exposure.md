@@ -4,6 +4,17 @@
 
 The most common data leak is returning too much. Developers query the database, serialize the result, and return the whole object — including fields the user should never see.
 
+## Contents
+
+- [The Data Access Layer (DAL)](#the-data-access-layer-dal)
+- [Response Filtering Patterns](#response-filtering-patterns)
+- [Error Sanitization](#error-sanitization)
+- [Preventing Business Logic Abuse (API6)](#preventing-business-logic-abuse-api6)
+- [What to Never Return to the Client](#what-to-never-return-to-the-client)
+- [Pagination and Data Limits](#pagination-and-data-limits)
+- [Audit Patterns](#audit-patterns)
+- [Sources](#sources)
+
 ## The Data Access Layer (DAL)
 
 The DAL is the central security architecture recommended by Next.js. It's a `server-only` module that:
@@ -256,7 +267,7 @@ export async function reserveTickets(eventId: string, count: number) {
 }
 // Attacker books 600 seats across all events in seconds
 
-// PASS — business logic limits
+// PASS: business logic limits, checked and written in one locked transaction
 'use server'
 import { apiLimiter } from '@/lib/rate-limit'
 
@@ -264,26 +275,36 @@ export async function reserveTickets(eventId: string, count: number) {
   const user = await getCurrentUser()
   if (!user) throw new Error('Unauthorized')
 
-  // Per-user limit
-  if (count > 6) return { error: 'Maximum 6 tickets per order' }
-
-  // Check existing reservations
-  const existing = await db
-    .select({ total: sql<number>`SUM(count)` })
-    .from(reservations)
-    .where(and(eq(reservations.eventId, eventId), eq(reservations.userId, user.id)))
-
-  if ((existing[0]?.total ?? 0) + count > 10) {
-    return { error: 'Maximum 10 tickets per person per event' }
+  // Per-order limit
+  if (!Number.isInteger(count) || count < 1 || count > 6) {
+    return { error: 'Choose 1 to 6 tickets per order' }
   }
 
-  // Rate limit to prevent rapid automated requests
+  // Rate limit before any database work
   const { success } = await apiLimiter.limit(`reserve:${user.id}`)
   if (!success) return { error: 'Please wait before making another reservation' }
 
-  await db.insert(reservations).values({ eventId, count, userId: user.id })
+  // A plain SUM then INSERT races: two requests both read 8 and both add 2.
+  // Locking the caller's user row makes their requests run one at a time.
+  return db.transaction(async (tx) => {
+    await tx.select({ id: users.id }).from(users).where(eq(users.id, user.id)).for('update')
+
+    const [existing] = await tx
+      .select({ total: sql<number>`coalesce(sum(${reservations.count}), 0)::int` })
+      .from(reservations)
+      .where(and(eq(reservations.eventId, eventId), eq(reservations.userId, user.id)))
+
+    if ((existing?.total ?? 0) + count > 10) {
+      return { error: 'Maximum 10 tickets per person per event' }
+    }
+
+    await tx.insert(reservations).values({ eventId, count, userId: user.id })
+    return { ok: true }
+  })
 }
 ```
+
+The lock lives until the transaction commits, so a second request waits and then sees the first insert. Postgres `sum()` of an integer column returns `bigint`, and node-postgres returns types it has no parser for as strings. The `::int` cast keeps the `+` numeric. A seat cap shared by every buyer needs the same pattern on the event row, or a single conditional `UPDATE events SET sold = sold + $1 WHERE id = $2 AND sold + $1 <= capacity`.
 
 ## What to Never Return to the Client
 
@@ -355,9 +376,9 @@ find . -name "route.ts" -exec grep -l "select\|findMany\|find(" {} \; | \
 
 ## Sources
 
-- [OWASP API3:2023 — Broken Object Property Level Authorization](https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/)
-- [OWASP API6:2023 — Unrestricted Access to Sensitive Business Flows](https://owasp.org/API-Security/editions/2023/en/0xa6-unrestricted-access-to-sensitive-business-flows/)
-- [OWASP A06:2025 — Insecure Design](https://owasp.org/Top10/2025/A06_2025-Insecure_Design/)
-- [OWASP A10:2025 — Mishandling of Exceptional Conditions](https://owasp.org/Top10/2025/A10_2025-Mishandling_of_Exceptional_Conditions/)
+- [OWASP API3:2023 — Broken Object Property Level Authorization](https://api-security.owasp.org/editions/2023/en/0xa3-broken-object-property-level-authorization/)
+- [OWASP API6:2023 — Unrestricted Access to Sensitive Business Flows](https://api-security.owasp.org/editions/2023/en/0xa6-unrestricted-access-to-sensitive-business-flows/)
+- [OWASP A06:2025 — Insecure Design](https://top10.owasp.org/2025/A06_2025-Insecure_Design/)
+- [OWASP A10:2025 — Mishandling of Exceptional Conditions](https://top10.owasp.org/2025/A10_2025-Mishandling_of_Exceptional_Conditions/)
 - [Next.js Data Security Guide](https://nextjs.org/docs/app/guides/data-security)
 - [Next.js Security Blog — Server Components and Actions](https://nextjs.org/blog/security-nextjs-server-components-actions)

@@ -4,6 +4,17 @@
 
 Your code is only as secure as its weakest dependency.
 
+## Contents
+
+- [Dependency Security](#dependency-security)
+- [Environment Variable Security](#environment-variable-security)
+- [CI/CD Security](#cicd-security)
+- [Third-Party API Security (API10)](#third-party-api-security-api10)
+- [API Versioning and Inventory (API9)](#api-versioning-and-inventory-api9)
+- [Server Actions Encryption Key](#server-actions-encryption-key)
+- [Audit Patterns](#audit-patterns)
+- [Sources](#sources)
+
 ## Dependency Security
 
 ### Audit Regularly
@@ -11,11 +22,12 @@ Your code is only as secure as its weakest dependency.
 ```bash
 # npm — built-in audit
 npm audit
-npm audit --fix  # auto-fix where possible
+npm audit fix    # subcommand, not a flag. Applies semver-compatible fixes
 
 # pnpm
 pnpm audit
-pnpm audit --fix
+pnpm audit --fix          # adds overrides to pnpm-workspace.yaml
+pnpm audit --fix=update   # updates the lockfile instead of adding overrides
 
 # GitHub — automatic via Dependabot
 # .github/dependabot.yml
@@ -86,6 +98,48 @@ import 'server-only'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 ```
+
+### Fail Fast on a Missing or Weak Secret
+
+A missing variable does not crash a Next.js app. It shows up later as `undefined`. With `AUTH_SECRET` unset, `new TextEncoder().encode(process.env.AUTH_SECRET)` returns an empty key instead of failing. Parse `process.env` once at startup and refuse to run if anything is wrong.
+
+```tsx
+// FAIL: the non-null assertion hides a missing key until the first payment
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+
+// PASS: lib/env.ts. The one place that reads process.env.
+import 'server-only'
+import { z } from 'zod'
+
+const EnvSchema = z.object({
+  DATABASE_URL: z.url(),
+  AUTH_SECRET: z.string().min(32),
+  STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
+  STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_'),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+})
+
+const parsed = EnvSchema.safeParse(process.env)
+if (!parsed.success) {
+  // Print the variable names only. Never the values.
+  const names = [...new Set(parsed.error.issues.map((issue) => issue.path.join('.')))].join(', ')
+  throw new Error(`Invalid environment variables: ${names}`)
+}
+
+export const env = parsed.data // typed: env.AUTH_SECRET is a string
+```
+
+```tsx
+// instrumentation.ts (project root, or src/)
+// register() runs once per server instance and must finish before it serves requests.
+export async function register() {
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('./lib/env') // throws here, so a bad deploy never takes traffic
+  }
+}
+```
+
+Then import `env` from `@/lib/env` everywhere else, for example `new Stripe(env.STRIPE_SECRET_KEY)`. `z.object()` drops every variable not in the schema, so `env` holds only what you declared. Keep `NEXT_PUBLIC_` values out of this schema. Next.js inlines them into the client bundle at `next build`, and only where the code writes `process.env.NEXT_PUBLIC_NAME` in full.
 
 ### .gitignore
 
@@ -305,8 +359,12 @@ find . -name "route.ts" -path "*/api/*" | sort
 
 ## Sources
 
-- [OWASP API9:2023 — Improper Inventory Management](https://owasp.org/API-Security/editions/2023/en/0xa9-improper-inventory-management/)
-- [OWASP API10:2023 — Unsafe Consumption of APIs](https://owasp.org/API-Security/editions/2023/en/0xaa-unsafe-consumption-of-apis/)
-- [OWASP A03:2025 — Software Supply Chain Failures](https://owasp.org/Top10/2025/A03_2025-Software_Supply_Chain_Failures/)
-- [OWASP A08:2025 — Software or Data Integrity Failures](https://owasp.org/Top10/2025/A08_2025-Software_or_Data_Integrity_Failures/)
+- [OWASP API9:2023 — Improper Inventory Management](https://api-security.owasp.org/editions/2023/en/0xa9-improper-inventory-management/)
+- [OWASP API10:2023 — Unsafe Consumption of APIs](https://api-security.owasp.org/editions/2023/en/0xaa-unsafe-consumption-of-apis/)
+- [OWASP A03:2025 — Software Supply Chain Failures](https://top10.owasp.org/2025/A03_2025-Software_Supply_Chain_Failures/)
+- [OWASP A08:2025 — Software or Data Integrity Failures](https://top10.owasp.org/2025/A08_2025-Software_or_Data_Integrity_Failures/)
 - [Socket.dev — Supply Chain Security](https://socket.dev/)
+- [npm audit](https://docs.npmjs.com/cli/v11/commands/npm-audit) and [pnpm audit](https://pnpm.io/cli/audit)
+- [Next.js instrumentation `register`](https://nextjs.org/docs/app/guides/instrumentation)
+- [Next.js environment variables](https://nextjs.org/docs/app/guides/environment-variables)
+- [Zod 4 API](https://zod.dev/api)

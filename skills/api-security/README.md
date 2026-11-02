@@ -1,6 +1,16 @@
 # api-security
 
-OWASP API Security Top 10 (2023) with production Next.js App Router code. Covers access control, authentication, input validation, rate limiting, security headers, data exposure, supply chain, SSRF, and AI tools on those APIs, with FAIL/PASS examples for every pattern.
+OWASP API Security Top 10 (2023) with production Next.js App Router code. Covers access control, authentication with MFA and password reset, input validation, rate limiting, security headers and CSRF, data exposure, supply chain, SSRF, file uploads, and AI tools on those APIs, with FAIL/PASS examples for every pattern. Ten resource files.
+
+## Contents
+
+- [Install](#install)
+- [What It Does](#what-it-does)
+- [What it catches](#what-it-catches)
+- [Coverage](#coverage)
+- [What's Different](#whats-different)
+- [OWASP API Security Top 10 (2023): Full Mapping](#owasp-api-security-top-10-2023-full-mapping)
+- [Verified Against](#verified-against)
 
 ## Install
 
@@ -62,13 +72,14 @@ const UpdateSchema = z.strictObject({
 | Resource | OWASP API | OWASP Web | Key Topics |
 |----------|-----------|-----------|------------|
 | [Access Control](resources/access-control.md) | API1 (BOLA), API5 (BFLA) | A01 | Ownership checks, IDOR prevention, RBAC, CORS, multi-tenant |
-| [Authentication](resources/authentication.md) | API2 | A07, A04 | Session management, JWT, Clerk patterns, proxy.ts, CVE-2025-29927, webhooks |
-| [Input Validation](resources/input-validation.md) | API3, API8 | A05 | Zod schemas, SQL injection, XSS, mass assignment, path traversal |
-| [Rate Limiting](resources/rate-limiting.md) | API4 | A06 | Upstash patterns, per-endpoint limits, cost attacks, AI budget limiting |
-| [Security Headers](resources/security-headers.md) | API8 | A02 | CSP (nonce + SRI + static), HSTS, CORS, CSRF, Cache-Control |
-| [Data Exposure](resources/data-exposure.md) | API3, API6 | A06, A10 | DAL pattern, DTOs, error sanitization, response filtering, pagination |
-| [Supply Chain](resources/supply-chain.md) | API9, API10 | A03, A08 | Dependency audit, env vars, CI/CD, third-party API validation |
-| [SSRF & Logging](resources/ssrf-and-logging.md) | API7 | A01, A09 | URL validation, fetch safety, structured logging, log injection |
+| [Authentication](resources/authentication.md) | API2 | A07, A04 | Session management, JWT, Clerk patterns, proxy.ts, CVE-2025-29927, password reset tokens, TOTP, backup codes, MFA recovery, passkeys, webhooks |
+| [Input Validation](resources/input-validation.md) | API3, API8 | A05 | Zod schemas, SQL injection, command injection, NoSQL operator injection, XSS, mass assignment, path traversal |
+| [Rate Limiting](resources/rate-limiting.md) | API4 | A06 | Upstash patterns, per-endpoint limits, per-account login throttling without lockout DoS, cost attacks, AI budget limiting |
+| [Security Headers](resources/security-headers.md) | API8 | A02 | CSP (nonce + SRI + static), HSTS, CORS, CSRF (Server Action limits, `allowedOrigins`, Fetch Metadata, `__Host-` cookies), Cache-Control |
+| [Data Exposure](resources/data-exposure.md) | API3, API6 | A06, A10 | DAL pattern, DTOs, error sanitization, race-safe business limits, response filtering, pagination |
+| [Supply Chain](resources/supply-chain.md) | API9, API10 | A03, A08 | Dependency audit, env vars, fail-fast env schema, CI/CD, third-party API validation |
+| [SSRF & Logging](resources/ssrf-and-logging.md) | API7 | A01, A09 | URL validation, DNS resolve and pin, fetch safety, structured logging, log injection |
+| [File Uploads](resources/file-uploads.md) | API4 | A06 | Size caps per layer, magic-byte allowlist, random names, scan hook, separate origin, `nosniff`, `attachment` |
 | [AI Tools](resources/ai-tools.md) | API1, API5 | A01 | Session identity on tool calls, signed approval, MCP |
 
 ## What's Different
@@ -82,14 +93,14 @@ const UpdateSchema = z.strictObject({
 | Audit/review focused | **Prevention focused** — write secure code from the start |
 | No awareness of Server Actions as public endpoints | **#1 pattern covered** — every action must verify auth |
 
-## OWASP API Security Top 10 (2023) — Full Mapping
+## OWASP API Security Top 10 (2023): Full Mapping
 
 | # | Category | Resource |
 |---|----------|----------|
 | API1 | Broken Object Level Authorization (BOLA) | [access-control](resources/access-control.md) |
 | API2 | Broken Authentication | [authentication](resources/authentication.md) |
 | API3 | Broken Object Property Level Authorization | [input-validation](resources/input-validation.md), [data-exposure](resources/data-exposure.md) |
-| API4 | Unrestricted Resource Consumption | [rate-limiting](resources/rate-limiting.md) |
+| API4 | Unrestricted Resource Consumption | [rate-limiting](resources/rate-limiting.md), [file-uploads](resources/file-uploads.md) |
 | API5 | Broken Function Level Authorization | [access-control](resources/access-control.md) |
 | API6 | Unrestricted Access to Sensitive Business Flows | [data-exposure](resources/data-exposure.md) |
 | API7 | Server Side Request Forgery | [ssrf-and-logging](resources/ssrf-and-logging.md) |
@@ -99,13 +110,14 @@ const UpdateSchema = z.strictObject({
 
 ## Verified Against
 
-- [OWASP API Security Top 10 (2023)](https://owasp.org/API-Security/editions/2023/en/0x11-t10/)
-- [OWASP Top 10 (2025)](https://owasp.org/Top10/2025/)
+- [OWASP API Security Top 10 (2023)](https://api-security.owasp.org/editions/2023/en/0x11-t10/)
+- [OWASP Top 10 (2025)](https://top10.owasp.org/2025/)
 - [Next.js Security Guide](https://nextjs.org/docs/app/guides/data-security)
 - [Next.js Security Blog — Server Components and Actions](https://nextjs.org/blog/security-nextjs-server-components-actions)
 - [Vercel Conformance — Security Headers](https://vercel.com/docs/workflow-collaboration/conformance/rules/NEXTJS_MISSING_SECURITY_HEADERS)
 - [OWASP GenAI LLM Top 10 2026](https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/)
 - [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
 - [AI SDK tool approvals](https://ai-sdk.dev/docs/agents/tool-approvals)
+- OWASP cheat sheets: [SSRF Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html), [File Upload](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html), [CSRF Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), [Multifactor Authentication](https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html), [Forgot Password](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html), [Authentication](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html), [Credential Stuffing Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Credential_Stuffing_Prevention_Cheat_Sheet.html), [OS Command Injection Defense](https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html), [NoSQL Security](https://cheatsheetseries.owasp.org/cheatsheets/NoSQL_Security_Cheat_Sheet.html)
 
-Earlier targeted review: October 2026. [Scoped deployment/GraphQL follow-up](SOURCES.md) checked 2026-10-21; this does not certify every security example.
+Earlier targeted review: October 2026. [Scoped deployment/GraphQL follow-up](SOURCES.md) checked 2026-10-21. Bug fixes and the upload, injection, MFA, reset, throttling, CSRF and env additions are recorded in [SOURCES.md](SOURCES.md). Neither review certifies every security example.

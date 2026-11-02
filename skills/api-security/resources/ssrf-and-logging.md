@@ -4,6 +4,13 @@
 
 Two related concerns: preventing the server from being tricked into making unintended requests (SSRF), and ensuring you can detect and investigate attacks (logging).
 
+## Contents
+
+- [Server-Side Request Forgery (SSRF)](#server-side-request-forgery-ssrf)
+- [Security Logging](#security-logging)
+- [Audit Patterns](#audit-patterns)
+- [Sources](#sources)
+
 ## Server-Side Request Forgery (SSRF)
 
 SSRF occurs when server-side code fetches a URL that the attacker controls. In Next.js, this is common in Server Components, Route Handlers, and Server Actions that accept URLs.
@@ -25,15 +32,61 @@ export async function POST(request: Request) {
   const response = await fetch(url)  // attacker sends http://169.254.169.254/...
   return Response.json(await response.json())
 }
+```
 
-// PASS — strict URL validation with allowlist
-const ALLOWED_HOSTS = new Set([
-  'api.example.com',
-  'cdn.example.com',
-  'images.unsplash.com',
-])
+A hostname check alone is not enough. `api.example.com` can resolve to `10.0.0.5`, and `fetch()` does its own DNS lookup after your check. An attacker who controls DNS can answer the check with a public IP and the fetch with a private one (DNS rebinding). Resolve the name, check every A and AAAA answer, and make the socket connect to the address you checked.
 
-function validateUrl(input: string): URL | null {
+```tsx
+// lib/safe-fetch.ts
+// npm install undici (its Agent lets us replace the DNS lookup)
+import 'server-only'
+import dns from 'node:dns'
+import net from 'node:net'
+import { Agent, fetch, type RequestInit } from 'undici'
+
+// OWASP SSRF minimum deny list, plus 169.254.0.0/16 (link-local and cloud metadata).
+// Add any other ranges your own network uses.
+const blocked = new net.BlockList()
+blocked.addSubnet('0.0.0.0', 8, 'ipv4')
+blocked.addSubnet('10.0.0.0', 8, 'ipv4')
+blocked.addSubnet('127.0.0.0', 8, 'ipv4')
+blocked.addSubnet('169.254.0.0', 16, 'ipv4') // 169.254.169.254 metadata
+blocked.addSubnet('172.16.0.0', 12, 'ipv4')
+blocked.addSubnet('192.168.0.0', 16, 'ipv4')
+blocked.addSubnet('224.0.0.0', 4, 'ipv4')
+blocked.addSubnet('::', 128, 'ipv6')
+blocked.addSubnet('::1', 128, 'ipv6')
+blocked.addSubnet('fc00::', 7, 'ipv6') // unique local
+blocked.addSubnet('fe80::', 10, 'ipv6') // link-local
+blocked.addSubnet('ff00::', 8, 'ipv6') // multicast
+
+function isBlocked(address: string): boolean {
+  const family = net.isIP(address)
+  if (family === 4) return blocked.check(address, 'ipv4')
+  // BlockList matches IPv4-mapped IPv6 against the IPv4 rules: ::ffff:7f00:1 is 127.0.0.1.
+  // Do not add ::ffff:0:0/96 as a rule. IPv4 checks match it too, so it blocks every IPv4 address.
+  if (family === 6) return blocked.check(address, 'ipv6')
+  return true // not an IP address at all
+}
+
+// Runs inside the socket connect. The socket dials the address this returns,
+// so there is no second lookup an attacker can rebind.
+const pinnedLookup: net.LookupFunction = (hostname, options, callback) => {
+  dns.lookup(hostname, { all: true, family: options.family }, (err, addresses) => {
+    if (err) return callback(err, '')
+    const [first] = addresses
+    if (!first || addresses.some((a) => isBlocked(a.address))) {
+      return callback(new Error(`Blocked address for ${hostname}`), '')
+    }
+    if (options.all) return callback(null, addresses)
+    callback(null, first.address, first.family)
+  })
+}
+
+// TLS still checks the certificate against the hostname in the URL.
+const agent = new Agent({ connect: { lookup: pinnedLookup, timeout: 5_000 } })
+
+export function validateUrl(input: string, allowedHosts?: ReadonlySet<string>): URL | null {
   let url: URL
   try {
     url = new URL(input)
@@ -41,48 +94,54 @@ function validateUrl(input: string): URL | null {
     return null
   }
 
-  // Only allow HTTPS
   if (url.protocol !== 'https:') return null
+  if (url.port !== '' && url.port !== '443') return null
+  if (url.username || url.password) return null
+  if (allowedHosts && !allowedHosts.has(url.hostname)) return null
 
-  // Allowlisted names skip the IP checks below.
-  // DNS can still point one of those names at a private address.
-  if (!ALLOWED_HOSTS.has(url.hostname)) return null
-
-  // Block private/internal IPs (basic check)
-  const blockedPatterns = [
-    /^localhost$/i,
-    /^127\./,
-    /^10\./,
-    /^172\.(1[6-9]|2\d|3[01])\./,
-    /^192\.168\./,
-    /^169\.254\./,    // AWS metadata
-    /^0\./,
-    /^\[::1\]/,       // IPv6 localhost
-    /^\[fc/i,         // IPv6 private
-    /^\[fd/i,         // IPv6 private
-  ]
-
-  if (blockedPatterns.some(p => p.test(url.hostname))) return null
+  // An IP literal skips the DNS lookup, so check it here.
+  // new URL() already turns 2130706433 and 0x7f.1 into 127.0.0.1.
+  const literal = url.hostname.replace(/^\[|\]$/g, '')
+  if (net.isIP(literal) !== 0 && isBlocked(literal)) return null
 
   return url
 }
 
-export async function POST(request: Request) {
-  const { url } = await request.json()
+export function safeFetch(url: URL, init: RequestInit = {}) {
+  return fetch(url, {
+    ...init,
+    dispatcher: agent,
+    redirect: 'error', // a redirect would skip validateUrl
+    signal: AbortSignal.timeout(5_000),
+  })
+}
+```
 
-  const validated = validateUrl(url)
-  if (!validated) {
+```tsx
+// PASS: allowlist, then the pinned fetch
+import { z } from 'zod'
+import { safeFetch, validateUrl } from '@/lib/safe-fetch'
+
+const ALLOWED_HOSTS = new Set(['api.example.com', 'cdn.example.com', 'images.unsplash.com'])
+const BodySchema = z.object({ url: z.string().max(2048) })
+
+export async function POST(request: Request) {
+  const parsed = BodySchema.safeParse(await request.json().catch(() => null))
+  const url = parsed.success ? validateUrl(parsed.data.url, ALLOWED_HOSTS) : null
+  if (!url) {
     return Response.json({ error: 'Invalid URL' }, { status: 400 })
   }
 
-  const response = await fetch(validated.href, {
-    redirect: 'error',              // don't follow redirects
-    signal: AbortSignal.timeout(5000), // timeout
-  })
-
-  return Response.json({ ok: response.ok, status: response.status })
+  try {
+    const response = await safeFetch(url)
+    return Response.json({ ok: response.ok, status: response.status })
+  } catch {
+    return Response.json({ error: 'Fetch failed' }, { status: 502 })
+  }
 }
 ```
+
+Keep the allowlist when you know the destinations. It stops the request going anywhere else. The pinned lookup stops an allowed name from pointing inside your network. With no allowlist (user webhooks), the pinned lookup is the main defence, and OWASP calls a deny list incomplete. On AWS, also require IMDSv2.
 
 ### Common SSRF Vectors in Next.js
 
@@ -94,22 +153,16 @@ export async function updateAvatar(imageUrl: string) {
   await uploadToStorage(await image.blob())
 }
 
-// PASS — file.type is the browser's claim. Check the bytes.
+// PASS: take the file itself, not a URL to it. No server fetch, no SSRF.
+// Size caps and the magic-byte check live in file-uploads.md.
 export async function updateAvatar(formData: FormData) {
   const file = formData.get('avatar')
   if (!(file instanceof File)) throw new Error('No file provided')
-
-  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer())
-  const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
-  const png = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47
-  const webp =
-    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
-  if (!jpeg && !png && !webp) throw new Error('Invalid file type')
-
-  await uploadToStorage(file)
+  await saveUpload(file, IMAGE_TYPES) // see file-uploads.md
 }
 ```
+
+The upload checks themselves are in [File Uploads](file-uploads.md).
 
 ```tsx
 // Vector 2: Webhook URL registration
@@ -119,19 +172,16 @@ export async function createWebhook(url: string) {
   await db.insert(webhooks).values({ url, userId: user.id })
 }
 
-// PASS — validate and test the URL
+// PASS: validate, then test through the pinned fetch
 export async function createWebhook(input: string) {
-  const url = validateUrl(input)
+  const url = validateUrl(input) // no allowlist: any public HTTPS host
   if (!url) return { error: 'Invalid webhook URL. Must be HTTPS.' }
 
-  // Verify the endpoint responds
   try {
-    const response = await fetch(url.href, {
+    const response = await safeFetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'webhook.test' }),
-      redirect: 'error',
-      signal: AbortSignal.timeout(5000),
     })
     if (!response.ok) return { error: 'Webhook endpoint returned an error' }
   } catch {
@@ -140,6 +190,7 @@ export async function createWebhook(input: string) {
 
   await db.insert(webhooks).values({ url: url.href, userId: user.id })
 }
+// Deliver every later event through safeFetch too. DNS can change after registration.
 ```
 
 ```tsx
@@ -173,6 +224,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ r
 | URL allowlist (not blocklist) | Blocklists are always incomplete — IP encoding tricks bypass them |
 | HTTPS only | Blocks `file://`, `gopher://`, `dict://` |
 | No redirect following | Prevents allowlist bypass via redirect chain |
+| Resolve DNS and pin the connection | Stops an allowed or public name resolving to a private IP, and DNS rebinding |
 | Timeout on all fetches | Prevents resource exhaustion from hanging connections |
 | Don't return raw responses | Prevents internal data leakage |
 | Accept file uploads instead of URLs | Eliminates SSRF entirely for user content |
@@ -379,9 +431,13 @@ grep -rn "console.log\|console.error" --include="*.ts" | grep -i "password\|toke
 
 ## Sources
 
-- [OWASP API7:2023 — Server Side Request Forgery](https://owasp.org/API-Security/editions/2023/en/0xa7-server-side-request-forgery/)
-- [OWASP A01:2025 — Broken Access Control](https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/)
-- [OWASP A09:2025 — Security Logging and Alerting Failures](https://owasp.org/Top10/2025/A09_2025-Security_Logging_and_Alerting_Failures/)
+- [OWASP API7:2023 — Server Side Request Forgery](https://api-security.owasp.org/editions/2023/en/0xa7-server-side-request-forgery/)
+- [OWASP A01:2025 — Broken Access Control](https://top10.owasp.org/2025/A01_2025-Broken_Access_Control/)
+- [OWASP A09:2025 — Security Logging and Alerting Failures](https://top10.owasp.org/2025/A09_2025-Security_Logging_and_Alerting_Failures/)
 - [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)
+- [OWASP SSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html)
+- [Node.js 22 `net.BlockList` and the `lookup` connect option](https://nodejs.org/docs/latest-v22.x/api/net.html)
+- [Node.js 22 `dns.lookup`](https://nodejs.org/docs/latest-v22.x/api/dns.html)
+- [undici Client `connect` options](https://github.com/nodejs/undici/blob/main/docs/docs/api/Client.md)
 
 Review note (2026-10-21): login and deleteProject select-result handling checked against [Drizzle select result examples](https://orm.drizzle.team/docs/select#partial-select). A select returns an array; destructuring its first row makes an empty result undefined. This check does not verify the whole logging resource.

