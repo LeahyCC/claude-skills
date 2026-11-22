@@ -82,9 +82,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Node 22 bundles npm 10, whose peer resolver crashes on this stack ("Cannot read
+      # properties of null (reading 'edgesOut')"). Node 26 bundles npm 11, and the skill's
+      # probes ran on Node 26 (skills/react-testing/SOURCES.md).
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
       - name: Every tsx test example passes on the pinned stack, links resolve, counts match
         run: node reviews/react-testing/checks/check-skill.mjs
 
