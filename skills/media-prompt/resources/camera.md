@@ -242,7 +242,7 @@ Not found among tags with 3,100 or more posts, so not worth writing on a tag mod
 
 ## From a FLUX 3 prompt
 
-BFL's FLUX 3 examples are a good source of ideas, but FLUX 3 is a larger, hosted model with sound and clips up to 20 seconds. To run one locally:
+BFL's FLUX 3 examples are a good source of ideas, but FLUX 3 Video is a larger, hosted model with sound and clips up to 20 seconds. To run one locally:
 
 | The FLUX 3 prompt has | On Wan 2.2 | On LTX-2.5 | On an image model |
 | --- | --- | --- | --- |

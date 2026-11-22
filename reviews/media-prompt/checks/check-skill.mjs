@@ -2,7 +2,7 @@
 //   1. inspect-model.mjs names the right family, kind, prediction, triggers and strength for
 //      headers built from the keys ComfyUI checks on load, and for each sidecar format
 //   2. it reports broken files without crashing, exits 1 when a file can't be read and 2 on bad arguments
-//   3. frame counts and sizes in wan.md and ltx.md follow each family's rule
+//   3. frame counts and sizes in wan.md and ltx.md, and sizes in flux3-klein.md, follow each family's rule
 //   4. relative links and anchors resolve, files over 100 lines have a contents list, the
 //      frontmatter is valid, and the counts in README.md and marketplace.json match the files
 //
@@ -58,6 +58,17 @@ const FLUX2 = (width) => ({
   'double_stream_modulation_img.lin.weight': [width * 6, width],
   'img_in.weight': [width, 128],
 })
+// FLUX 3 Image Klein: the two keys ComfyUI checks, plus ref_time_in on the distilled (flow-map) checkpoint.
+const FLUX3 = ({ distilled }) => ({
+  'content_mode_blocks.image.0.attn_out.weight': [3072, 3072],
+  'single_stream_modulations.txt.lin.weight': [9216, 3072],
+  'txt_mode_blocks.0.q_proj.weight': [3072, 3072],
+  'single_blocks.0.q_proj.weight': [3072, 3072],
+  ...(distilled ? { 'ref_time_in.in_layer.weight': [3072, 256] } : {}),
+})
+const withPrefix = (prefix, tensors) => Object.fromEntries(Object.entries(tensors).map(([k, v]) => [prefix + k, v]))
+// Matches when the text does not contain the phrase, for asserting that a note is absent.
+const without = (phrase) => new RegExp(`^(?![\\s\\S]*${phrase})`)
 const WAN = (width, channels) => ({
   'head.modulation': [1, 2, width],
   'patch_embedding.weight': [width, channels, 1, 2, 2],
@@ -89,6 +100,18 @@ const FIXTURES = [
       'vae.decoder.conv_in.weight': [512, 32, 3, 3],
     },
     expect: { family: 'flux2-klein-4b', kind: /^checkpoint/, notes: /\[klein\] base, 50 steps \(file name\)/ } },
+  { file: 'model_f3.safetensors', tensors: FLUX3({ distilled: true }),
+    expect: { family: 'flux3-klein-distilled', kind: /^diffusion model only/, notes: /ref_time_in/, unsure: false, promptFile: 'flux3-klein.md' } },
+  { file: 'model_f3b_aio.safetensors',
+    tensors: {
+      ...withPrefix('model.diffusion_model.', FLUX3({ distilled: false })),
+      'text_encoders.qwen3vl_4b.transformer.model.norm.weight': [2560],
+      'vae.decoder.conv_in.weight': [512, 32, 3, 3],
+    },
+    expect: { family: 'flux3-klein-base', kind: /^checkpoint/, notes: /no ref_time_in/ } },
+  // The name says Base, the tensors say distilled: the tensors win, and the FLUX.2 [klein] hint stays out.
+  { file: 'flux3-image-klein-base-bf16.safetensors', tensors: FLUX3({ distilled: true }),
+    expect: { family: 'flux3-klein-distilled', notes: without('\\[klein\\] base') } },
   { file: 'model_q.safetensors', tensors: { 'txt_norm.weight': [3584] },
     expect: { family: 'qwen-image', notes: /no key ComfyUI checks separates/, promptFile: 'qwen-image.md' } },
   { file: 'model_q2511.safetensors', tensors: { 'txt_norm.weight': [3584], '__index_timestep_zero__': [] },
@@ -112,6 +135,13 @@ const FIXTURES = [
     expect: { kind: /^VAE/, family: null } },
   { file: 'encoder_file.safetensors', tensors: { 'encoder.block.0.layer.0.SelfAttention.q.weight': [4096, 4096] },
     expect: { kind: /^text encoder \(T5/ } },
+  // Klein's encoder and upsampler, by the keys ComfyUI's detect_te_model checks.
+  { file: 'qwen3vl_4b_bf16.safetensors',
+    tensors: { 'model.visual.deepstack_merger_list.0.norm.weight': [4096], 'model.language_model.layers.0.self_attn.q_proj.weight': [4096, 2560] },
+    expect: { kind: /^text encoder \(Qwen3-VL/, family: null } },
+  { file: 'qwen3.5_9b_flux3_prompt_upsampler_w4a8.safetensors',
+    tensors: { 'model.language_model.layers.0.linear_attn.A_log': [32], 'model.language_model.layers.0.input_layernorm.weight': [4096] },
+    expect: { kind: /^language model \(Qwen3\.5/, family: 'flux3-klein', unsure: true } },
 
   // LoRAs
   { file: 'char_lora.safetensors', tensors: SDXL_LORA,
@@ -160,6 +190,31 @@ const FIXTURES = [
   { file: 'k2_lora.safetensors', tensors: { 'diffusion_model.blocks.0.attn.wq.lora_A.weight': [16, 3072] },
     metadata: { ss_base_model_version: 'krea2' },
     expect: { family: 'krea2', unsure: false } },
+  // FLUX 3 Klein LoRAs in BFL's names, kohya's flattened names (single blocks only, which must not
+  // fall to the FLUX.1 and FLUX.2 check) and Diffusers' names (whose single_transformer_blocks FLUX.1 shares).
+  { file: 'klein_style.safetensors',
+    tensors: {
+      'diffusion_model.single_blocks.0.q_proj.lora_A.weight': [32, 3072],
+      'diffusion_model.single_blocks.0.q_proj.lora_B.weight': [3072, 32],
+      'diffusion_model.content_mode_blocks.image.0.mlp_in.lora_A.weight': [32, 3072],
+    },
+    expect: { kind: 'LoRA', rank: 32, family: 'flux3-klein', unsure: false, notes: /0\.75/, promptFile: 'flux3-klein.md' } },
+  { file: 'klein_kohya.safetensors',
+    tensors: { 'lora_unet_single_blocks_3_attn_out.lora_down.weight': [16, 3072], 'lora_unet_single_blocks_3_attn_out.lora_up.weight': [3072, 16] },
+    expect: { family: 'flux3-klein', unsure: false } },
+  { file: 'klein_diffusers.safetensors',
+    tensors: {
+      'transformer.mode_blocks.image.0.attn.to_q.lora_A.weight': [16, 3072],
+      'transformer.txt_mode_blocks.0.attn.to_q.lora_A.weight': [16, 3072],
+      'transformer.single_transformer_blocks.0.attn.to_q.lora_A.weight': [16, 3072],
+    },
+    expect: { family: 'flux3-klein', unsure: false } },
+  { file: 'klein_base_lora.safetensors', tensors: { 'diffusion_model.txt_mode_blocks.0.v_proj.lora_A.weight': [16, 3072] },
+    sidecars: { '.civitai.info': json({ baseModel: 'Flux.3 Klein-base', trainedWords: ['abc style'] }) },
+    expect: { family: 'flux3-klein-base', familySource: 'klein_base_lora.civitai.info', triggers: ['abc style'] } },
+  // "flux_3d" is a FLUX.1 style name, not FLUX 3: the unsure FLUX tensors keep FLUX.1.
+  { file: 'flux_3d_style.safetensors', tensors: { 'lora_unet_single_blocks_0_linear1.lora_down.weight': [16, 3072] },
+    expect: { family: 'flux1' } },
   { file: 'a1111_lora.safetensors', tensors: SDXL_LORA,
     sidecars: { '.json': json({ description: '', 'sd version': 'SDXL', 'activation text': 'trigger one, trigger two', 'preferred weight': 0.7, 'negative text': '', notes: '' }) },
     expect: { family: 'sdxl', triggers: ['trigger one', 'trigger two'], strength: 0.7 } },
@@ -177,6 +232,9 @@ const FIXTURES = [
   { file: 'mislabeled.safetensors', tensors: SDXL_CHECKPOINT,
     sidecars: { '.civitai.info': json({ baseModel: 'Flux.1 D' }) },
     expect: { family: 'sdxl', conflict: /Flux\.1 D/ } },
+  { file: 'video-Q8_0.gguf', raw: Buffer.from('GGUF'),
+    sidecars: { '.civitai.info': json({ baseModel: 'Flux 3 Video' }) },
+    expect: { family: 'flux3-video', promptFile: null } },
 ]
 
 const BROKEN = [
@@ -254,19 +312,23 @@ rmSync(dir, { recursive: true, force: true })
 
 // Windows checkouts may turn LF into CRLF; the checks below assume LF.
 const read = (path) => readFileSync(join(skill, path), 'utf8').replace(/\r\n/g, '\n')
+// An image family has no frames (frameStep null), so only its sizes are checked. FLUX 3 Klein's
+// autoencoder refuses sizes that are not multiples of 16 (DOWNSAMPLING_RATIO in BFL's autoencoder.py).
 const RULES = [
   { file: 'resources/wan.md', frameStep: 4, sizeStep: 16 },
   { file: 'resources/ltx.md', frameStep: 8, sizeStep: 32 },
+  { file: 'resources/flux3-klein.md', frameStep: null, sizeStep: 16 },
 ]
 for (const { file, frameStep, sizeStep } of RULES) {
   const text = read(file)
-  const frames = [...text.matchAll(/(\d+) frames/g)].map((m) => Number(m[1]))
+  const frames = frameStep ? [...text.matchAll(/(\d+) frames/g)].map((m) => Number(m[1])) : []
   const badFrames = frames.filter((n) => (n - 1) % frameStep !== 0)
   const sizes = [...text.matchAll(/(\d{3,4})×(\d{3,4})/g)].map((m) => [Number(m[1]), Number(m[2])])
   const badSizes = sizes.filter(([w, h]) => w % sizeStep !== 0 || h % sizeStep !== 0)
-  if (frames.length === 0 || sizes.length === 0) fail(`${file}: found no frame counts or sizes to check`)
+  const framesNote = frameStep ? `${frames.length} frame counts are ${frameStep}n+1, ` : ''
+  if ((frameStep && frames.length === 0) || sizes.length === 0) fail(`${file}: found no ${frameStep ? 'frame counts or ' : ''}sizes to check`)
   else if (badFrames.length || badSizes.length) fail(`${file}: frame counts not ${frameStep}n+1: ${badFrames}; sizes not multiples of ${sizeStep}: ${badSizes.map((s) => s.join('×'))}`)
-  else pass(`${file}: ${frames.length} frame counts are ${frameStep}n+1, ${sizes.length} sizes are multiples of ${sizeStep}`)
+  else pass(`${file}: ${framesNote}${sizes.length} sizes are multiples of ${sizeStep}`)
 }
 
 // camera.md and effects.md mix families. A "### " section whose title names LTX follows LTX's

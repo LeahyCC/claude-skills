@@ -2,7 +2,7 @@
 
 FLUX.2 [dev], FLUX.2 [klein] 4B and 9B, and FLUX.1 [dev] with its finetunes, FLUX.1 Krea [dev] included. All of them take sentences. None takes a negative prompt except FLUX.2 [klein] base.
 
-FLUX 3 Image Klein (October 2026) is a different model with different settings. It is not covered here.
+FLUX 3 Image Klein (October 2026) is a different model, with its own text encoder, settings and prompt upsampler. It is in [flux3-klein.md](./flux3-klein.md).
 
 ## Contents
 

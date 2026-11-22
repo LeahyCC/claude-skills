@@ -409,7 +409,7 @@
       "name": "media-prompt",
       "source": "./skills/media-prompt",
       "displayName": "Media Prompt",
-      "description": "Prompts and ComfyUI settings for local image and video models: FLUX.2 and FLUX.1, Krea 2, Qwen-Image and Qwen-Image-Edit, Pony, NoobAI and Illustrious tags, Wan 2.2 and LTX-2.5, plus LoRA trigger words, upscaling and frame interpolation. Directs the shot on request (camera move, lens, light, colour, sound) and builds trippy effects such as a dolly zoom or a morph. Includes a Node script that reads a model file to tell what it is built on.",
+      "description": "Prompts and ComfyUI settings for local image and video models: FLUX.2, FLUX.1 and FLUX 3 Image Klein, Krea 2, Qwen-Image and Qwen-Image-Edit, Pony, NoobAI and Illustrious tags, Wan 2.2 and LTX-2.5, plus LoRA trigger words, upscaling and frame interpolation. Directs the shot on request (camera move, lens, light, colour, sound) and builds trippy effects such as a dolly zoom or a morph. Includes a Node script that reads a model file to tell what it is built on.",
       "version": "0.1.0",
       "author": {
         "name": "LeahyCC"
@@ -423,8 +423,8 @@
         "stable-diffusion"
       ],
       "metadata": {
-        "verified_against": "Vendor guides and rewriter prompts (BFL, Krea, Qwen, Alibaba Model Studio, Lightricks), model cards (FLUX.2, FLUX.1 Krea, Krea 2, Qwen-Image, NoobAI, Illustrious, Pony V6), ComfyUI source and official workflow templates, and the safetensors, ModelSpec, kohya, musubi-tuner, ai-toolkit, SwarmUI, A1111 and LoRA Manager metadata formats. Scoped in skills/media-prompt/SOURCES.md (checked 2026-11-22).",
-        "resource_files": 11,
+        "verified_against": "Vendor guides and rewriter prompts (BFL, including the FLUX 3 Image Klein upsampler's system prompts, Krea, Qwen, Alibaba Model Studio, Lightricks), model cards (FLUX.2, FLUX.1 Krea, FLUX 3 Image Klein, Krea 2, Qwen-Image, NoobAI, Illustrious, Pony V6), BFL's Klein inference code, ComfyUI source and official workflow templates, and the safetensors, ModelSpec, kohya, musubi-tuner, ai-toolkit, SwarmUI, A1111 and LoRA Manager metadata formats. Scoped in skills/media-prompt/SOURCES.md (checked 2026-11-22).",
+        "resource_files": 12,
         "install": "npx skills add LeahyCC/claude-skills@media-prompt"
       }
     }

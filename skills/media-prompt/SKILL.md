@@ -2,19 +2,20 @@
 name: media-prompt
 description: >
   Turns a plain-words idea into a ready-to-paste prompt and ComfyUI settings
-  for local image and video models: FLUX.2 [dev] and [klein], FLUX.1
-  finetunes, Krea 2, Qwen-Image and Qwen-Image-Edit, SDXL tag models (Pony V6,
-  NoobAI, Illustrious), Wan 2.2 and LTX-2.5, plus LoRA triggers, upscaling and
-  frame interpolation. Writes the form each model was trained on, a negative
-  only when CFG uses one, and steps, CFG, size and frames. When asked, directs
-  the shot (camera move, lens, light, colour, sound) and builds trippy or
-  surreal effects such as a dolly zoom, morph or double exposure. A bundled
-  script reads a .safetensors header to tell what a checkpoint or LoRA is built
-  on and its trigger words. Use when the user wants an image or video prompt
-  for ComfyUI, Forge or SwarmUI, wants it cinematic, photographic or trippy,
-  asks what settings or triggers a model needs, or says a prompt is not
-  working. Not for hosted tools such as Midjourney, DALL-E or Sora, or for
-  building ComfyUI workflows or custom nodes.
+  for local image and video models: FLUX.2 [dev] and [klein], FLUX 3 Klein,
+  FLUX.1 finetunes, Krea 2, Qwen-Image and Qwen-Image-Edit, SDXL tag models
+  (Pony V6, NoobAI, Illustrious), Wan 2.2 and LTX-2.5, plus LoRA triggers,
+  upscaling and frame interpolation. Writes the form each model was trained
+  on, a negative only when CFG uses one, and steps, CFG, size and frames.
+  When asked, directs the shot (camera move, lens, light, colour, sound) and
+  builds trippy or surreal effects such as a dolly zoom, morph or double
+  exposure. A bundled script reads a .safetensors header to tell what a
+  checkpoint or LoRA is built on, and its triggers. Use when the user wants
+  an image or video prompt for ComfyUI, Forge or SwarmUI, wants it
+  cinematic, photographic or trippy, asks what settings or triggers a model
+  needs, or says a prompt is not working. Not for hosted tools such as
+  Midjourney, DALL-E or Sora, or for building ComfyUI workflows or custom
+  nodes.
 ---
 
 # Media prompt
@@ -32,6 +33,7 @@ Sources checked: [SOURCES.md](SOURCES.md)
 | Model | The prompt is | Negative prompt | Read |
 | --- | --- | --- | --- |
 | FLUX.2 [dev], FLUX.2 [klein] 4B and 9B, FLUX.1 [dev] and its finetunes | Sentences | None, except on [klein] base | [flux.md](./resources/flux.md) |
+| FLUX 3 Image Klein and Klein Base | A short request for its prompt upsampler, or the full caption the upsampler would write | None on Klein (CFG 1). Empty on Base | [flux3-klein.md](./resources/flux3-klein.md) |
 | Krea 2, and checkpoints built on it | Long sentences | None on Turbo | [krea2.md](./resources/krea2.md) |
 | Qwen-Image, 2512 and 2.1 | Sentences, words to draw in quotes | At CFG 4. None at CFG 1 (Lightning, 2.1) | [qwen-image.md](./resources/qwen-image.md) |
 | Qwen-Image-Edit, 2509, 2511, and 2.1 edits | One edit instruction | At CFG 4. None at CFG 1 (Lightning, 2.1) | [qwen-image-edit.md](./resources/qwen-image-edit.md) |
@@ -43,7 +45,7 @@ Sources checked: [SOURCES.md](SOURCES.md)
 | Directing any of these: framing, camera move, lens, light, colour, a still's camera and film | The family's form, with shot words added | | [camera.md](./resources/camera.md) |
 | Trippy, surreal and impossible effects: dolly zoom, morph, dissolve, time tricks, recursion | One effect, written as what happens | | [effects.md](./resources/effects.md) |
 
-Not covered: Pony V7 (AuraFlow), Chroma, Z-Image, HiDream, HunyuanVideo, SD 1.5, SD 3.5, FLUX 3, and Wan 2.5 and later (hosted only). For those, say so, write plain sentences, and mark the settings as unchecked. FLUX 3 Video is API only; [camera.md](./resources/camera.md#from-a-flux-3-prompt) turns its prompts into prompts for the local video models.
+Not covered: Pony V7 (AuraFlow), Chroma, Z-Image, HiDream, HunyuanVideo, SD 1.5, SD 3.5, and the hosted models: FLUX 3 Image (its open-weights Klein is covered above), FLUX 3 Video, and Wan 2.5 and later. For those, say so, write plain sentences, and mark the settings as unchecked. [camera.md](./resources/camera.md#from-a-flux-3-prompt) turns FLUX 3 Video prompts into prompts for the local video models.
 
 ## Steps
 
@@ -69,13 +71,13 @@ Not covered: Pony V7 (AuraFlow), Chroma, Z-Image, HiDream, HunyuanVideo, SD 1.5,
 | Use the quality words the model's authors publish (Pony's score string, NoobAI's quality tags) | Paste "masterpiece, 8k, ultra detailed" onto a sentence model |
 | Name what should be there | Write negations ("no hat") in the prompt. Qwen's Chinese rewriter rules ban negation words in rewrites |
 | Write a negative only when CFG is above 1 | Write one that ComfyUI will skip: at CFG 1 it never runs the negative |
-| Use `(word:1.2)` weights in SDXL tag prompts only | Use them on FLUX.2, Qwen-Image, Krea 2 or LTX-2. ComfyUI turns weighting off for those encoders, so the brackets reach the model as text |
+| Use `(word:1.2)` weights in SDXL tag prompts only | Use them on FLUX.2, FLUX 3 Klein, Qwen-Image, Krea 2 or LTX-2. ComfyUI turns weighting off for those encoders, so the brackets reach the model as text |
 | For an edit or image to video, describe the change | Describe what the image already shows |
 | Match the length the family file gives | Pad to a word count |
 
 ## Direct it
 
-Use this when the user asks for a look ("cinematic", "like a film photo", "trippy", "dreamy"), names a film technique, or pastes a prompt written for a hosted model such as FLUX 3.
+Use this when the user asks for a look ("cinematic", "like a film photo", "trippy", "dreamy"), names a film technique, or pastes a prompt written for a hosted model such as FLUX 3 Video.
 
 1. **Keep their idea.** Every subject, action and place they named stays. The look and one effect are the additions they asked for. New people, props or story beats still come only from them, or from a treatment they picked.
 2. **Choose one of each:** a framing, one camera move (video), one lens or optic, one light, one colour or texture. Take the words from [camera.md](./resources/camera.md), in the model's own words where its guide has them.
@@ -135,6 +137,7 @@ Decline these whatever the framing.
 - [ ] The form matches the family: tags, sentences, an edit instruction, or a paragraph
 - [ ] Negative says "none" and why whenever CFG is 1
 - [ ] No weight brackets outside SDXL tag prompts
+- [ ] On FLUX 3 Klein, the upsampler is on, or the prompt is a full caption in its form (for an edit, written from the references)
 - [ ] Sizes and frame counts follow the family's rule (multiples of 16 or 32, 4n+1 or 8n+1 frames)
 - [ ] LoRA triggers came from the models file, the script or the user
 - [ ] The minimal version is there

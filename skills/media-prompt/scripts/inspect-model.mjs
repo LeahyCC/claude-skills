@@ -47,7 +47,10 @@ const FAMILIES = {
   'flux2-dev': { label: 'FLUX.2 [dev]', file: 'flux.md' },
   'flux2-klein-4b': { label: 'FLUX.2 [klein] 4B', file: 'flux.md' },
   'flux2-klein-9b': { label: 'FLUX.2 [klein] 9B', file: 'flux.md' },
-  'flux3': { label: 'FLUX 3', file: null },
+  'flux3-klein': { label: 'FLUX 3 Image Klein (distilled or Base)', file: 'flux3-klein.md' },
+  'flux3-klein-distilled': { label: 'FLUX 3 Image Klein (distilled)', file: 'flux3-klein.md' },
+  'flux3-klein-base': { label: 'FLUX 3 Image Klein Base', file: 'flux3-klein.md' },
+  'flux3-video': { label: 'FLUX 3 Video (API only, no local weights)', file: null },
   'krea2': { label: 'Krea 2', file: 'krea2.md' },
   'qwen-image': { label: 'Qwen-Image', file: 'qwen-image.md' },
   'qwen-image-edit': { label: 'Qwen-Image-Edit', file: 'qwen-image-edit.md' },
@@ -66,19 +69,26 @@ const FAMILIES = {
 // Base model names as trainers, SwarmUI and Civitai write them, most specific first. Civitai says
 // its list changes as it adds families, so these are patterns, not a fixed enum.
 // Short names need a boundary so that "swan" is not Wan and "ponytail" is not Pony.
+// FLUX 3: the 3 must end the version, so a "flux_3d" style LoRA stays FLUX.1.
+const FLUX3 = String.raw`flux[ ._-]?3(?![a-z0-9])`
+const FLUX3_NAME = new RegExp(FLUX3, 'i')
 const NAME_PATTERNS = [
   [/pony[ _-]?v7|auraflow/i, 'auraflow'],
   [/pony(?!tail)/i, 'sdxl-pony'],
   [/illustrious/i, 'sdxl-illustrious'],
   [/noobai/i, 'sdxl-noobai'],
   [/sdxl|sd_xl|stable-diffusion-xl/i, 'sdxl'],
-  [/flux[ ._-]?3/i, 'flux3'],
+  [new RegExp(`${FLUX3}.*video`, 'i'), 'flux3-video'],
+  [new RegExp(`${FLUX3}.*klein.*base(?![a-z])`, 'i'), 'flux3-klein-base'],
+  [FLUX3_NAME, 'flux3-klein'],
   [/flux[ ._-]?2.*klein.*4b/i, 'flux2-klein-4b'],
   [/flux[ ._-]?2.*klein.*9b/i, 'flux2-klein-9b'],
   [/flux[ ._-]?2/i, 'flux2-dev'],
   [/flux[ ._-]?1.*krea/i, 'flux1-krea'],
   [/krea[ ._-]?2/i, 'krea2'],
   [/flux/i, 'flux1'],
+  // Qwen3-VL is a text encoder (FLUX 3 Image Klein's and Krea 2's), not Qwen-Image.
+  [/qwen[ ._-]?3[ ._-]?vl/i, null],
   [/qwen.*2\.1/i, 'qwen-image-2.1'],
   [/qwen.*edit/i, 'qwen-image-edit'],
   [/qwen/i, 'qwen-image'],
@@ -154,6 +164,7 @@ const MODEL_CHECKS = [
   ['krea2', (has) => has('txtfusion.projector.weight')],
   ['qwen-image-2.1', (has) => has('txt_in.text_norm.weight') && has('modulation.1.weight')],
   ['qwen-image', (has) => has('txt_norm.weight')],
+  ['flux3', (has) => has('content_mode_blocks.image.0.attn_out.weight') && has('single_stream_modulations.txt.lin.weight')],
   ['flux2', (has) => has('double_stream_modulation_img.lin.weight')],
   ['chroma', (has, hasStart) => hasStart('distilled_guidance_layer.0.norms.0.') || hasStart('distilled_guidance_layer.norms.0.')],
   ['flux1', (has) => has('double_blocks.0.img_attn.norm.key_norm.weight') || has('double_blocks.0.img_attn.norm.key_norm.scale')],
@@ -186,6 +197,11 @@ const WAN_VARIANT_KEYS = [
 const FLUX2_BY_WIDTH = { 6144: 'flux2-dev', 4096: 'flux2-klein-9b', 3072: 'flux2-klein-4b' }
 const FLUX1_WIDTH = 3072
 const KLEIN_4B_DOUBLE_BLOCKS = 5
+
+// FLUX 3 Image Klein is 3072 wide (HIDDEN in BFL's flux3 dit.py). Only the distilled checkpoint, a
+// flow map, has the second time input (FLOW_MAP_KEY in BFL's checkpoint.py; ComfyUI reads it as flow_map).
+const FLUX3_KLEIN_WIDTH = 3072
+const FLUX3_FLOW_MAP_KEY = 'ref_time_in.in_layer.weight'
 
 // SDXL's ADM input (label_emb) is 2816 wide for the base model and 2560 for the refiner.
 const SDXL_BASE_ADM_WIDTH = 2816
@@ -229,6 +245,16 @@ function describeModel(check, prefix, tensors, keys) {
     else if (FLUX2_BY_WIDTH[width]) found.family = FLUX2_BY_WIDTH[width]
     else found.notes.push('[dev] or [klein]: the width did not match a known FLUX.2')
     if (found.family.startsWith('flux2-klein')) found.notes.push('distilled and base [klein] share these tensors: "base" in the file name means the 50-step model')
+  }
+  if (check === 'flux3') {
+    const width = shape('content_mode_blocks.image.0.attn_out.weight')?.[0]
+    found.evidence = `content_mode_blocks.image.0.attn_out.weight (${width} wide) and single_stream_modulations.txt.lin.weight`
+    const distilled = has(FLUX3_FLOW_MAP_KEY)
+    found.family = distilled ? 'flux3-klein-distilled' : 'flux3-klein-base'
+    found.notes.push(distilled
+      ? `${FLUX3_FLOW_MAP_KEY}, the flow-map time input only the distilled checkpoint has: 16 steps, cfg 1`
+      : `no ${FLUX3_FLOW_MAP_KEY}: the undistilled Base, 50 steps at cfg 3.5`)
+    if (width !== FLUX3_KLEIN_WIDTH) found.notes.push(`Klein is ${FLUX3_KLEIN_WIDTH} wide: this may be a FLUX 3 model the skill does not cover`)
   }
   if (check === 'krea2') found.evidence = 'txtfusion.projector.weight'
   if (check === 'auraflow') found.evidence = 'double_layers.0.attn.w1q.weight'
@@ -287,7 +313,11 @@ function modelKind(keys) {
 }
 
 // Files that are not a diffusion model or a LoRA, so the user is not told "unknown" about a VAE.
+// The two Qwen keys are the ones ComfyUI's detect_te_model checks. Qwen3-VL comes first because its
+// language model also matches the generic text encoder entry below.
 const OTHER_KINDS = [
+  [/(^|\.)visual\.deepstack_merger_list\.0\.norm\.weight$/, 'text encoder (Qwen3-VL; FLUX 3 Image Klein and Krea 2 load the 4B)'],
+  [/(^|\.)layers\.0\.linear_attn\.A_log$/, "language model (Qwen3.5; FLUX 3 Image Klein's prompt upsampler is a Qwen3.5-9B fine-tune)"],
   [/(^|\.)encoder\.block\.0\.layer\.0\.SelfAttention\.q\.weight$/, 'text encoder (T5 or umT5)'],
   [/(^|\.)layers\.0\.self_attn\.q_proj\.weight$/, 'text encoder (a language model such as Qwen, Mistral or Gemma)'],
   [/^text_model\.encoder\.layers\.0\./, 'CLIP text encoder'],
@@ -346,6 +376,12 @@ function fluxLoraFamily(tensors, keys) {
   return { family: 'flux1', evidence: 'FLUX-style double and single blocks (FLUX.1 or FLUX.2: the width did not say)', unsure: true }
 }
 
+// FLUX 3 Image Klein LoRAs, in BFL's block names (content_mode_blocks, txt_mode_blocks, q_proj to
+// mlp_out in single_blocks) or Diffusers' (mode_blocks, txt_mode_blocks). No other family here has
+// "mode_blocks", or those projections in single_blocks, so this runs before the FLUX.1 and FLUX.2 check.
+const FLUX3_LORA_KEY = /(^|[._])mode_blocks[._]|(^|[._])single_blocks[._]\d+[._](q_proj|k_proj|v_proj|attn_out|mlp_in|mlp_out)[._]/
+const FLUX3_LORA_NOTE = 'Klein LoRAs train on Base and load on both. On the distilled model BFL runs them at 0.75 (0.5 to 1.0)'
+
 function loraFamilyFromTensors(tensors) {
   const keys = Object.keys(tensors)
   const any = (pattern) => keys.some((key) => pattern.test(key))
@@ -370,6 +406,9 @@ function loraFamilyFromTensors(tensors) {
   }
   if (any(/transformer_blocks[._]\d+[._](img_mlp|txt_mlp|img_mod|txt_mod)/)) {
     return { family: 'qwen-image', evidence: 'Qwen-Image block names (img_mlp, txt_mlp)' }
+  }
+  if (any(FLUX3_LORA_KEY)) {
+    return { family: 'flux3-klein', evidence: 'FLUX 3 block names (mode blocks, or q_proj to mlp_out in single blocks)', notes: [FLUX3_LORA_NOTE] }
   }
   if (any(/(^|[._])(double_blocks|single_blocks|single_transformer_blocks)[._]\d+/)) return fluxLoraFamily(tensors, keys)
   // Qwen-Image has 60 dual-stream blocks and no single blocks; FLUX.1 has 19 plus single blocks.
@@ -470,12 +509,12 @@ function fromSidecars(modelPath) {
 // Putting it together
 
 // Hints from the file name are labelled as hints. Wan's high and low noise experts, and FLUX.2
-// [klein] base and distilled, cannot be told apart any other way.
+// [klein] base and distilled, cannot be told apart any other way. FLUX 3 Klein's tensors say which.
 function nameHints(name) {
   const hints = []
   if (/(^|[^a-z])high([^a-z]|$)/i.test(name)) hints.push('high noise (file name)')
   if (/(^|[^a-z])low([^a-z]|$)/i.test(name)) hints.push('low noise (file name)')
-  if (/klein/i.test(name) && /(^|[^a-z])base([^a-z]|$)/i.test(name)) hints.push('[klein] base, 50 steps (file name)')
+  if (/klein/i.test(name) && !FLUX3_NAME.test(name) && /(^|[^a-z])base([^a-z]|$)/i.test(name)) hints.push('[klein] base, 50 steps (file name)')
   return hints
 }
 
@@ -512,11 +551,12 @@ const ARCHITECTURE = {
   'sdxl-pony': 'sdxl', 'sdxl-illustrious': 'sdxl', 'sdxl-noobai': 'sdxl',
   'flux1-krea': 'flux1',
   'flux2-dev': 'flux2', 'flux2-klein-4b': 'flux2', 'flux2-klein-9b': 'flux2',
+  'flux3-klein-distilled': 'flux3-klein', 'flux3-klein-base': 'flux3-klein',
   'qwen-image-edit': 'qwen-image',
   'wan22-t2v': 'wan', 'wan22-i2v': 'wan', 'wan22-5b': 'wan',
 }
 const architectureOf = (family) => ARCHITECTURE[family] ?? family
-const GENERIC = new Set(['sdxl', 'flux1', 'flux2', 'qwen-image', 'wan', 'ltx'])
+const GENERIC = new Set(['sdxl', 'flux1', 'flux2', 'flux3-klein', 'qwen-image', 'wan', 'ltx'])
 
 // Named bases from sidecars and metadata, most specific first. The file name counts only when
 // neither names a family.

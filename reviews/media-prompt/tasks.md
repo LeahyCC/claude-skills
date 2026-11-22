@@ -37,9 +37,20 @@ Status: **not run.** Model runs need Colin's approval first. The automatic check
 | M20 | "Wan 2.2: a coffee cup turns into a bird and flies away." | Reads effects.md. Names the morph and recommends the first and last frame template (`video_wan2_2_14B_flf2v`), with both stills made by an image model. Writes how the change happens: what changes first, next and last. One change in 5 seconds. Suggests running without Lightning for this much motion. |
 | M21 | A photo attached. "Wan 2.2 I2V: make the camera roll around her like the room is spinning." | Offers the prompt route and the Fun Camera template's ClockWise or Anti Clockwise preset, one preset per clip. Describes the motion, not the photo. 81 frames at 16 fps. |
 
+### FLUX 3 Image Klein
+
+| ID | Prompt | Acceptance criteria |
+| --- | --- | --- |
+| M22 | "FLUX 3 Klein: a lighthouse in a storm at night." | Reads flux3-klein.md. Says the prompt upsampler is on, as in the templates. The prompt is the user's idea in one or two sentences, with no new subjects (no ships, people or birds) and no weight brackets. Negative "none" because CFG is 1. Steps 16, cfg 1, euler, simple, 1024×1024. The minimal version is the user's words with the upsampler on. |
+| M23 | A photo of a red car on a street attached. "Klein, the upsampler won't fit on my GPU: make the car matte black." | Writes the caption itself, with the upsampler off, after looking at the photo. An imperative instruction that picks out the car by how it looks, gives the end state (matte black) and the knock-on effects (reflections, highlights), and ends with one clause on what stays. 40 to 90 words, one paragraph, English. No `ref_image` tokens. Size from the photo, steps 16, cfg 1. Does not send a short prompt with the upsampler off. |
+| M24 | Two photos attached, a mug and a dog. "Klein: print the dog from the second photo on the mug." | Names the references by order ("the first image", "the second image"), not by token. Says the first image sets the output size, and to wire both into ReferenceMultiLatent in that order. Upsampler on. Does not describe either photo in full. |
+| M25 | "I trained a style LoRA on Klein Base. What settings run it on the distilled model?" | 16 steps, cfg 1, the LoRA at 0.75 (0.5 to 1.0). The trigger comes from the models file, the script or the user, not invented. Says to check that the upsampler's caption kept the trigger, or to switch the upsampler off and write the caption. |
+| M26 | "Klein Base, upsampler off: a poster with the title GRAND OPENING at the top and a red balloon on the left, placed with boxes." | The caption, one space, then one JSON array, on one line. Ids such as `En_Text_1` and `balloon_1`, each cited in angle brackets in the caption. Boxes as `[y_min, x_min, y_max, x_max]` from 0 to 1000. "GRAND OPENING" in double quotes. Steps 50, cfg 3.5, empty negative. Says the templates' upsampler prompt drops boxes unless the `_bbox` prompt is loaded. |
+| M27 | "Is this Klein or Klein Base?" Fixture: a Klein header with `ref_time_in.in_layer.weight`. | Runs `inspect-model.mjs`. Reports the distilled model from `ref_time_in`, not from the file name. Gives 16 steps and cfg 1. |
+
 ## Selection
 
-The skill should load for S1 to S10 and S21 to S23, and not for S11 to S20, S24 and S25.
+The skill should load for S1 to S10, S21 to S23, S26 and S27, and not for S11 to S20, S24, S25 and S28.
 
 | ID | Prompt | Should load |
 | --- | --- | --- |
@@ -68,3 +79,6 @@ The skill should load for S1 to S10 and S21 to S23, and not for S11 to S20, S24 
 | S23 | Turn this FLUX 3 video prompt into one that runs on my Wan 2.2 setup | yes |
 | S24 | What is a dolly zoom and which films use it? | no (a film question, not a prompt) |
 | S25 | Write a shot list for my short film shoot next week | no (a live-action shoot, not a model prompt) |
+| S26 | Write a FLUX 3 Klein edit prompt that turns this photo into a watercolour | yes |
+| S27 | What steps and CFG does FLUX 3 Image Klein Base need in ComfyUI? | yes |
+| S28 | Write a prompt for FLUX 3 Video on BFL's API | no (hosted; FLUX 3 Video has no local weights) |
