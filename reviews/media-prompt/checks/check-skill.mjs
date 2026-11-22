@@ -301,6 +301,18 @@ if (rowLines[0] === '| File | Kind | Family | Trigger | Strength | Notes |' && r
   pass('--rows prints the models.md header, a separator and one row per file')
 } else fail(`--rows output:\n${rows.stdout}`)
 
+// A row must say when its family is a guess, as the block view's [hint] does, and must not say
+// so when a sidecar named the base.
+const hintRows = run([join(dir, 'wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors'), join(dir, 'small_lora.safetensors'), join(dir, 'quant-Q8_0.gguf'), '--rows'])
+const rowFor = (name) => hintRows.stdout.split('\n').find((line) => line.startsWith(`| ${name} |`)) ?? ''
+const fileNameRow = rowFor('wan2.2_t2v_high_noise_14B_fp8_scaled.safetensors')
+const tensorGuessRow = rowFor('small_lora.safetensors')
+const sidecarRow = rowFor('quant-Q8_0.gguf')
+if (/family from the file name only/.test(fileNameRow) && /family is a guess from the tensor names/.test(tensorGuessRow)
+  && /\| not read \(only \.safetensors headers are read\) \|/.test(sidecarRow) && !/family from the file|family is a guess/.test(sidecarRow)) {
+  pass('--rows marks a family taken from the file name or guessed from tensors, and not one a sidecar named')
+} else fail(`--rows family notes:\n${hintRows.stdout}`)
+
 const noArgs = run([])
 if (noArgs.status === 2) pass('exit 2 with no arguments')
 else fail(`no arguments: expected exit 2, got ${noArgs.status}`)

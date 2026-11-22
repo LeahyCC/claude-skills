@@ -596,6 +596,7 @@ function finish(report, fromTensors, meta, sidecars) {
     report.conflict = `the tensors look like ${FAMILIES[fromTensors.family]?.label ?? fromTensors.family}, but ${best.source} says "${best.value}"`
   }
   report.unsure = choice.from === 'name' ? Boolean(best.fromFileName) : Boolean(fromTensors?.unsure && !choice.confirmedBy)
+  report.familyFromFileName = choice.from === 'name' && Boolean(best.fromFileName)
   report.label = FAMILIES[report.family]?.label ?? 'unknown'
   report.notes = [...(fromTensors?.notes ?? []), ...report.hints]
   report.baseNames = named
@@ -638,14 +639,30 @@ function printBlock(report) {
 
 const cell = (text) => String(text ?? '').replaceAll('|', '/').replaceAll('\n', ' ')
 
+function rowKind(kind) {
+  if (kind === 'LoRA') return 'LoRA'
+  if (kind.startsWith('checkpoint')) return 'checkpoint'
+  if (kind.startsWith('diffusion')) return 'diffusion model'
+  if (kind.startsWith('not read')) return 'not read (only .safetensors headers are read)'
+  return kind
+}
+
+// The block view marks an unsettled family with [hint]; a row says the same in its notes, so a
+// guess never reads as a fact in the models file.
+function familyNote(report) {
+  if (!report.unsure) return null
+  return report.familyFromFileName
+    ? 'family from the file name only: confirm on the model page'
+    : 'family is a guess from the tensor names: confirm on the model page'
+}
+
 function printRow(report) {
   const stated = report.triggers.map((t) => t.value).join(', ')
   const fromFolders = stated ? '' : report.folders.map((f) => f.value).join(', ')
-  const kind = report.kind === 'LoRA' ? 'LoRA' : report.kind.startsWith('checkpoint') ? 'checkpoint' : report.kind.startsWith('diffusion') ? 'diffusion model' : report.kind
   const folderNote = fromFolders ? 'trigger taken from the training folder name' : null
-  const notes = [report.prediction, ...report.notes, folderNote, report.conflict].filter(Boolean).join('; ')
+  const notes = [familyNote(report), report.prediction, ...report.notes, folderNote, report.conflict].filter(Boolean).join('; ')
   const triggers = stated || fromFolders
-  console.log(`| ${cell(report.file)} | ${cell(kind)} | ${cell(report.label)} | ${cell(triggers)} | ${cell(report.strength?.value)} | ${cell(notes)} |`)
+  console.log(`| ${cell(report.file)} | ${cell(rowKind(report.kind))} | ${cell(report.label)} | ${cell(triggers)} | ${cell(report.strength?.value)} | ${cell(notes)} |`)
 }
 
 function collect(target, files) {

@@ -45,7 +45,7 @@ ComfyUI paths below are in [comfyanonymous/ComfyUI](https://github.com/comfyanon
 
 ## Not claimed
 
-- `inspect-model.mjs` was tested on header-only files built from the keys ComfyUI checks and the formats the trainers write ([check-skill.mjs](../../reviews/media-prompt/checks/check-skill.mjs)), not on real model files. A LoRA family read from tensor names is a hint, and the script says so.
+- `inspect-model.mjs` is tested on header-only files built from the keys ComfyUI checks and the formats the trainers write ([check-skill.mjs](../../reviews/media-prompt/checks/check-skill.mjs)). On 2026-11-22 it also ran once on a real models folder of 26 checkpoints, diffusion models and LoRAs (SDXL, FLUX.1, FLUX.2 [klein], Qwen-Image, Qwen-Image-Edit-2511, Qwen-Image-2.1, Wan 2.2, an LTX-2.5 GGUF and HunyuanVideo). It named a family for every file, from the tensors where ComfyUI's keys allow and from the file name otherwise. That run showed `--rows` did not mark families guessed from a file name; rows now say so, as the block view's [hint] does. A LoRA family read from tensor names is a hint, and the script says so.
 - No prompt here was rendered to compare results. The rules come from the vendors' guides and rewriters, not from A/B tests.
 - Most pages and source files were read through a fetch tool that summarises, so quotes are kept short. The disabled weights, the "Picture" labels and the RIFE frame count were each confirmed by two separate reads. Re-read the source before quoting a longer passage.
 - That ComfyUI core does not parse `<lora:...>` tags rests on its CLIP Text Encode docs and `sd1_clip.py`, not on a search of the whole codebase.

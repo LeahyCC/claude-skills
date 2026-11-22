@@ -51,7 +51,7 @@ Not covered: Pony V7 (AuraFlow), Chroma, Z-Image, HiDream, HunyuanVideo, SD 1.5,
 
 1. **Find the model.** Stop at the first source that answers:
    - the user's models file, `~/.claude/media-prompt/models.md` ([format below](#your-models-file))
-   - the file itself: `node scripts/inspect-model.mjs <path>`. It reads the header, never the weights, and says where each answer came from. A line marked "hint" is a guess from the file name.
+   - the file itself: `node scripts/inspect-model.mjs <path>`. It reads the header, never the weights, and says where each answer came from. A family marked "hint", or a row whose notes say "family from the file name only" or "a guess from the tensor names", is not settled: check the model page or ask.
    - the checkpoint's model page (Civitai's "Base Model" field)
    - ask, once, with the likely families as options
 
