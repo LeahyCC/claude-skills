@@ -8,6 +8,7 @@ Wan 2.2 T2V-A14B (text to video), I2V-A14B (image to video) and TI2V-5B (both, i
 - [Text to video](#text-to-video)
 - [The official vocabulary](#the-official-vocabulary)
 - [Image to video](#image-to-video)
+- [Camera control and first and last frame](#camera-control-and-first-and-last-frame)
 - [Negative prompt](#negative-prompt)
 - [Settings](#settings)
 - [FAIL and PASS](#fail-and-pass)
@@ -46,7 +47,7 @@ Write it as one paragraph: who or what, where, what moves and how, then camera a
 
 ## The official vocabulary
 
-From the guide's "Cinematic aesthetic control" section, which says its examples were made with Wan 2.2. The terms are its table labels and examples, not a closed list.
+From the guide's aesthetic, dynamic and stylization tables. The page now covers Wan 2.5 to 3.0 as well, but its cinematic, camera-movement and style examples were made with Wan 2.2. The terms are its table labels and examples, not a closed list.
 
 | Category | Terms |
 | --- | --- |
@@ -55,13 +56,19 @@ From the guide's "Cinematic aesthetic control" section, which says its examples 
 | Time of day | daytime, night, dawn, sunrise, sunset |
 | Shot size | close-up, close shot, medium close-up, medium shot, medium full shot, wide-angle, extreme full shot |
 | Composition | center composition, left-heavy composition, balanced composition, symmetrical composition |
-| Lens | long-focus lens, wide-angle lens, ultra-wide-angle fisheye, tilt-shift lens |
+| Lens focal length | long-focus, ultra-wide-angle fisheye |
 | Camera angle | eye-level, low angle, high-angle, top-down angle, over-the-shoulder angle, aerial shot |
 | Shot type | clean single shot, two-shot, group shot, establishing shot |
 | Tone | warm tones, cool tones, low saturation |
-| Camera movement | camera pushes in, camera pulls out, camera moves left, orbiting camera movement, compound camera movement, fixed camera |
+| Camera movement | camera pulls out, camera moves left (basic); compound camera movement, orbiting camera movement (advanced). The image-to-video formula adds camera pushes in and fixed camera |
 | Visual style | felt style, 3D cartoon, pixel style, puppet animation, claymation style, black and white animation |
 | Special effects | tilt-shift photography, time-lapse photography |
+
+- **Moves in the Wan 2.2 examples:** slowly pushes in, moves back with her, slowly pans to the right, pans down, low-angle camera rises, follow-cam perspective with a wide-angle lens, fixed angle with no camera movement. Wan's own texts use "pans" and "tilts" interchangeably for up and down.
+- **What each move does,** from the English page's advanced formula: a push-in brings intimacy or tension, a pull-out reveals scale, a tracking shot rides alongside the subject, an orbit makes the subject important, a fixed camera gives stillness.
+- **Keep an orbit under 45°.** The English page says wider orbits distort the space.
+- **Speed comes from adverbs.** The guide has no slow-motion term; it uses "slowly" and "quickly".
+- **Wan's own prompt extender** (`wan/utils/system_prompt.py`) uses more terms, among them Dutch angle shot, overhead shot, underlighting, edge lighting, top lighting, moonlight, practical and fluorescent lighting, and extreme close-up shot to extreme wide shot. It leaves out the camera angle when the prompt already describes a camera move.
 
 ## Image to video
 
@@ -75,6 +82,19 @@ Motion + Camera movement
 - Add one camera move ("camera pushes in", "camera moves left"), or "fixed camera" to keep it still.
 - Do not describe the picture again. Wan 2.2's own README examples do describe the scene; this skill follows the guide.
 - An empty prompt is allowed. The README runs one with prompt extension on.
+
+## Camera control and first and last frame
+
+Two ComfyUI templates go beyond the prompt. Both use the A14B two-expert setup.
+
+| Template | What it does | Models and nodes | Template settings |
+| --- | --- | --- | --- |
+| `video_wan2_2_14B_flf2v` | A start image and an end image; Wan makes the motion between them. Both of its example prompts are transformations | The I2V-A14B high-noise and low-noise pair, through WanFirstLastFrameToVideo | 640×640, 81 frames at 16 fps, steps 20 (high-noise 0 to 10), cfg 4, euler, simple, shift 8. Lightning group: 4 steps, cfg 1, shift 5 |
+| `video_wan2_2_14B_fun_camera` | Image to video along a preset camera path | `wan2.2_fun_camera_high_noise_14B` and `wan2.2_fun_camera_low_noise_14B`, through WanCameraEmbedding into WanCameraImageToVideo | 720×720, 81 frames at 16 fps, steps 20 (high-noise 0 to 10), cfg 3.5, euler, simple, shift 8. The Lightning group is bypassed: 4 steps, cfg 1 |
+
+- **First and last frame:** Alibaba's doc for its hosted Wan 2.2 first-and-last-frame model says that when the two frames differ a lot, the prompt should describe how the change happens: the camera move or the subject's motion.
+- **WanCameraEmbedding presets:** Static, Pan Up, Pan Down, Pan Left, Pan Right, Zoom In, Zoom Out, Anti Clockwise (ACW) and ClockWise (CW), one per clip, with a speed (default 1.0). In the node's code the pans slide the camera rather than turn it, the zooms move it forward or back (a dolly, not a lens zoom), and the clockwise presets roll the frame. The node also sets the clip's width, height and length.
+- **Lightning costs motion.** ComfyUI's template notes say the Lightning LoRAs reduce how much moves. For big motion, such as a morph or a time-lapse, try without them first.
 
 ## Negative prompt
 

@@ -1,6 +1,6 @@
 # media-prompt
 
-Turns a plain-words idea into a prompt and ComfyUI settings for local image and video models. Each model gets the form it was trained on: tags for Pony, NoobAI and Illustrious, sentences for FLUX, Krea 2 and Qwen-Image, one instruction for Qwen-Image-Edit, a motion paragraph for Wan 2.2, and a paragraph in time order, with sound, for LTX-2.5. A bundled script reads a model file to tell what it is built on and what its trigger words are.
+Turns a plain-words idea into a prompt and ComfyUI settings for local image and video models. Each model gets the form it was trained on: tags for Pony, NoobAI and Illustrious, sentences for FLUX, Krea 2 and Qwen-Image, one instruction for Qwen-Image-Edit, a motion paragraph for Wan 2.2, and a paragraph in time order, with sound, for LTX-2.5. Ask for a look and it directs the shot like a cinematographer: camera move, lens, light, colour and sound, plus trippy effects such as a dolly zoom, a morph or an impossible reveal. A bundled script reads a model file to tell what it is built on and what its trigger words are.
 
 ## Install
 
@@ -22,11 +22,14 @@ Describe the picture or the clip. The skill finds the model (from your models fi
 - the negative prompt, or "none" and why (at CFG 1, ComfyUI never runs it)
 - settings: size, frames and fps, steps, CFG, sampler, shift or guidance
 - LoRAs, with trigger words and strengths
+- when it directs a look, the film terms it used and what each does on screen, so you learn the words
 - a minimal version: your words in the model's form with nothing added, as the control
+
+Say "make it cinematic", "like a film photo" or "make it trippy", or paste a prompt written for FLUX 3, and it chooses one framing, one camera move, one lens, one light and at most one impossible effect, written as what happens on screen and cut to what the model can make in its clip length. Give it only a mood and it offers three ideas to pick from.
 
 Your own checkpoints and LoRAs go in `~/.claude/media-prompt/models.md`, outside any repository. `node scripts/inspect-model.mjs <models folder> --rows` writes its rows for you.
 
-Version 0.1.0. 9 resource files and 1 script.
+Version 0.1.0. 11 resource files and 1 script.
 
 ## Coverage
 
@@ -37,10 +40,12 @@ Version 0.1.0. 9 resource files and 1 script.
 | [qwen-image.md](./resources/qwen-image.md) | Qwen-Image, 2512 and 2.1: Qwen's rewriter rules, quoted text, the quality suffix, negatives, Lightning, sizes, transparent output |
 | [qwen-image-edit.md](./resources/qwen-image-edit.md) | Edit, 2509, 2511 and 2.1 edits: one instruction, the fixed restore, inpaint and outpaint wording, "picture 1" versus `<image1>` |
 | [sdxl-tags.md](./resources/sdxl-tags.md) | Pony V6 score, source and rating tags, NoobAI tag order and special tags, Illustrious versions, weights, escapes, CLIP skip, v-prediction |
-| [wan.md](./resources/wan.md) | Wan 2.2 A14B and TI2V-5B: the official formula and vocabulary, image to video, the default negative, Lightning, NAG, template and repo settings |
-| [ltx.md](./resources/ltx.md) | LTX-2.5 and LTX-2: the paragraph, sound and dialogue, multi-shot, 8n+1 frames, the enhancer, two-stage settings |
+| [wan.md](./resources/wan.md) | Wan 2.2 A14B and TI2V-5B: the official formula and vocabulary, what each camera move does, image to video, first and last frame, Fun Camera presets, the default negative, Lightning, NAG, template and repo settings |
+| [ltx.md](./resources/ltx.md) | LTX-2.5 and LTX-2: the paragraph, the full camera and effect vocabulary, sound and dialogue, multi-shot, first and last frame, camera LoRAs and the slow-motion LoRA, 8n+1 frames, the enhancer, two-stage settings |
 | [loras.md](./resources/loras.md) | Where trigger words come from and how far to trust each source, ComfyUI loaders, Wan high and low pairs, strength and stacking |
 | [finishing.md](./resources/finishing.md) | RIFE frame counts and the save fps, upscale models, a second pass |
+| [camera.md](./resources/camera.md) | Directing any model: how a directed prompt is built, shot size, angle, composition, camera moves, focus, lenses, time, light, colour, still photography, the Danbooru tags with enough posts to work, and turning a FLUX 3 prompt into a local one |
+| [effects.md](./resources/effects.md) | Trippy and impossible effects: what makes them work, three treatments from a mood, camera tricks, time, transformations, world swaps, optics and layers, and which route each needs |
 
 | Script | What it does |
 | --- | --- |
@@ -57,6 +62,8 @@ Version 0.1.0. 9 resource files and 1 script.
 | Guesses the model from the file name | Reads the file: the keys ComfyUI checks, the metadata, the sidecars |
 | Guesses trigger words | Reads them from the metadata and sidecars, says where each came from, or asks |
 | Says "use CLIP skip 2" | ComfyUI's SDXL default already is CLIP skip 2. The CLIP Set Last Layer node's default of -1 undoes it |
+| Piles on "cinematic, dramatic lighting, drone shot, dolly zoom" | One move, one lens, one light, each named and then described as what the camera does, in the model's own words where its guide has them |
+| Writes "psychedelic" on a tag model | Uses only Danbooru tags with enough posts to have been learned, and sends looks with no such tag to a sentence model |
 
 Checked sources are in [SOURCES.md](./SOURCES.md).
 

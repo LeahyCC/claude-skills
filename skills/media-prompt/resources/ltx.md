@@ -8,6 +8,7 @@ Lightricks' LTX-2.5 (August 2026, 22B, open weights) and LTX-2 (19B). Both make 
 - [Sound and dialogue](#sound-and-dialogue)
 - [Several shots](#several-shots)
 - [Image to video](#image-to-video)
+- [Camera control and speed](#camera-control-and-speed)
 - [Negative prompt](#negative-prompt)
 - [Frames, size, fps](#frames-size-fps)
 - [Settings](#settings)
@@ -20,7 +21,9 @@ From Lightricks' prompting guide:
 - **One flowing paragraph, present tense, about 4 to 8 sentences.** Lead with the shot or the main action.
 - **Then the parts in this order:** the scene, the action, the characters, the camera, the sound.
 - **Emotion through the body.** The guide: express emotion "through physical cues, not abstract labels". "Her jaw tightens and she looks away", not "she is angry".
-- **Camera movement relative to the subject,** and what is seen after the move: "the camera circles around him until the city skyline is behind him". The guide's words: follows, tracks, pans across, circles around, pushes in, pulls back, handheld, over-the-shoulder, static frame.
+- **Camera movement relative to the subject,** and what is seen after the move: "the camera circles around him until the city skyline is behind him". The guide's words: follows, tracks, pans across, circles around, tilts upward, pushes in, pulls back, overhead view, handheld movement, over-the-shoulder, wide establishing shot, static frame.
+- **One move per shot,** and say where the subject ends up. Lightricks' camera blog: a move the clip is too short for gets cut off, not slowed down.
+- **The guide's other terms,** one list for LTX-2 and 2.5: pacing (slow motion, time-lapse, lingering shot, continuous shot, freeze-frame, fade-in, fade-out, seamless transition, sudden stop), film characteristics (film grain, lens flares, pixelated edges, jittery stop-motion), visual effects (particle systems, motion blur, depth of field), and styles from claymation and hand-drawn to film noir, surreal and experimental film.
 - **One light source,** kept consistent.
 - **Avoid:** numbered shot lists, abstract emotion words, mixed light sources, crowded frames, on-screen text, complex physics, and prompts written for other video models pasted in unchanged.
 - **No `(word:1.2)` weights.** ComfyUI turns weighting off for LTX-2's Gemma encoders, so the brackets reach the model as text.
@@ -32,19 +35,40 @@ From Lightricks' prompting guide:
 - **Spoken words go in double quotes.** Say who speaks and how: voice, tone, and the language or accent if it matters.
 - Keep dialogue that must stay lip-synced inside one shot.
 
+Black Forest Labs' audio guide for FLUX 3 Video, a hosted model that also makes sound, covers what Lightricks' guide leaves out. Treat it as a starting point on LTX, not as documented LTX behaviour:
+
+- **Four layers; use only the ones the scene needs.** Speech, ambience (the place), effects tied to something visible ("the mug clicks against the saucer"), and music, with its style and where it sits in the mix.
+- **Name the source, not the mood.** "Rain ticking on a metal awning, distant traffic" gives the model more than "moody ambience".
+- **Ask for a sound, not for silence.** BFL warns that quiet room tone can come out as static or dead air. Name something soft and concrete, such as rain on the window or a low piano.
+- **Off-screen speech is a "voiceover".** On FLUX 3, a quoted line with no visible speaker and no voiceover cue can turn into on-screen text.
+- **Direct a voice with anchors:** age and accent when they matter, register (low, bright, rough), how it is recorded (close and dry, a phone speaker, across the room), and the delivery (hesitant, lightly amused). "Professional" and "engaging" give a stock announcer read.
+- **Keep other voices out from under a line.** Crowd chatter or a radio fights the speech. Weather, machines and footsteps don't.
+- **Leave room for the line.** A short line in a longer clip is safer than words written to fill every second. If the last word is cut off, shorten the line.
+
 ## Several shots
 
 LTX-2.5 makes multi-shot clips natively:
 
 - **2 to 4 shots, in one paragraph, in time order.**
-- **Name each cut in words:** "Cut to a close-up of her hands on the steering wheel."
+- **Name each cut in words:** "Cut to a close-up of her hands on the steering wheel." Lightricks names hard cuts, match cuts and dissolves.
 - **Name the people again after each cut.** Don't rely on "she".
 - **Say whether the sound carries across the cut.**
+- **Write pauses in** ("she pauses", "a beat of silence"). Lightricks says LTX-2.5's duration predictor does not add them on its own.
+- Image to video stays one take.
 - Longer scenes can use screenplay form: scene headers, character names and quoted lines.
 
 ## Image to video
 
 Describe the motion, the camera and the sound. The picture already shows the scene, so do not describe it again.
+
+**Two images.** Lightricks' docs give the first and last frame template (`video_ltx2_5_flf2v`) three uses: transitions, morphing between subjects or scenes, and camera moves with a fixed destination. The template guides the first and the last frame with the two images at strength 0.7, and its example prompt names the start image as the first frame and the end image as the last.
+
+## Camera control and speed
+
+- **Camera LoRAs are for LTX-2 only.** Lightricks' seven camera LoRAs (dolly in, dolly out, dolly left, dolly right, jib up, jib down, static; `Lightricks/LTX-2-19b-LoRA-Camera-Control-<Move>`) were trained on the 19B LTX-2. They load with LoraLoaderModelOnly at 1.0 and have no trigger word; their cards say to describe where the move ends. Lightricks publishes none for LTX-2.3 or LTX-2.5, and the LTX-2 README says a LoRA works only with the model it was trained for.
+- **An exact camera path on LTX-2.5:** the Layout-To-Render IC-LoRA (`Lightricks/LTX-2.5-22b-IC-LoRA-Layout-To-Render`, strength 1.0) follows the camera path and framing of a rough layout video. Don't also describe the move in the prompt.
+- **Slow motion on LTX-2.5 image to video:** the Slow-Motion-Control LoRA (`Lightricks/LTX-2.5-22b-LoRA-Slow-Motion-Control`, strength 1.0) with Lightricks' `LTX-2.5_I2V_Speed_Control_flow.json`, whose speed setting runs from 1.0 down to 0.025 while playback stays at 24 fps. Leave "slow motion" and other speed words out of the prompt.
+- **Dolly zoom and crane-and-tilt** are "stress cases" in Lightricks' camera blog, not moves it expects to work every time.
 
 ## Negative prompt
 

@@ -269,6 +269,51 @@ for (const { file, frameStep, sizeStep } of RULES) {
   else pass(`${file}: ${frames.length} frame counts are ${frameStep}n+1, ${sizes.length} sizes are multiples of ${sizeStep}`)
 }
 
+// camera.md and effects.md mix families. A "### " section whose title names LTX follows LTX's
+// rule; every other section follows Wan's (4n+1 frames, multiples of 16), which every image
+// family's sizes also meet.
+for (const file of ['resources/camera.md', 'resources/effects.md']) {
+  let checked = 0
+  const bad = []
+  for (const section of read(file).split(/^### /m)) {
+    const [frameStep, sizeStep] = /LTX/.test(section.split('\n')[0]) ? [8, 32] : [4, 16]
+    for (const [, n] of section.matchAll(/(\d+) frames/g)) {
+      checked++
+      if ((Number(n) - 1) % frameStep !== 0) bad.push(`${n} frames (${frameStep}n+1)`)
+    }
+    for (const [, w, h] of section.matchAll(/(\d{3,4})×(\d{3,4})/g)) {
+      checked++
+      if (w % sizeStep !== 0 || h % sizeStep !== 0) bad.push(`${w}×${h} (multiples of ${sizeStep})`)
+    }
+  }
+  if (file === 'resources/effects.md' && checked === 0) fail(`${file}: found no frame counts or sizes to check`)
+  else if (bad.length) fail(`${file}: ${bad.join(', ')}`)
+  else pass(`${file}: ${checked} frame counts and sizes follow their family's rule`)
+}
+
+// Every tag in camera.md's tag section is a Danbooru tag with at least 3,100 posts in the
+// tag list of DominikDoom/a1111-sd-webui-tagcomplete (tags/danbooru.csv), read for this skill.
+// Words that failed that check are written there without backticks.
+const TAG_POSTS = {
+  'upper body': 772446, 'full body': 805933, 'cowboy shot': 556396, portrait: 82065, 'close-up': 46497,
+  'wide shot': 15927, 'from above': 98806, 'from below': 82958, 'from side': 222299, 'from behind': 232537,
+  'dutch angle': 119425, pov: 122685, 'straight-on': 29201, profile: 129076, 'upside-down': 26072,
+  'depth of field': 103629, 'blurry background': 129836, 'blurry foreground': 29948, bokeh: 8130,
+  fisheye: 5176, foreshortening: 53286, perspective: 7934, 'chromatic aberration': 24284, 'lens flare': 38902,
+  'film grain': 14589, 'motion blur': 25048, backlighting: 33963, 'light rays': 25951, sunbeam: 10937,
+  'dappled sunlight': 10660, spotlight: 5349, silhouette: 17459, glowing: 102222, 'light particles': 53660,
+  bloom: 3970, 'high contrast': 3195, monochrome: 631227, greyscale: 501387, sepia: 7847,
+  'limited palette': 17163, 'muted color': 6406, surreal: 4849, abstract: 3819, glitch: 4389, melting: 3573,
+  reflection: 37467, mirror: 27681, 'floating object': 9101, rainbow: 9800, afterimage: 12050,
+  'speed lines': 9894, 'motion lines': 70796, 'light trail': 3797, underwater: 22946, scenery: 52470,
+}
+const tagSection = /^## Tag models\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(read('resources/camera.md'))?.[1] ?? ''
+const tagsUsed = [...tagSection.matchAll(/`([^`]+)`/g)].map((m) => m[1])
+const unknownTags = tagsUsed.filter((tag) => !(tag in TAG_POSTS))
+if (tagsUsed.length === 0) fail('camera.md: no tags found under "## Tag models"')
+else if (unknownTags.length) fail(`camera.md: tags not in the checked list: ${unknownTags.join(', ')}`)
+else pass(`camera.md: ${tagsUsed.length} tags are all in the checked Danbooru list`)
+
 // ---------------------------------------------------------------------------------------------
 // 4. Links, contents lists, frontmatter, counts
 
