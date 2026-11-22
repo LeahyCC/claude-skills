@@ -77,6 +77,7 @@ Each skill has its own page: install, what it covers, and the source it was chec
 | [plain-docs](./skills/plain-docs/) | Docs cut to what the reader needs: a fixed 5 layer page shape, a cut ladder for sections, and the AI sound tells to fix |
 | [ascii-art](./skills/ascii-art/) | Text drawings for work and fun: diagrams, tables, charts, banners, pictures, kaomoji, boards and mazes. Scripts do the counting, a checker catches drift |
 | [tailwind-design-system](./skills/tailwind-design-system/) | Build and run a design system on Tailwind v4 at scale: token tiers, themes, measured contrast, component APIs, monorepo packaging, lint and CI enforcement, versioning and deprecation |
+| [media-prompt](./skills/media-prompt/) | Prompts and ComfyUI settings for local image and video models: FLUX, Krea 2, Qwen-Image, Pony, NoobAI, Illustrious, Wan 2.2, LTX-2.5. A script reads a model file to tell what it is built on and what its trigger words are |
 
 ## Commands
 
