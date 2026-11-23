@@ -1,9 +1,13 @@
 // Checks the media-plan skill against itself:
 //   1. the worked example in SKILL.md fits the models: its shot lengths add up to the stated length,
-//      no Wan 2.2 shot runs past 5 seconds, every LTX-2.5 shot runs 5 to 10, and there is one
+//      no Wan 2.2 shot runs past 5 seconds, no LTX-2.5 shot runs past 10, and there is one
 //      /media-prompt hand-off line for each shot
-//   2. no em dashes in the skill or its tasks
-//   3. relative links and anchors resolve (in this file and across files), files over 100 lines
+//   2. the hand-off lines follow the look bible: the master line holds every character's full
+//      words and the Place, Light and Medium lines word for word; fresh stills carry the full
+//      words of each character they name; edits and video use only the short names, spelled the
+//      same every time; and every line that states the light uses the Light words unchanged
+//   3. no em dashes in the skill or its tasks
+//   4. relative links and anchors resolve (in this file and across files), files over 100 lines
 //      have a contents list, the frontmatter is valid, and the counts in README.md and
 //      marketplace.json match the files
 //
@@ -30,10 +34,9 @@ const docs = ['SKILL.md', 'README.md', 'SOURCES.md', ...readdirSync(join(skill, 
 // ---------------------------------------------------------------------------------------------
 // 1. The worked example fits what the models can make
 
-// Wan 2.2 A14B makes 81 frames at 16 fps, about 5 s. LTX-2.5 makes 5 to 10 s per clip.
+// Wan 2.2 A14B makes 81 frames at 16 fps, about 5 s. LTX-2.5 makes up to about 10 s per clip (its templates default to 97 frames, 4 s).
 // These limits come from media-prompt's wan.md and ltx.md.
 const WAN_MAX_SECONDS = 5
-const LTX_MIN_SECONDS = 5
 const LTX_MAX_SECONDS = 10
 
 const skillText = read('SKILL.md')
@@ -57,7 +60,7 @@ else {
     const route = cells[routeColumn]
     total += seconds
     if (/Wan/.test(route) && !/LTX/.test(route) && seconds > WAN_MAX_SECONDS) fail(`worked example: shot ${cells[1]} is ${seconds} s on Wan 2.2, which makes about ${WAN_MAX_SECONDS}`)
-    if (/LTX/.test(route) && (seconds < LTX_MIN_SECONDS || seconds > LTX_MAX_SECONDS)) fail(`worked example: shot ${cells[1]} is ${seconds} s on LTX-2.5, which makes ${LTX_MIN_SECONDS} to ${LTX_MAX_SECONDS}`)
+    if (/LTX/.test(route) && seconds > LTX_MAX_SECONDS) fail(`worked example: shot ${cells[1]} is ${seconds} s on LTX-2.5, which makes up to about ${LTX_MAX_SECONDS}`)
   }
   if (total !== statedLength) fail(`worked example: shots add up to ${total} s, the plan says ${statedLength} s`)
   else pass(`worked example: ${tableRows.length} shots add up to ${total} s, each within its model's length`)
@@ -72,16 +75,61 @@ else {
 }
 
 // ---------------------------------------------------------------------------------------------
-// 2. No em dashes
+// 2. The hand-off lines follow the look bible
+//
+// media-prompt's edit and image-to-video rules say to write only the change, never the picture
+// again. So the full words go in fresh stills, and edits and video use one fixed short name.
 
-const EM_DASH = '—'
+const section = (title) => example.split(new RegExp(`^### ${title}$`, 'm'))[1]?.split(/^### /m)[0] ?? ''
+const bibleRows = section('Look bible')
+  .split('\n')
+  .filter((line) => line.startsWith('| ') && !line.startsWith('| Line ') && !line.startsWith('| ---'))
+  .map((line) => line.split('|').slice(1, -1).map((cell) => cell.trim()))
+const characters = bibleRows.filter(([, shortName]) => shortName).map(([, shortName, full]) => ({ shortName, full }))
+const bibleLine = (label) => bibleRows.find(([name]) => name === label)?.[2]
+const [place, light, medium] = ['Place', 'Light', 'Medium'].map(bibleLine)
+const lines = section('Hand-off').split('\n').filter((line) => line.startsWith('/media-prompt '))
+// The master is the one line that names no shot; a fresh still is any text-to-image line.
+const masterLine = lines.find((line) => !/\bshot \d+\b/i.test(line))
+const isFresh = (line) => /text to image/.test(line)
+const lineName = (line) => (line === masterLine ? 'the master line' : /\bshot \d+( layer \w)?/i.exec(line)?.[0] ?? line.slice(0, 40))
+
+if (characters.length === 0 || !place || !light || !medium) fail('look bible: needs character rows with a short name, and Place, Light and Medium rows')
+else if (!masterLine) fail('hand-off: no master line (a line that names no shot)')
+else {
+  const before = failures
+  for (const [label, words] of [...characters.map((c) => [c.shortName, c.full]), ['Place', place], ['Light', light], ['Medium', medium]]) {
+    if (!masterLine.includes(words)) fail(`look bible: the master line does not hold the ${label} words word for word: "${words}"`)
+  }
+  // Each character's head noun ("giant") left over once the short names and full words are taken
+  // out means a character named some other way: "the iron giant", "the Rust Giant".
+  const headNouns = [...new Set(characters.map((c) => c.shortName.split(' ').at(-1)))]
+  for (const line of lines) {
+    const name = lineName(line)
+    for (const { shortName, full } of characters) {
+      if (isFresh(line) && line.includes(shortName) && !line.includes(full)) fail(`look bible: ${name} is a fresh still but leaves out the full words for ${shortName}`)
+      if (!isFresh(line) && line.includes(full)) fail(`look bible: ${name} is an edit or video but repeats the full words for ${shortName}`)
+    }
+    if (isFresh(line) && !(line.includes(light) && line.includes(medium))) fail(`look bible: ${name} is a fresh still without the Light and Medium words`)
+    if (/\b(sun|light)\b/i.test(line) && !line.includes(light)) fail(`look bible: ${name} states the light without the Light words: "${light}"`)
+    let rest = line
+    for (const { shortName, full } of characters) rest = rest.split(full).join('').split(shortName).join('')
+    for (const noun of headNouns) if (new RegExp(`\\b${noun}\\b`, 'i').test(rest)) fail(`look bible: ${name} names a ${noun} without a short name from the look bible`)
+  }
+  if (failures === before) pass(`look bible: the master holds ${characters.length} characters, Place, Light and Medium word for word; ${lines.length} lines use the short names and Light words as written`)
+}
+
+// ---------------------------------------------------------------------------------------------
+// 3. No em dashes
+
+const EM_DASH = '\u2014'
 const tasks = join(root, 'reviews/media-plan/tasks.md')
 const dashFiles = [...docs.map((doc) => join(skill, doc)), tasks].filter((path) => existsSync(path) && readAt(path).includes(EM_DASH))
 if (dashFiles.length) fail(`em dashes in ${dashFiles.map((p) => relative(root, p)).join(', ')}`)
 else pass(`no em dashes in ${docs.length + 1} files`)
 
 // ---------------------------------------------------------------------------------------------
-// 3. Links, contents lists, frontmatter, counts
+// 4. Links, contents lists, frontmatter, counts
 
 const slug = (heading) => heading.trim().toLowerCase().replace(/[^\p{L}\p{N} -]/gu, '').replace(/ /g, '-')
 const anchorsOf = (path) => new Set([...readAt(path).matchAll(/^#{1,6} (.+)$/gm)].map((m) => slug(m[1])))

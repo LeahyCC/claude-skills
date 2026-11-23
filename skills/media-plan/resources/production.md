@@ -23,7 +23,7 @@ Which model makes each shot, the order to make everything in, which shots are ri
 | Qwen-Image-Edit 2511 | One change to a still, or a new camera angle of it | | Every still after the master: new framing, a closed prop, a pose |
 | Wan 2.2 I2V-A14B | About 5 s at 16 fps: **one camera move, one change** | None | Most shots. The best motion on the rig. Lightning is fast but calmer |
 | Wan 2.2 first and last frame | About 5 s between two stills | None | A morph, or landing on an exact end view |
-| LTX-2.5 | 5 to 10 s at 24 fps: **two to four beats**, in time order | Its own voice, effects and ambience | Shots where the model's own sound helps, a longer payoff, speech when the voice can be the model's |
+| LTX-2.5 | Up to about 10 s at 24 fps: **two to four beats**, in time order | Its own voice, effects and ambience | Shots where the model's own sound helps, a longer payoff, speech when the voice can be the model's |
 | Wan 2.2 S2V, InfiniteTalk | A face speaking or singing to a voice file | Yours | Lip sync to an ElevenLabs file. **Not installed yet** ([Gaps](#gaps)) |
 
 - **LTX-2.5 cannot lip sync to a supplied voice file.** Its ComfyUI templates all generate their own audio. Plan an ElevenLabs line as voiceover, or as a speaker whose mouth is not seen, unless the lip-sync gap is closed.
@@ -66,7 +66,7 @@ Creators and vendors who publish their method agree on the shape: script, then r
 1. **Voice draft.** Generate the voiceover and dialogue lines first, as a rough take. Each line's real length sets its shot's length; a lip-sync model needs the audio as input anyway. Cheap to redo.
 2. **Master still.** One still with every character and the place, in the look bible's words. It decides the look of everything after it: video inherits the still's look, so fix the look here.
 3. **Fix the master** one change per pass: close or simplify small hinged props (an open pocket watch's lid turned into a second face in motion, and the still models drew it open even when told closed), remove extra limbs, set the light.
-4. **Shot stills.** Each shot's start frame is an edit of the master. Name each character in the same words every time: BFL's and Lightricks' video guides both say to repeat one fixed description unchanged. For many angles of one character, first edit the master into a character sheet (front, side, back, close-up, as Curious Refuge teaches); Runway says one good reference is enough for most projects and a turnaround helps with varied angles. Contact between two characters: build in layers. A small soft face: a detail pass.
+4. **Shot stills.** Each shot's start frame is an edit of the master, written as the change only, with each character's short name. media-prompt's edit rule is to describe only the change, and its image-to-video rule is not to describe the picture again; the master already holds the full description. BFL's and Lightricks' video guides both say to keep one fixed description, so the full words live in the look bible and go, unchanged, into every fresh still (the master, a layer, a still wider than the master). For many angles of one character, first edit the master into a character sheet (front, side, back, close-up, as Curious Refuge teaches); Runway says one good reference is enough for most projects and a turnaround helps with varied angles. Contact between two characters: build in layers. A small soft face: a detail pass.
 5. **Video, one clip per shot,** from its start frame. Make the risky shots first: if one fails, the plan changes before the easy ones are spent.
 6. **Final voice and lip sync.** Regenerate any line whose timing changed. Lip sync only shots that show a speaking mouth.
 7. **Sound** in layers under the voice ([sound.md](./sound.md)).
@@ -78,7 +78,8 @@ Edits zoom in well and zoom out badly. A big zoom-out from a close-up loses the 
 
 - **Make the master the widest framing the piece needs,** with every character in it.
 - **Make closer shots by cropping in or re-angling the master.**
-- **A shot wider than the master** is its own still, with the character brought in from the master as a second picture.
+- **A shot wider than the master** is its own fresh still in the look bible's full words, with the character brought in from the master as a second picture.
+- **A pull back** starts on a crop of the master and ends at its framing or closer.
 
 ## Risky shots and takes
 
@@ -112,12 +113,19 @@ The LTX voice row is inferred, not documented: nothing in Lightricks' docs ties 
 One line per pass, ready to paste. Each names the model, the job, what feeds it, and the idea in plain words:
 
 ```text
-/media-prompt <model>, <job>, from <input>: <the idea, with the look bible's words for each character and the light>
+/media-prompt <model>, <job>, from <input>: <the idea>
 ```
 
 - **Job:** text to image, edit, image to video, first and last frame, refine, finishing.
-- **From:** "the master", "still 3", "stills 2 and 3", or nothing for the master itself.
-- **The idea** carries the shot's framing, move, lens, light, change and sound from the shot list, and the character's exact words from the look bible. media-prompt keeps the user's words, so the look bible's words reach the model unchanged.
+- **From:** "the master", "still 3", "layer A, layer B and the master", or nothing for a fresh still.
+- **The idea** carries the shot's framing, move, lens, light, change and sound from the shot list. media-prompt keeps the user's words, so the look bible's words reach the model as written.
+
+| Line | Characters | Light |
+| --- | --- | --- |
+| Fresh still: the master, a layer, a still wider than the master | The short name, then the full words: "the rust giant, a giant of riveted iron plates..." | The Light words, unchanged, plus the Medium words |
+| Edit or video | The short name only ("the rust giant"), spelled the same every time, and only what changes | The Light words, unchanged, when the line states the light |
+
+The master's line holds every character's full words, the Place, the Light and the Medium, word for word.
 - **Risky shots** say so, so media-prompt adds its Takes line.
 - **Gaps** stay out of hand-off lines. A shot blocked by a gap gets its fallback route instead.
 
@@ -134,5 +142,13 @@ No still to start from, a new prompt instead of an edit of the master, three cam
 PASS:
 
 ```text
-/media-prompt Wan 2.2 I2V-A14B, image to video, from still 3, risky: the bloom giant catches the rust giant's iron fist in both hands and green vines climb slowly up the iron arm; static camera, 50mm, low sun from the left; full 20-step path, 6 takes
+/media-prompt Wan 2.2 I2V-A14B, image to video, from still 3, risky: the bloom giant catches the rust giant's iron fist in both hands and green vines climb slowly up the iron arm; static camera, 50mm, low dawn sun from screen left through haze, hard and warm; full 20-step path, 6 takes
+```
+
+The short names stand for the full words already in still 3, and the light is the look bible's, as written.
+
+FAIL, an image-to-video line that describes the picture again:
+
+```text
+/media-prompt Wan 2.2 I2V-A14B, image to video, from still 3: a giant of riveted iron plates flaking orange rust swings at a giant woven from mossy oak branches; low sun from the left
 ```

@@ -36,7 +36,7 @@ Pixar's story rules give the spine ("Once upon a time... One day... Until finall
 | 15 to 30 s | 3 to 6 | Hook, turn, payoff. A setup shot between hook and turn if there is room |
 | 30 to 60 s | 6 to 12 | Hook, setup, one or two turns, payoff |
 
-No platform or story authority gives beats per second. These counts come from shot length: Wan 2.2 makes about 5 s a shot, and LTX-2.5 5 to 10 s, so 20 s is about four shots. A faster cut uses more, shorter shots trimmed from 5 s clips; cuts of 2 to 4 s are common in short-form, but no study backs a number, so that is preference. Hold the payoff longest.
+No platform or story authority gives beats per second. These counts come from shot length: Wan 2.2 makes about 5 s a shot, and LTX-2.5 up to about 10 s, so 20 s is about four shots. A faster cut uses more, shorter shots trimmed from 5 s clips; cuts of 2 to 4 s are common in short-form, but no study backs a number, so that is preference. Hold the payoff longest.
 
 **Default when nothing is given:** a 20 s, 9:16 reel, four shots.
 
@@ -50,7 +50,7 @@ No platform or story authority gives beats per second. These counts come from sh
 ## The turn and the payoff
 
 - **The turn** changes what the viewer expects: the fight becomes a hug, the monster is the victim, the god gets smaller.
-- **The payoff** shows the result, and holds. Give it the longest shot, often an LTX-2.5 shot of 5 to 10 s, or a Wan shot with a held end.
+- **The payoff** shows the result, and holds. Give it the longest shot, often an LTX-2.5 shot of up to about 10 s, or a Wan shot with a held end.
 - **Write the payoff first** (Pixar's rule 7), then the hook that sets it up.
 - **One impossible thing** at a time. The rest of the world obeys physics, so the impossible thing reads.
 - **A loop** (the last frame matches the first) is a choice, not a rule. If wanted, plan both stills from the same frame of the master.

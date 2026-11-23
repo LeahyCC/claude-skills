@@ -48,18 +48,21 @@ StudioBinder gives a 2:1 key-to-fill ratio as a common start. The ASC's Stephen 
 The ASC (Burum) and No Film School agree: keep the light's direction, colour and quality the same from the wide to the close-up, and light the master first, then match the closer shots to it. Cinematographers cheat a light's exact position between setups; what must match is how it reads. For an AI piece:
 
 - **The master still sets the light.** Every shot still is an edit of it, and each edit ends by keeping the light.
-- **One light phrase, copied word for word** into every hand-off line: "low dawn sun from screen left, through haze".
+- **One light phrase, written once** in the look bible and used unchanged in every hand-off line that states the light: "low dawn sun from screen left through haze, hard and warm".
 - **Keep the key on the same screen side** when the camera stays on one side of the 180-degree line. If a reverse shot flips the key to the other side, that is correct for the world, but say so in the plan.
 - **A change in light is a beat,** not drift: dawn to noon, a lamp going out. Put it in the shot's Change column.
 - **Mixed frame sources drift.** A Wan shot and an LTX shot of the same scene can come out warmer or cooler. Grade them to match in the finish.
 
 ## The look bible
 
-One block that every shot copies from. Write each line once, in words a model can draw, and never paraphrase it later:
+One block the plan draws on. Write each line once, in words a model can draw, and never paraphrase it later. How much of it a hand-off line carries depends on the line:
+
+- **A fresh still** (the master, a layer, a still wider than the master) carries each character's full words, the Light and the Medium. The master also carries the Place.
+- **An edit or a video** uses each character's short name and only what changes, because the picture already shows the rest. It uses the Light words unchanged when it states the light.
 
 | Line | What goes in it |
 | --- | --- |
-| Each character | What must stay the same in every shot: build, material, face, clothes, one colour. Size if it matters. 15 to 30 words each |
+| Each character | A short name ("the rust giant"), spelled the same in every line. Then the full words: what must stay the same in every shot, such as build, material, face, clothes, one colour. Size if it matters. 15 to 30 words each |
 | Place | The setting in one sentence, and one landmark that shows where we are |
 | Palette | Two to four colours, named ("rust orange, moss green, wheat gold") |
 | Light | The key's source, side and quality. Its colour |

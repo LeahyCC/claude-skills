@@ -18,7 +18,7 @@ How to turn beats into shots that cut together, when every shot is a separate ge
 | Model | A shot can hold |
 | --- | --- |
 | Wan 2.2 | About 5 s: one camera move and one change |
-| LTX-2.5 | 5 to 10 s: two to four beats, in time order, one move |
+| LTX-2.5 | Up to about 10 s: two to four beats, in time order, one move |
 | A still | One moment, no move |
 
 A beat that needs two moves or two changes is two shots. A shot shorter than its clip is fine: cut it in the edit. Plan each shot's seconds from the voice draft ([production.md](./production.md#the-order)).

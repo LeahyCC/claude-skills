@@ -53,12 +53,12 @@ Read all five for a full plan. For one part ("just the shot list"), read that fi
 | --- | --- | --- |
 | Krea 2 Turbo | A still | The default for stills: looked the most real in real runs |
 | Qwen-Image 2512, then a Krea 2 refine | A still | Busy action, big scale, exact layout |
-| Qwen-Image-Edit 2511 | One change to a still | Every still after the master. New angles with the multi-angles LoRA |
+| Qwen-Image-Edit 2511 | One change to a still | Most stills after the master. New angles with the multi-angles LoRA |
 | Wan 2.2 I2V | About 5 s, no sound | **One camera move and one change** |
-| LTX-2.5 | 5 to 10 s, with its own sound and voice | Two to four beats. **Cannot lip sync to a supplied voice file** |
+| LTX-2.5 | Up to about 10 s, with its own sound and voice | Two to four beats. **Cannot lip sync to a supplied voice file** |
 | Wan 2.2 S2V, InfiniteTalk | Lip sync to a voice file | **Not installed yet.** Flag it, never plan around it silently |
 
-- **Consistent characters:** one master still; every other still is an edit of it, never a fresh prompt.
+- **Consistent characters:** one master still; every other still is an edit of it. The exceptions are a layer for two characters touching and a still wider than the master: those are fresh stills, written in the look bible's full words.
 - **Small hinged props** (an open pocket watch) break in motion. Close or simplify them in the still.
 - **Words on screen** go in the edit, not the video.
 
@@ -69,7 +69,7 @@ Read all five for a full plan. For one part ("just the shot list"), read that fi
 3. **Beats** sized to the length: a hook in the first 1 to 2 s, a turn, a payoff. 15 to 30 s is 3 to 6 shots.
 4. **Script:** action lines, then each voice line in quotes with who speaks and how. Mark V.O. or O.S. when no mouth is on screen.
 5. **Shot list:** one row per shot, every column filled, every shot within its model's length.
-6. **Look bible:** what must stay the same, in words copied into every hand-off line.
+6. **Look bible:** what must stay the same. Each character gets full words and one short name; then the place, palette, light and medium ([lighting.md](./resources/lighting.md#the-look-bible)).
 7. **Production order:** voice draft, master still, edited stills, video per shot (risky first), final voice and lip sync, sound, finish. Mark risky shots with their takes. List the gaps.
 8. **Hand-off:** one `/media-prompt` line for the master, then one per shot. Offer one next change ("a faster cut", "a darker ending"), not a menu.
 
@@ -80,7 +80,9 @@ Read all five for a full plan. For one part ("just the shot list"), read that fi
 | Keep the user's subjects, places and tone | Add characters or subplots they didn't ask for |
 | One move and one change per Wan shot | Two moves, or a shot longer than its model makes |
 | Make the master the widest shot, and crop in | Plan a still wider than the master as an edit of it |
-| Copy the look bible's words into every hand-off line | Describe a character in new words each shot |
+| Put the look bible's full words in every fresh still: the master, each layer, a still wider than the master | Describe a character in new words each shot |
+| In edits and video, use each character's short name, the same every time, and write only the change | Describe the picture again: media-prompt's edit and image-to-video rules forbid it |
+| When a line states the light, use the look bible's Light words unchanged | Reword the light from shot to shot |
 | Plan ElevenLabs lines as voiceover, or a hidden mouth, until lip sync is installed | Plan a mouth speaking an ElevenLabs file on LTX-2.5 |
 | Name light by source and side ("low sun from the left") | Write "cinematic", "epic", "dramatic lighting" |
 | Mark risky shots and how many takes | Treat every shot as one take |
@@ -104,7 +106,7 @@ Shot list
 | # | Sec | Framing | Move | Lens | Light | Change | Sound | Route |
 
 Look bible
-| Line | Words to copy |
+| Line | Short name | Full words |
 
 Production order
 <numbered steps, risky shots marked with takes>
@@ -139,7 +141,7 @@ Length: 20 s, 9:16 reel.
 An iron foot the size of a church slams into the wheat. Rust spreads out through the stalks in a ring.
 NARRATOR (V.O., old woman, low and calm, close to the mic): "It came for the last green valley."
 
-2. A giant of mossy oak branches rises out of the forest. Birds burst from its shoulders.
+2. The bloom giant rises out of the forest. Birds burst from its shoulders.
 
 3. The rust giant swings. The bloom giant catches the iron fist in both hands. Vines climb the iron arm.
 NARRATOR (V.O.): "She didn't fight back."
@@ -152,29 +154,31 @@ NARRATOR (V.O.): "She gave it roots."
 
 | # | Sec | Framing | Move | Lens | Light | Change | Sound | Route |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 4 | Low angle from the wheat | Static | 24mm | Low sun from the left, haze | The iron foot lands at 1 s; the wheat browns to rust in a ring | Iron boom, wind; VO 1 | Edit of the master, Wan 2.2 I2V |
-| 2 | 4 | Full shot, bloom giant, farmhouse small in front | Slow tilt up | 85mm, from far back | Same sun, rim light on the moss | It stands up; birds lift off its shoulders | Wood creak, birds | Edit of the master, Wan 2.2 I2V |
-| 3 | 5 | Medium two-shot, side on | Static | 50mm | Low sun from the left | The bloom giant catches the fist; vines climb the iron arm | Metal groan, rustling vines; VO 2 | Layers, Wan 2.2 I2V full 20 steps. **Risky** |
-| 4 | 7 | Wide, high angle over the valley | Slow pull back | 35mm | Low sun from the left, warmer | The rust giant kneels, then flowers open across it | LTX ambience: wind settles, birdsong; VO 3 | Edit of the master, LTX-2.5 I2V |
+| 1 | 4 | Low angle from the wheat, re-angled from the master | Static | 24mm | Look bible light | The iron foot lands at 1 s; the wheat browns to rust in a ring | Iron boom, wind; VO 1 | Edit of the master, Wan 2.2 I2V |
+| 2 | 4 | Full shot of the bloom giant, cropped from the master, farmhouse small in front | Slow tilt up | 85mm, from far back | Look bible light, rim light on the moss | It stands up; birds lift off its shoulders | Wood creak, birds | Edit of the master, Wan 2.2 I2V |
+| 3 | 5 | Medium two-shot, side on | Static | 50mm | Look bible light | The bloom giant catches the fist; vines climb the iron arm | Metal groan, rustling vines; VO 2 | Layers, Wan 2.2 I2V full 20 steps. **Risky** |
+| 4 | 7 | High angle, a closer crop of the master | Slow pull back, ending at the master's framing | 35mm | Look bible light | The rust giant kneels, then flowers open across it | LTX ambience: wind settles, birdsong; VO 3 | Edit of the master, LTX-2.5 I2V |
 
 ### Look bible
 
-| Line | Words to copy |
-| --- | --- |
-| Rust giant | a giant of riveted iron plates flaking orange rust, a dented bucket-shaped head with two dark eye slits, slow and heavy |
-| Bloom giant | a giant woven from mossy oak branches, white and yellow wildflowers along its shoulders, a bark face with two knot-hole eyes |
-| Place | a narrow wheat valley at dawn with one small stone farmhouse, forest on the right slope |
-| Palette | rust orange, moss green, wheat gold, pale grey sky |
-| Light | low dawn sun from screen left through haze, hard and warm, the right sides in blue shadow |
-| Medium | 35mm film still, Kodak Portra 400, natural grain |
-| Effect | flowers and vines grow over iron at time-lapse speed, shots 3 and 4 only |
-| Screen direction | rust giant on the left facing right, bloom giant on the right facing left, camera on the farmhouse side |
+Fresh stills (the master, the shot 3 layers) carry the full words. Edits and video use the short name and the change. Any line that states the light uses the Light words as written.
+
+| Line | Short name | Full words |
+| --- | --- | --- |
+| Character | the rust giant | a giant of riveted iron plates flaking orange rust, a dented bucket-shaped head with two dark eye slits |
+| Character | the bloom giant | a giant woven from mossy oak branches, white and yellow wildflowers along its shoulders, a bark face with two knot-hole eyes |
+| Place | | a narrow wheat valley at dawn with one small stone farmhouse, forest on the right slope |
+| Palette | | rust orange, moss green, wheat gold, pale grey sky |
+| Light | | low dawn sun from screen left through haze, hard and warm |
+| Medium | | 35mm film still, Kodak Portra 400, natural grain |
+| Effect | | flowers and vines grow over iron at time-lapse speed, shots 3 and 4 only |
+| Screen direction | | the rust giant on the left facing right, the bloom giant on the right facing left, camera on the farmhouse side |
 
 ### Order
 
 1. **Voice draft:** the three narrator lines in ElevenLabs. VO 1 must fit inside shot 1's 4 s.
-2. **Master:** the widest shot, both giants apart in the valley. Qwen 2512 for the scale and layout, then a Krea 2 refine. 4 takes, pick one.
-3. **Stills:** 1, 2 and 4 are edits of the master. 3 is built in layers: each giant alone, then combined with the fist caught. **Risky, 6 takes.**
+2. **Master:** the widest shot, a high-angle wide of the valley with both giants apart. Qwen 2512 for the scale and layout, then a Krea 2 refine. 4 takes, pick one.
+3. **Stills:** 1, 2 and 4 are edits of the master, each closer than it; shot 4 starts on a closer crop so its pull back ends at the master's framing. 3 is built in layers: each giant as a fresh still in its full words, then combined with the fist caught. **Risky, 6 takes.**
 4. **Video:** shot 3 first (two characters touching, 6 takes, no Lightning), then 4 (4 takes), then 1 and 2 (3 takes each).
 5. **Final voice and sound:** narrator lines, effects from ElevenLabs sound effects, LTX's ambience under shot 4.
 6. **Finish:** Wan's 16 fps clips interpolated ×2, one delivery rate, an upscale, captions above the bottom band.
@@ -184,11 +188,13 @@ Gaps: none. The narrator is never on screen, so no lip sync.
 ### Hand-off
 
 ```text
-/media-prompt Qwen-Image 2512, text to image, then a Krea 2 Turbo refine, the master: 9:16, a wide view of a narrow wheat valley at dawn with one small stone farmhouse; on the left a giant of riveted iron plates flaking orange rust, a dented bucket-shaped head with two dark eye slits, faces right; on the right a giant woven from mossy oak branches, white and yellow wildflowers along its shoulders, a bark face with two knot-hole eyes, stands at the forest edge facing left; low dawn sun from screen left through haze; 35mm film still, Kodak Portra 400
-/media-prompt Shot 1, Qwen-Image-Edit 2511 edit of the master, then Wan 2.2 I2V-A14B: low-angle view from inside the wheat of the rust giant's iron foot coming down; then the foot slams into the wheat at 1 s and the stalks brown to rust in a ring; static camera, 24mm, low sun from the left; 3 takes
-/media-prompt Shot 2, Qwen-Image-Edit 2511 edit of the master, then Wan 2.2 I2V-A14B: full shot of the bloom giant crouched at the forest edge, the farmhouse small in front, seen from far back on an 85mm lens; then it stands up as birds lift off its shoulders; slow tilt up, rim light on the moss from the low sun; 3 takes
-/media-prompt Shot 3, risky, build in layers with Qwen-Image-Edit 2511 from the master, then Wan 2.2 I2V-A14B on the full 20-step path: medium two-shot side on, the bloom giant on the right holding the rust giant's iron fist in both hands; then green vines climb slowly up the iron arm; static camera, 50mm, low sun from the left; 6 takes
-/media-prompt Shot 4, Qwen-Image-Edit 2511 edit of the master, then LTX-2.5 image to video, 7 s: high-angle wide over the valley, vines on the rust giant's arm; the rust giant slowly kneels, then white and yellow flowers open across its back until it is a green hill; the camera pulls back slowly; low sun from the left, warmer; wind settling and birdsong, no speech; 4 takes
+/media-prompt Qwen-Image 2512, text to image, then a Krea 2 Turbo refine, the master: 9:16, a high-angle wide view of a narrow wheat valley at dawn with one small stone farmhouse, forest on the right slope; on the left the rust giant, a giant of riveted iron plates flaking orange rust, a dented bucket-shaped head with two dark eye slits, faces right; on the right the bloom giant, a giant woven from mossy oak branches, white and yellow wildflowers along its shoulders, a bark face with two knot-hole eyes, crouches at the forest edge facing left; low dawn sun from screen left through haze, hard and warm; 35mm film still, Kodak Portra 400, natural grain
+/media-prompt Shot 1, Qwen-Image-Edit 2511 edit of the master, then Wan 2.2 I2V-A14B: re-angle to a low view from inside the wheat, close on the rust giant's iron foot lifted above the stalks; then the foot slams into the wheat at 1 s and the stalks brown to rust in a ring; static camera, 24mm, low dawn sun from screen left through haze, hard and warm; 3 takes
+/media-prompt Shot 2, Qwen-Image-Edit 2511 edit of the master, then Wan 2.2 I2V-A14B: crop in to a full shot of the bloom giant crouched at the forest edge, the farmhouse small in front, as if from far back on an 85mm lens; then the bloom giant stands up as birds lift off its shoulders; slow tilt up; low dawn sun from screen left through haze, hard and warm, rim light on the moss; 3 takes
+/media-prompt Shot 3 layer A, risky, Krea 2 Turbo text to image: 9:16, the rust giant, a giant of riveted iron plates flaking orange rust, a dented bucket-shaped head with two dark eye slits, alone and side on, facing right, its right fist thrown forward, on bare ground; low dawn sun from screen left through haze, hard and warm; 35mm film still, Kodak Portra 400, natural grain
+/media-prompt Shot 3 layer B, risky, Krea 2 Turbo text to image: 9:16, the bloom giant, a giant woven from mossy oak branches, white and yellow wildflowers along its shoulders, a bark face with two knot-hole eyes, alone and side on, facing left, both hands raised in front of it, on bare ground; low dawn sun from screen left through haze, hard and warm; 35mm film still, Kodak Portra 400, natural grain
+/media-prompt Shot 3, risky, Qwen-Image-Edit 2511 multi-image edit from layer A, layer B and the master, then Wan 2.2 I2V-A14B on the full 20-step path: a medium two-shot side on in the valley, the rust giant on the left, the bloom giant on the right holding the rust giant's iron fist in both hands; then green vines climb slowly up the iron arm; static camera, 50mm, low dawn sun from screen left through haze, hard and warm; 6 takes
+/media-prompt Shot 4, Qwen-Image-Edit 2511 edits of the master, then LTX-2.5 image to video, 7 s: a closer high-angle crop of the master, the bloom giant standing beside the rust giant, green vines on the rust giant's right arm; the rust giant slowly kneels, then white and yellow flowers open across its back until it is a green hill; the camera pulls back slowly to the master's framing; low dawn sun from screen left through haze, hard and warm; only wind settling and birdsong; 4 takes
 ```
 
 ## Limits
@@ -205,10 +211,10 @@ Decline these whatever the framing.
 
 - [ ] Three loglines only for a mood or one image, and the plan stops for the pick
 - [ ] The hook is the first shot and lands in its first 1 to 2 s
-- [ ] Every Wan shot is 5 s or less with one move and one change; every LTX shot is 5 to 10 s with at most four beats
+- [ ] Every Wan shot is 5 s or less with one move and one change; every LTX shot is up to about 10 s with 2 to 4 beats
 - [ ] The shot seconds add up to the length
-- [ ] Every still after the master is an edit of it, and the master is the widest shot
-- [ ] The look bible's words are copied unchanged into every hand-off line
+- [ ] Every still after the master is an edit of it, except layers and stills wider than the master; the master is the widest shot
+- [ ] Fresh stills carry the look bible's full words; edits and video use the same short names and only the change; stated light is the Light words unchanged
 - [ ] One light source and side, the same in every shot unless a shot changes it on purpose
 - [ ] Each voice line says who speaks and how, and whether a mouth is on screen
 - [ ] Risky shots are marked with takes; gaps are listed at the shot they affect

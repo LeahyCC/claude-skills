@@ -2,7 +2,7 @@
 
 Checked 2026-11-23. When a file changes, update its row here. Platform guides and model limits move, so the date matters.
 
-The model limits (Wan 2.2's 5 seconds, LTX-2.5's 5 to 10 seconds and its generated audio, Qwen-Image-Edit 2511's angles, the Krea 2 refine) are media-prompt's, sourced in [media-prompt's SOURCES.md](https://github.com/LeahyCC/claude-skills/blob/main/skills/media-prompt/SOURCES.md). This file covers what is new here.
+The model limits (Wan 2.2's 5 seconds, LTX-2.5's clips of up to about 10 seconds (its templates default to 97 frames, 4 s) and its generated audio, Qwen-Image-Edit 2511's angles, the Krea 2 refine) are media-prompt's, sourced in [media-prompt's SOURCES.md](https://github.com/LeahyCC/claude-skills/blob/main/skills/media-prompt/SOURCES.md). This file covers what is new here.
 
 ## Claim homes
 

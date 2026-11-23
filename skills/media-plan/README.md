@@ -34,7 +34,7 @@ Install media-prompt too: the plan's hand-off lines are requests for it.
 | Gaps | What the setup can't make yet (lip sync to a voice file), at the shot it affects |
 | Hand-off | One `/media-prompt` line for the master and one per shot |
 
-Every shot fits what one generation makes: Wan 2.2 at about 5 seconds with one move and one change, LTX-2.5 at 5 to 10 seconds with its own sound, stills on Krea 2 or Qwen. Characters stay the same because every still after the first is an edit of one master still.
+Every shot fits what one generation makes: Wan 2.2 at about 5 seconds with one move and one change, LTX-2.5 at up to about 10 seconds with its own sound, stills on Krea 2 or Qwen. Characters stay the same because one master still sets them, and every other still is an edit of it or a fresh still in the same look bible words.
 
 Version 0.1.0. 5 resource files.
 
@@ -54,7 +54,7 @@ Version 0.1.0. 5 resource files.
 | --- | --- |
 | Writes shots any length | Every shot fits one generation, and shots that don't are split |
 | A new prompt for every shot | One master still, every other still an edit of it |
-| "Dramatic lighting" | One light source and side, copied into every shot |
+| "Dramatic lighting" | One light source and side, in the same words in every line that states the light |
 | Dialogue with a face on screen, whatever the setup | Says when a line needs lip sync the setup can't do, and offers a voiceover or a hidden mouth |
 | Every shot one take | Risky shots marked, with how many takes |
 
