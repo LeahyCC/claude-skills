@@ -1,6 +1,6 @@
 # media-prompt skill tasks and acceptance criteria
 
-Written 2026-11-22, before any model run. Run each prompt against Claude with the skill and without it. Score each criterion 0 or 1. One run per task is exploratory, not a statistical estimate.
+Written 2026-11-22, before any model run. M28 to M40 and S29 to S32 added 2026-11-23 with pipelines.md and fixes.md. Run each prompt against Claude with the skill and without it. Score each criterion 0 or 1. One run per task is exploratory, not a statistical estimate.
 
 Status: **not run.** Model runs need Colin's approval first. The automatic checks in `checks/check-skill.mjs` run in CI and do not need a model.
 
@@ -48,9 +48,27 @@ Status: **not run.** Model runs need Colin's approval first. The automatic check
 | M26 | "Klein Base, upsampler off: a poster with the title GRAND OPENING at the top and a red balloon on the left, placed with boxes." | The caption, one space, then one JSON array, on one line. Ids such as `En_Text_1` and `balloon_1`, each cited in angle brackets in the caption. Boxes as `[y_min, x_min, y_max, x_max]` from 0 to 1000. "GRAND OPENING" in double quotes. Steps 50, cfg 3.5, empty negative. Says the templates' upsampler prompt drops boxes unless the `_bbox` prompt is loaded. |
 | M27 | "Is this Klein or Klein Base?" Fixture: a Klein header with `ref_time_in.in_layer.weight`. | Runs `inspect-model.mjs`. Reports the distilled model from `ref_time_in`, not from the file name. Gives 16 steps and cfg 1. |
 
+### Pipelines and fixes
+
+| ID | Prompt | Acceptance criteria |
+| --- | --- | --- |
+| M28 | "Three shots of the same knight and tree creature for a Wan 2.2 reel." | Reads pipelines.md. A master still first, then each shot's start frame as a Qwen-Image-Edit 2511 edit of it, not three fresh prompts. The characters described in the same words each time. One output block per pass, each naming what feeds it. |
+| M29 | "Qwen-Image 2512: a knight and a tree creature fighting, the creature's roots wrapped around his sword." | Says contact between two characters is hard in one still and offers building in layers. If it writes one prompt, keeps it to the two subjects and one interaction. No negation words. |
+| M30 | "My Wan clip: the pocket watch splits into two as he lifts it." | Reads fixes.md. Names the likely cause (an open lid, a hinge, or a hand-off between hands). Fixes cheapest first: reroll, a start-frame edit (closed, one hand), a last frame, a larger render. Says to change one thing with the seed fixed. |
+| M31 | "Wan with Lightning: he's done moving after 2 seconds, then stands still." | Says the Lightning LoRAs reduce motion. Offers a second beat in the prompt and the full-step path. Does not suggest a longer clip than Wan makes. |
+| M32 | An image attached. "This looks plastic. Refine it on Krea 2 so it looks like a film still." | Reads krea2.md's image to image. Resize to 1 to 2 MP, denoise about 0.35, 8 steps, cfg 1, no negative. The prompt describes the whole picture, then the look. |
+| M33 | A face close-up attached. "Qwen Edit 2511: zoom out to the full body in a battle stance." | Warns that a big zoom-out loses the character. Offers stepping out about 2× at a time with the outpaint wording, or a new full-body picture with the close-up as `picture 2`. Says the multi-angles LoRA's widest framing is a wide shot. |
+| M34 | "In my full-body picture the mask came out as mush." | Gives the detail pass: crop, enlarge to about 1024, edit with the close-up as `picture 2`, shrink, paste with a feathered mask at the same x and y. Core nodes only. |
+| M35 | "I have a voice file from ElevenLabs. Make my character say it." | Reads wan.md's lip-sync section. Offers Wan 2.2 S2V or InfiniteTalk with their template settings. Says LTX-2.5 has no official route for a voice file. The prompt describes the performance, not the words. Suggests clean vocals. |
+| M36 | "Here's my clip.mp4. What went wrong?" | Says Claude can't watch video. Offers the frame-strip command with `-fps_mode`, and only with the user's OK, or asks for a description. |
+| M37 | "I can't share the picture, but it's a close-up of a masked samurai with red eyes. Animate it on Wan 2.2." | Works from the description without asking for the file again. Motion and camera only, image-to-video settings. |
+| M38 | "I made this still in Midjourney. Animate it with LTX-2.5." | Writes only the LTX-2.5 image-to-video prompt and settings, with the video size matching the still's aspect. Does not write a Midjourney prompt. |
+| M39 | "Krea 2 Turbo with the official watercolor LoRA: a fox in snow." | Uses `krea2_softwatercolor` with the trigger "art deco watercolor style" at 1.0. Prose, 8 steps, cfg 1, no negative. |
+| M40 | "Upscale my 480p Wan clip and clean it up." | Settings only. Offers SeedVR2 (the 3B video template, 2×, trim long clips) and names the upscale-model route. Notes the save fps if the clip was interpolated. |
+
 ## Selection
 
-The skill should load for S1 to S10, S21 to S23, S26 and S27, and not for S11 to S20, S24, S25 and S28.
+The skill should load for S1 to S10, S21 to S23, S26, S27, S29, S30 and S32, and not for S11 to S20, S24, S25, S28 and S31.
 
 | ID | Prompt | Should load |
 | --- | --- | --- |
@@ -82,3 +100,7 @@ The skill should load for S1 to S10, S21 to S23, S26 and S27, and not for S11 to
 | S26 | Write a FLUX 3 Klein edit prompt that turns this photo into a watercolour | yes |
 | S27 | What steps and CFG does FLUX 3 Image Klein Base need in ComfyUI? | yes |
 | S28 | Write a prompt for FLUX 3 Video on BFL's API | no (hosted; FLUX 3 Video has no local weights) |
+| S29 | My Wan video glitches when he lifts the watch, how do I fix it? | yes |
+| S30 | Make my character lip-sync to this voice file in ComfyUI | yes |
+| S31 | Write a Midjourney prompt for my first frame | no (hosted tool) |
+| S32 | How do I keep the same character across several shots in ComfyUI? | yes |

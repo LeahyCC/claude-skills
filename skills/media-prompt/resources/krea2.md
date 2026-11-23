@@ -4,6 +4,15 @@ Krea's own image model, open weights since June 2026. It is a 12B diffusion tran
 
 `inspect-model.mjs` knows Krea 2 by its `txtfusion.projector` layer, the key ComfyUI checks.
 
+## Contents
+
+- [Write the prompt](#write-the-prompt)
+- [Settings](#settings)
+- [Image to image](#image-to-image)
+- [Style reference](#style-reference)
+- [Style LoRAs](#style-loras)
+- [FAIL and PASS](#fail-and-pass)
+
 ## Write the prompt
 
 Krea's prompting doc asks for natural language, and says long, detailed prompts give the best results, though short ones work. Put the words to draw in quotes.
@@ -38,6 +47,48 @@ Its rules also keep people clothed by default, which is one more reason to run a
 - ComfyUI files: `krea2_turbo_fp8_scaled.safetensors`, text encoder `qwen3vl_4b_fp8_scaled.safetensors` (CLIPLoader type `krea2`), VAE `qwen_image_vae.safetensors`.
 - ComfyUI's template has prompt enhancement on by default. A prompt written with this skill already did that job: switch the enhancer off so the prompt runs as written.
 - Krea's README options table lists 28 steps and CFG 4.5 as defaults, against its own Raw command (52 and 3.5). The command is the one Krea shows for Raw.
+
+## Image to image
+
+Turbo redraws an existing picture: the refine pass in [pipelines.md](./pipelines.md#refine-with-a-second-model). ComfyUI's templates are text to image only, so swap EmptyLatentImage for Load Image, a resize and VAE Encode:
+
+| Setting | Value |
+| --- | --- |
+| Size | Resize first with ImageScaleToTotalPixels, 1 to 2 MP, resolution steps 16 |
+| Steps, CFG | 8, 1 (as text to image), euler, simple |
+| Denoise | 0.35 to start. 0.25 changes only texture and light; 0.45 starts to change shapes |
+| Negative | None: ConditioningZeroOut, as in the template |
+| Prompt | The whole picture, then the look, by the rules above. Not only the change |
+
+## Style reference
+
+`krea2_style_reference.safetensors`, by ostris, makes Turbo follow the look of one or two reference images. ComfyUI ships it as the template `image_krea2_turbo_int8_image_style_reference`:
+
+- The LoRA loads with LoraLoaderModelOnly at 1.0 on Turbo.
+- The reference image goes into TextEncodeQwenImageEditPlus, through FluxKontextMultiReferenceLatentMethod (`index_timestep_zero`). The template samples with CFGGuider 1, euler, simple, 8 steps and ModelSamplingFlux 1.15.
+- The prompt is the new picture's subject. The card: "No trigger word is needed just image and prompt."
+- Trained for 1 to 2 reference images. The card does not say how much of the reference's content carries over; its example prompt names a new subject, so describe yours in full.
+
+This is the nearest local tool to a hosted style reference. A style LoRA trained on your own images holds a look more firmly ([loras.md](./loras.md)).
+
+## Style LoRAs
+
+Comfy-Org's Krea-2 repository carries nine style LoRAs. Its README gives each a trigger and a recommended strength of 1.0. Put the trigger in the prompt as written:
+
+| File | Trigger |
+| --- | --- |
+| `krea2_darkbrush.safetensors` | monochrome ink wash style |
+| `krea2_dotmatrix.safetensors` | monochrome stippling style |
+| `krea2_kidsdrawing.safetensors` | naive expressive sketch style |
+| `krea2_neondrip.safetensors` | textured abstract style |
+| `krea2_rainywindow.safetensors` | rainy window style |
+| `krea2_retroanime.safetensors` | purple retro anime style |
+| `krea2_softwatercolor.safetensors` | art deco watercolor style |
+| `krea2_sunsetblur.safetensors` | ethereal motion blur style |
+| `krea2_vintagetarot.safetensors` | vintage tarot style |
+
+- The README does not say whether they were trained for Turbo or Raw. ComfyUI's Turbo template loads `krea2_darkbrush` on Turbo at 0.8, behind an "Enable LoRA?" switch that starts off.
+- `krea2_turbo_lora_rank_64_bf16.safetensors` sits in the same folder with no trigger or description.
 
 ## FAIL and PASS
 

@@ -129,3 +129,14 @@ jobs:
           node-version: 22
       - name: Inspector names each fixture model, doc numbers follow the model rules, links and counts match
         run: node reviews/media-prompt/checks/check-skill.mjs
+
+  media-plan:
+    name: Media plan checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Worked example fits the models, no em dashes, links and counts match
+        run: node reviews/media-plan/checks/check-skill.mjs

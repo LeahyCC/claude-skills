@@ -9,6 +9,7 @@ Wan 2.2 T2V-A14B (text to video), I2V-A14B (image to video) and TI2V-5B (both, i
 - [The official vocabulary](#the-official-vocabulary)
 - [Image to video](#image-to-video)
 - [Camera control and first and last frame](#camera-control-and-first-and-last-frame)
+- [Your own audio: lip sync](#your-own-audio-lip-sync)
 - [Negative prompt](#negative-prompt)
 - [Settings](#settings)
 - [FAIL and PASS](#fail-and-pass)
@@ -95,6 +96,24 @@ Two ComfyUI templates go beyond the prompt. Both use the A14B two-expert setup.
 - **First and last frame:** Alibaba's doc for its hosted Wan 2.2 first-and-last-frame model says that when the two frames differ a lot, the prompt should describe how the change happens: the camera move or the subject's motion.
 - **WanCameraEmbedding presets:** Static, Pan Up, Pan Down, Pan Left, Pan Right, Zoom In, Zoom Out, Anti Clockwise (ACW) and ClockWise (CW), one per clip, with a speed (default 1.0). In the node's code the pans slide the camera rather than turn it, the zooms move it forward or back (a dolly, not a lens zoom), and the clockwise presets roll the frame. The node also sets the clip's width, height and length.
 - **Lightning costs motion.** ComfyUI's template notes say the Lightning LoRAs reduce how much moves. For big motion, such as a morph or a time-lapse, try without them first.
+
+## Your own audio: lip sync
+
+To make a character speak or sing a voice file you already have (a recording, or a voice from a text-to-speech service), two Wan models take the audio as input. LTX-2.5 makes its own sound and has no official route for a file of yours ([ltx.md](./ltx.md#sound-and-dialogue)).
+
+| | Wan 2.2 S2V | InfiniteTalk |
+| --- | --- | --- |
+| Template | `video_wan2_2_14B_s2v` | `video_wan2_1_infinitetalk` |
+| Built on | Wan 2.2 S2V 14B (`wan2.2_s2v_14B_fp8_scaled`, or bf16 for less degradation) | Wan 2.1 I2V 14B 480p, plus an InfiniteTalk model patch (single or multi speaker) |
+| Audio encoder | `wav2vec2_large_english_fp16` | `wav2vec2-chinese-base_fp16` |
+| Inputs | A reference image, the audio, a prompt | A start image, one audio file per speaker, a prompt; for two speakers, a painted mask over each |
+| Size and length | 640×640; chunks of 77 frames (at least 73) at 16 fps | 832×480; 81 frames per pass, saved at 25 fps (about 3.24 s per extend group) |
+| Settings | 20 steps, cfg 6, uni_pc, simple, shift 8. With the Wan 2.2 Lightning LoRA: 4 steps, cfg 1 | 6 steps, cfg 1, euler, normal, with the lightx2v I2V 480p distill LoRA |
+| Longer clips | Copy the S2V Extend subgraph; each adds one chunk. Set the batch size to the number of extends plus one | Copy the Video Extend group and chain its previous frames, until the length matches the audio |
+
+- **The prompt** describes the performance and the camera, not the words: ComfyUI's S2V example is "He looks down at his hands playing the guitar and sings affectionately and gently." The audio carries the speech.
+- **Clean vocals sync better.** Strip music and background noise from the voice track first.
+- S2V's template notes say the Lightning LoRA works but many keys don't match; if quality drops, use the 20-step path.
 
 ## Negative prompt
 
