@@ -34,6 +34,7 @@ From Lightricks' prompting guide:
 - Describe the ambience, the music, sound effects, speech or singing, in the paragraph where they happen.
 - **Spoken words go in double quotes.** Say who speaks and how: voice, tone, and the language or accent if it matters.
 - Keep dialogue that must stay lip-synced inside one shot.
+- **The voice is generated, not supplied.** ComfyUI's LTX-2.5 templates (text to video, image to video, first and last frame, DFR) all generate their audio; none takes an audio file. Custom-audio lip sync on LTX-2.5 exists only as community workflows, with mixed reports. For a voice file you already have, use Wan 2.2 S2V or InfiniteTalk ([wan.md](./wan.md#your-own-audio-lip-sync)).
 
 Black Forest Labs' audio guide for FLUX 3 Video, a hosted model that also makes sound, covers what Lightricks' guide leaves out. Treat it as a starting point on LTX, not as documented LTX behaviour:
 

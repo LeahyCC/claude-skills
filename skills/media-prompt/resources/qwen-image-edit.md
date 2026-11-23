@@ -7,6 +7,8 @@ Edits with Qwen-Image-Edit (August 2025), Edit-2509 (September 2025), Edit-2511 
 - [Which editor](#which-editor)
 - [Write the instruction](#write-the-instruction)
 - [Several images](#several-images)
+- [Camera angles on 2511](#camera-angles-on-2511)
+- [What edits do badly](#what-edits-do-badly)
 - [Settings](#settings)
 - [FAIL and PASS](#fail-and-pass)
 
@@ -61,6 +63,28 @@ Keep the character and pose in <image1> unchanged, put this light blue denim shi
 ```
 
 The first is from Qwen's edit rewriter, the second from ComfyUI's 2.1 guide.
+
+## Camera angles on 2511
+
+The Multiple-Angles LoRA (fal) re-shoots one picture from another camera position. Its card gives a token form, and ComfyUI's template uses plain sentences:
+
+| Source | Prompt form | Example |
+| --- | --- | --- |
+| fal's card | `<sks> [azimuth] [elevation] [distance]`. The card calls the `<sks>` trigger "essential" | `<sks> back view low-angle shot wide shot` |
+| ComfyUI's "1-click multiple character angles" template | One camera instruction per output | `Rotate the camera 45 degrees to the right.`, `Turn the camera to a low-angle view.` |
+
+- **Azimuths:** eight, from front view through the quarter and side views to back view. **Elevations:** low-angle shot (-30°), eye-level shot, elevated shot (30°), high-angle shot (60°). **Distances:** close-up, medium shot, wide shot.
+- **Strength 0.8 to 1.0;** the card suggests starting at 0.9. ComfyUI's template loads it at 1.0 with the 4-step Lightning LoRA (4 steps, cfg 1), or 40 steps at cfg 4 without it.
+- **Wide shot is its widest framing.** It changes the camera, not how much of a close-up exists: it can't invent a full body from a face. See [What edits do badly](#what-edits-do-badly).
+- The card: "Clear subjects with good lighting work best."
+
+## What edits do badly
+
+- **Big zoom-outs and reframes.** From a close-up to a full body, the kept part shrinks to a few pixels and the model invents the rest, so the character turns generic. Step out about 2× at a time with the fixed outpaint wording, or make the new framing as its own picture and bring the character in as `picture 2`.
+- **Fine detail at full-body size.** A face or mask at about 1 MP is too small to hold detail. Redraw it alone with a [detail pass](./pipelines.md#detail-pass).
+- **Interactions between two characters,** such as one holding the other's weapon. [Build in layers](./pipelines.md#build-in-layers), then fix one thing per pass.
+
+More symptoms and fixes are in [fixes.md](./fixes.md#edits).
 
 ## Settings
 

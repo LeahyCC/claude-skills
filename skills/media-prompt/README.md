@@ -25,11 +25,11 @@ Describe the picture or the clip. The skill finds the model (from your models fi
 - when it directs a look, the film terms it used and what each does on screen, so you learn the words
 - a minimal version: your words in the model's form with nothing added, as the control
 
-Say "make it cinematic", "like a film photo" or "make it trippy", or paste a prompt written for FLUX 3 Video, and it chooses one framing, one camera move, one lens, one light and at most one impossible effect, written as what happens on screen and cut to what the model can make in its clip length. Give it only a mood and it offers three ideas to pick from.
+Say "make it cinematic", "like a film photo" or "make it trippy", or paste a prompt written for FLUX 3 Video, and it chooses one framing, one camera move, one lens, one light and at most one impossible effect, written as what happens on screen and cut to what the model can make in its clip length. Give it only a mood and it offers three ideas to pick from. For a finished piece it plans the passes (a master still, edits, video, finish), and when a result breaks it gives the fix, cheapest first.
 
 Your own checkpoints and LoRAs go in `~/.claude/media-prompt/models.md`, outside any repository. `node scripts/inspect-model.mjs <models folder> --rows` writes its rows for you.
 
-Version 0.1.0. 12 resource files and 1 script.
+Version 0.2.0. 14 resource files and 1 script.
 
 ## Coverage
 
@@ -37,16 +37,18 @@ Version 0.1.0. 12 resource files and 1 script.
 | --- | --- |
 | [flux.md](./resources/flux.md) | FLUX.2 [dev], [klein] 4B and 9B (distilled and base), FLUX.1 [dev] and Krea [dev]: prose, light, the [klein] Style and Mood ending, quoted text, hex colours, JSON, reference edits, settings |
 | [flux3-klein.md](./resources/flux3-klein.md) | FLUX 3 Image Klein and Klein Base: the prompt upsampler and when to write its caption yourself, the caption and edit-instruction forms, references by order, bounding boxes, Base LoRAs on the distilled model, ComfyUI files, templates and settings |
-| [krea2.md](./resources/krea2.md) | Krea 2 Turbo and Raw: Krea's prompting doc and expansion rules, CFG-free Turbo, ComfyUI files and settings |
+| [krea2.md](./resources/krea2.md) | Krea 2 Turbo and Raw: Krea's prompting doc and expansion rules, CFG-free Turbo, ComfyUI files and settings, image to image, the style reference LoRA, the nine official style LoRAs and their triggers |
 | [qwen-image.md](./resources/qwen-image.md) | Qwen-Image, 2512 and 2.1: Qwen's rewriter rules, quoted text, the quality suffix, negatives, Lightning, sizes, transparent output |
-| [qwen-image-edit.md](./resources/qwen-image-edit.md) | Edit, 2509, 2511 and 2.1 edits: one instruction, the fixed restore, inpaint and outpaint wording, "picture 1" versus `<image1>` |
+| [qwen-image-edit.md](./resources/qwen-image-edit.md) | Edit, 2509, 2511 and 2.1 edits: one instruction, the fixed restore, inpaint and outpaint wording, "picture 1" versus `<image1>`, the 2511 multi-angles LoRA, and what edits do badly |
 | [sdxl-tags.md](./resources/sdxl-tags.md) | Pony V6 score, source and rating tags, NoobAI tag order and special tags, Illustrious versions, weights, escapes, CLIP skip, v-prediction |
-| [wan.md](./resources/wan.md) | Wan 2.2 A14B and TI2V-5B: the official formula and vocabulary, what each camera move does, image to video, first and last frame, Fun Camera presets, the default negative, Lightning, NAG, template and repo settings |
-| [ltx.md](./resources/ltx.md) | LTX-2.5 and LTX-2: the paragraph, the full camera and effect vocabulary, sound and dialogue, multi-shot, first and last frame, camera LoRAs and the slow-motion LoRA, 8n+1 frames, the enhancer, two-stage settings |
+| [wan.md](./resources/wan.md) | Wan 2.2 A14B and TI2V-5B: the official formula and vocabulary, what each camera move does, image to video, first and last frame, Fun Camera presets, the default negative, Lightning, NAG, template and repo settings, lip sync to your own audio with S2V and InfiniteTalk |
+| [ltx.md](./resources/ltx.md) | LTX-2.5 and LTX-2: the paragraph, the full camera and effect vocabulary, sound and dialogue, multi-shot, first and last frame, camera LoRAs and the slow-motion LoRA, 8n+1 frames, the enhancer, two-stage settings, and why it can't take your own audio |
 | [loras.md](./resources/loras.md) | Where trigger words come from and how far to trust each source, ComfyUI loaders, Wan high and low pairs, strength and stacking |
-| [finishing.md](./resources/finishing.md) | RIFE frame counts and the save fps, upscale models, a second pass |
+| [finishing.md](./resources/finishing.md) | ComfyUI's own frame interpolation and the RIFE pack, frame counts and the save fps, upscale models, a second pass, SeedVR2, mixing clip frame rates |
 | [camera.md](./resources/camera.md) | Directing any model: how a directed prompt is built, shot size, angle, composition, camera moves, focus, lenses, time, light, colour, still photography, the Danbooru tags with enough posts to work, and turning a FLUX 3 prompt into a local one |
 | [effects.md](./resources/effects.md) | Trippy and impossible effects: what makes them work, three treatments from a mood, camera tricks, time, transformations, world swaps, optics and layers, and which route each needs |
+| [pipelines.md](./resources/pipelines.md) | Jobs of several passes: shots from one master still, building in layers, one idea per still, a refine pass on a second model, a detail pass, seeds and takes, a hosted still as the start frame |
+| [fixes.md](./resources/fixes.md) | When a result comes back wrong: video symptoms, edits that fail, the rendered look, and checking a result you can't see |
 
 | Script | What it does |
 | --- | --- |

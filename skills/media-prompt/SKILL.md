@@ -2,20 +2,19 @@
 name: media-prompt
 description: >
   Turns a plain-words idea into a ready-to-paste prompt and ComfyUI settings
-  for local image and video models: FLUX.2 [dev] and [klein], FLUX 3 Klein,
-  FLUX.1 finetunes, Krea 2, Qwen-Image and Qwen-Image-Edit, SDXL tag models
-  (Pony V6, NoobAI, Illustrious), Wan 2.2 and LTX-2.5, plus LoRA triggers,
-  upscaling and frame interpolation. Writes the form each model was trained
-  on, a negative only when CFG uses one, and steps, CFG, size and frames.
-  When asked, directs the shot (camera move, lens, light, colour, sound) and
-  builds trippy or surreal effects such as a dolly zoom, morph or double
-  exposure. A bundled script reads a .safetensors header to tell what a
-  checkpoint or LoRA is built on, and its triggers. Use when the user wants
-  an image or video prompt for ComfyUI, Forge or SwarmUI, wants it
-  cinematic, photographic or trippy, asks what settings or triggers a model
-  needs, or says a prompt is not working. Not for hosted tools such as
-  Midjourney, DALL-E or Sora, or for building ComfyUI workflows or custom
-  nodes.
+  for local image and video models: FLUX.2, FLUX 3 Klein, FLUX.1 finetunes,
+  Krea 2, Qwen-Image and Qwen-Image-Edit, SDXL tag models (Pony V6, NoobAI,
+  Illustrious), Wan 2.2 and LTX-2.5, plus LoRA triggers, upscaling,
+  interpolation and lip sync to a voice file. Writes the form each model was
+  trained on, a negative only when CFG uses one, and steps, CFG, size and
+  frames. Directs the shot (camera, lens, light, colour, sound) and builds
+  trippy effects such as a dolly zoom or morph. Plans multi-pass jobs (one
+  master still, layers, a refine pass) and fixes broken results. A bundled
+  script reads a model file's base and triggers. Use when the user wants an image or video prompt for
+  ComfyUI, Forge or SwarmUI, wants it cinematic or trippy, asks what
+  settings or triggers a model needs, or says a result is not working. Not
+  for prompts for hosted tools such as Midjourney, DALL-E or Sora, or for
+  building ComfyUI workflows or custom nodes.
 ---
 
 # Media prompt
@@ -44,8 +43,10 @@ Sources checked: [SOURCES.md](SOURCES.md)
 | Upscaling, frame interpolation | No prompt, settings only | | [finishing.md](./resources/finishing.md) |
 | Directing any of these: framing, camera move, lens, light, colour, a still's camera and film | The family's form, with shot words added | | [camera.md](./resources/camera.md) |
 | Trippy, surreal and impossible effects: dolly zoom, morph, dissolve, time tricks, recursion | One effect, written as what happens | | [effects.md](./resources/effects.md) |
+| More than one pass: shots from one master still, building in layers, a refine pass on a second model, a detail pass, seeds and takes, a hosted still as the start frame | Each pass in its own family's form | Per pass | [pipelines.md](./resources/pipelines.md) |
+| A result came back wrong: an object split, motion stopped early, a reframe lost the character, the rendered look | The fix, cheapest first | | [fixes.md](./resources/fixes.md) |
 
-Not covered: Pony V7 (AuraFlow), Chroma, Z-Image, HiDream, HunyuanVideo, SD 1.5, SD 3.5, and the hosted models: FLUX 3 Image (its open-weights Klein is covered above), FLUX 3 Video, and Wan 2.5 and later. For those, say so, write plain sentences, and mark the settings as unchecked. [camera.md](./resources/camera.md#from-a-flux-3-prompt) turns FLUX 3 Video prompts into prompts for the local video models.
+Not covered: Pony V7 (AuraFlow), Chroma, Z-Image, HiDream, HunyuanVideo, SD 1.5, SD 3.5, and the hosted models: FLUX 3 Image (its open-weights Klein is covered above), FLUX 3 Video, and Wan 2.5 and later. For those, say so, write plain sentences, and mark the settings as unchecked. [camera.md](./resources/camera.md#from-a-flux-3-prompt) turns FLUX 3 Video prompts into prompts for the local video models. A still made by a hosted model can be the start frame for a local video model: write only the local video prompt ([pipelines.md](./resources/pipelines.md#a-hosted-still-as-the-start-frame)).
 
 ## Steps
 
@@ -56,8 +57,8 @@ Not covered: Pony V7 (AuraFlow), Chroma, Z-Image, HiDream, HunyuanVideo, SD 1.5,
    - ask, once, with the likely families as options
 
    A checkpoint's name is not enough. One name is used for checkpoints on FLUX.1, Pony and Illustrious, and one checkpoint line moved from SDXL to Krea 2 at version 10.
-2. **Find the job:** text to image, edit an image, text to video, image to video, or finishing. For an edit or image to video, ask for the image if it is not attached, look at it, and write only what changes.
-3. **Read that one family file.** If the user wants a look, also read [camera.md](./resources/camera.md), and for anything impossible [effects.md](./resources/effects.md). Do not load the others.
+2. **Find the job:** text to image, edit an image, text to video, image to video, finishing, a chain of passes, or fixing a result. For an edit or image to video, ask for the image if it is not attached, look at it, and write only what changes. If the user can't share it (outputs are often private), ask what it shows and work from the description. Claude can't watch video; [fixes.md](./resources/fixes.md#checking-what-went-wrong) has a frame-strip command to use with the user's OK.
+3. **Read that one family file.** If the user wants a look, also read [camera.md](./resources/camera.md), and for anything impossible [effects.md](./resources/effects.md). For a job of several passes read [pipelines.md](./resources/pipelines.md), then each pass's family file as you reach it; for a broken result read [fixes.md](./resources/fixes.md). Do not load the others.
 4. **Ask only what would change the prompt.** At most two questions, usually none. Take the rest from the file's defaults and say which defaults you used.
 5. **Write the prompt** by the rules below.
 6. **Hand back the output block**, then stop. Offer one next change ("more motion", "closer crop"), not a menu.
@@ -100,12 +101,13 @@ Negative: <the negative prompt> | none: <why, for example "CFG is 1, so ComfyUI 
 Settings: <width>×<height>, <frames> frames at <fps> fps (video only), steps <n>, cfg <n>, <sampler>, <scheduler>, <shift or guidance>
 LoRAs: <file> at <strength>, trigger "<words>" | none
 Terms: <each film term in the prompt, and what it does on screen> (only when directing)
+Takes: <n> takes, seed on randomize; fix the seed before changing words (only for a risky shot)
 
 Minimal version (the user's words in this model's form, nothing added):
 <prompt>
 ```
 
-The minimal version is the control. If it beats the full prompt, the additions were wrong for this idea: say so, and stay closer to it next time. Finishing jobs get Settings only. The Terms line teaches the words: "dolly zoom: the camera pulls back while the lens zooms in, so the subject holds its size and the background swells".
+The minimal version is the control. If it beats the full prompt, the additions were wrong for this idea: say so, and stay closer to it next time. Finishing jobs get Settings only. A risky shot (hands holding things, small or hinged props, two characters touching, big motion) gets the Takes line ([pipelines.md](./resources/pipelines.md#seeds-and-takes)). A job of several passes gets one output block per pass, in order, each naming what feeds it. The Terms line teaches the words: "dolly zoom: the camera pulls back while the lens zooms in, so the subject holds its size and the background swells".
 
 ## Your models file
 
@@ -142,4 +144,6 @@ Decline these whatever the framing.
 - [ ] LoRA triggers came from the models file, the script or the user
 - [ ] The minimal version is there
 - [ ] When directing: one move, one lens, one light, at most one effect, each written as what happens on screen, and the length fits the model
+- [ ] A risky shot says how many takes; a job of several passes has one block per pass, each naming its input
+- [ ] A fix changes one thing, with the seed fixed, and starts with the cheapest route
 - [ ] The limits hold
