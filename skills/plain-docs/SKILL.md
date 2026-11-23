@@ -1,6 +1,11 @@
 ---
 name: plain-docs
-description: Use when writing or fixing documentation: README files, guides, how-tos, API references, concept pages, and ADRs. Cuts docs to what the reader needs, puts a picture before detail, and uses plain words. Two modes: write a new doc in a fixed 5 layer shape, or trim an existing doc and report what was cut.
+description: >
+  Use when writing or fixing documentation: README files, guides, how-tos,
+  API references, concept pages, and ADRs. Cuts docs to what the reader
+  needs, puts a picture before detail, and uses plain words. Two modes:
+  write a new doc in a fixed 5 layer shape, or trim an existing doc and
+  report what was cut.
 ---
 
 # Plain Docs

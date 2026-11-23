@@ -50,6 +50,8 @@ description: >
 
 Use only `name` and `description`. Claude Code and the skills CLI do not act on keys under `metadata`, so file and command trigger patterns there do not trigger anything.
 
+Keep the description in a folded block (`>`) as above. Unquoted on one line, a `: ` in the text makes the YAML invalid, and a ` #` turns the rest of the line into a comment. CI runs `node reviews/all-skills/checks/check-frontmatter.mjs` to catch both.
+
 ### Writing Guidelines
 
 - **Lead with a decision matrix or quick reference table** — users scan, they don't read top-to-bottom
