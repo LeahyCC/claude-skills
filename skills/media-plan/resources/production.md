@@ -39,7 +39,7 @@ Each shot in the shot list names its route: the still and the video model.
 | The first picture of the piece | Master: Krea 2 Turbo. Busy action or big scale: Qwen 2512, then a Krea 2 refine | |
 | The same characters as the master | An edit of the master in Qwen Edit 2511, never a fresh prompt | |
 | A new camera angle of the same place | Qwen Edit 2511 with the multi-angles LoRA (widest framing: a wide shot) | |
-| Two characters touching or fighting | Build in layers: each character alone, then combined in one Qwen Edit 2511 multi-image edit | Wan 2.2 I2V on the full 20-step path; risky |
+| Two characters touching or fighting | Build in layers: each character an edit of the master that isolates it, then one Qwen Edit 2511 multi-image edit combines them | Wan 2.2 I2V on the full 20-step path; risky |
 | One move and one change | | Wan 2.2 I2V |
 | A transformation (A becomes B) | Two stills, A and B, both edits of the master | Wan 2.2 or LTX-2.5 first and last frame |
 | Two to four beats in one take, or the model's own sound | | LTX-2.5 I2V |
@@ -66,7 +66,7 @@ Creators and vendors who publish their method agree on the shape: script, then r
 1. **Voice draft.** Generate the voiceover and dialogue lines first, as a rough take. Each line's real length sets its shot's length; a lip-sync model needs the audio as input anyway. Cheap to redo.
 2. **Master still.** One still with every character and the place, in the look bible's words. It decides the look of everything after it: video inherits the still's look, so fix the look here.
 3. **Fix the master** one change per pass: close or simplify small hinged props (an open pocket watch's lid turned into a second face in motion, and the still models drew it open even when told closed), remove extra limbs, set the light.
-4. **Shot stills.** Each shot's start frame is an edit of the master, written as the change only, with each character's short name. media-prompt's edit rule is to describe only the change, and its image-to-video rule is not to describe the picture again; the master already holds the full description. BFL's and Lightricks' video guides both say to keep one fixed description, so the full words live in the look bible and go, unchanged, into every fresh still (the master, a layer, a still wider than the master). For many angles of one character, first edit the master into a character sheet (front, side, back, close-up, as Curious Refuge teaches); Runway says one good reference is enough for most projects and a turnaround helps with varied angles. Contact between two characters: build in layers. A small soft face: a detail pass.
+4. **Shot stills.** Each shot's start frame is an edit of the master, written as the change only, with each character's short name. media-prompt's edit rule is to describe only the change, and its image-to-video rule is not to describe the picture again; the master already holds the full description. BFL's and Lightricks' video guides both say to keep one fixed description, so the full words live in the look bible and go, unchanged, into every fresh still (the master, and a still wider than the master). For many angles of one character, first edit the master into a character sheet (front, side, back, close-up, as Curious Refuge teaches); Runway says one good reference is enough for most projects and a turnaround helps with varied angles. Contact between two characters: build in layers. A small soft face: a detail pass.
 5. **Video, one clip per shot,** from its start frame. Make the risky shots first: if one fails, the plan changes before the easy ones are spent.
 6. **Final voice and lip sync.** Regenerate any line whose timing changed. Lip sync only shots that show a speaking mouth.
 7. **Sound** in layers under the voice ([sound.md](./sound.md)).
@@ -122,7 +122,7 @@ One line per pass, ready to paste. Each names the model, the job, what feeds it,
 
 | Line | Characters | Light |
 | --- | --- | --- |
-| Fresh still: the master, a layer, a still wider than the master | The short name, then the full words: "the rust giant, a giant of riveted iron plates..." | The Light words, unchanged, plus the Medium words |
+| Fresh still: the master, or a still wider than the master | The short name, then the full words: "the rust giant, a giant of riveted iron plates..." | The Light words, unchanged, plus the Medium words |
 | Edit or video | The short name only ("the rust giant"), spelled the same every time, and only what changes | The Light words, unchanged, when the line states the light |
 
 The master's line holds every character's full words, the Place, the Light and the Medium, word for word.

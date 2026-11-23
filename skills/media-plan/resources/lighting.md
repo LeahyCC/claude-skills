@@ -57,7 +57,7 @@ The ASC (Burum) and No Film School agree: keep the light's direction, colour and
 
 One block the plan draws on. Write each line once, in words a model can draw, and never paraphrase it later. How much of it a hand-off line carries depends on the line:
 
-- **A fresh still** (the master, a layer, a still wider than the master) carries each character's full words, the Light and the Medium. The master also carries the Place.
+- **A fresh still** (the master, or a still wider than the master) carries each character's full words, the Light and the Medium. The master also carries the Place.
 - **An edit or a video** uses each character's short name and only what changes, because the picture already shows the rest. It uses the Light words unchanged when it states the light.
 
 | Line | What goes in it |

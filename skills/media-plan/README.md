@@ -34,7 +34,7 @@ Install media-prompt too: the plan's hand-off lines are requests for it.
 | Gaps | What the setup can't make yet (lip sync to a voice file), at the shot it affects |
 | Hand-off | One `/media-prompt` line for the master and one per shot |
 
-Every shot fits what one generation makes: Wan 2.2 at about 5 seconds with one move and one change, LTX-2.5 at up to about 10 seconds with its own sound, stills on Krea 2 or Qwen. Characters stay the same because one master still sets them, and every other still is an edit of it or a fresh still in the same look bible words.
+Every shot fits what one generation makes: Wan 2.2 at about 5 seconds with one move and one change, LTX-2.5 at up to about 10 seconds with its own sound, stills on Krea 2 or Qwen. Characters stay the same because one master still sets them, and every other still is an edit of it, except a still wider than the master, which is a fresh still in the same look bible words.
 
 Version 0.1.0. 5 resource files.
 

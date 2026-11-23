@@ -58,7 +58,7 @@ Read all five for a full plan. For one part ("just the shot list"), read that fi
 | LTX-2.5 | Up to about 10 s, with its own sound and voice | Two to four beats. **Cannot lip sync to a supplied voice file** |
 | Wan 2.2 S2V, InfiniteTalk | Lip sync to a voice file | **Not installed yet.** Flag it, never plan around it silently |
 
-- **Consistent characters:** one master still; every other still is an edit of it. The exceptions are a layer for two characters touching and a still wider than the master: those are fresh stills, written in the look bible's full words.
+- **Consistent characters:** one master still; every other still is an edit of it, the layers for two characters touching included. The only fresh still after the master is one wider than the master, written in the look bible's full words.
 - **Small hinged props** (an open pocket watch) break in motion. Close or simplify them in the still.
 - **Words on screen** go in the edit, not the video.
 
@@ -80,7 +80,7 @@ Read all five for a full plan. For one part ("just the shot list"), read that fi
 | Keep the user's subjects, places and tone | Add characters or subplots they didn't ask for |
 | One move and one change per Wan shot | Two moves, or a shot longer than its model makes |
 | Make the master the widest shot, and crop in | Plan a still wider than the master as an edit of it |
-| Put the look bible's full words in every fresh still: the master, each layer, a still wider than the master | Describe a character in new words each shot |
+| Put the look bible's full words in every fresh still: the master, and a still wider than the master (the only fresh still after it) | Describe a character in new words each shot |
 | In edits and video, use each character's short name, the same every time, and write only the change | Describe the picture again: media-prompt's edit and image-to-video rules forbid it |
 | When a line states the light, use the look bible's Light words unchanged | Reword the light from shot to shot |
 | Plan ElevenLabs lines as voiceover, or a hidden mouth, until lip sync is installed | Plan a mouth speaking an ElevenLabs file on LTX-2.5 |
@@ -161,7 +161,7 @@ NARRATOR (V.O.): "She gave it roots."
 
 ### Look bible
 
-Fresh stills (the master, the shot 3 layers) carry the full words. Edits and video use the short name and the change. Any line that states the light uses the Light words as written.
+The fresh still (here only the master) carries the full words. Edits and video use the short name and the change. Any line that states the light uses the Light words as written.
 
 | Line | Short name | Full words |
 | --- | --- | --- |
@@ -178,7 +178,7 @@ Fresh stills (the master, the shot 3 layers) carry the full words. Edits and vid
 
 1. **Voice draft:** the three narrator lines in ElevenLabs. VO 1 must fit inside shot 1's 4 s.
 2. **Master:** the widest shot, a high-angle wide of the valley with both giants apart. Qwen 2512 for the scale and layout, then a Krea 2 refine. 4 takes, pick one.
-3. **Stills:** 1, 2 and 4 are edits of the master, each closer than it; shot 4 starts on a closer crop so its pull back ends at the master's framing. 3 is built in layers: each giant as a fresh still in its full words, then combined with the fist caught. **Risky, 6 takes.**
+3. **Stills:** 1, 2 and 4 are edits of the master, each closer than it; shot 4 starts on a closer crop so its pull back ends at the master's framing. 3 is built in layers: each giant isolated from the master in its own edit, then the two combined with the fist caught. **Risky, 6 takes.**
 4. **Video:** shot 3 first (two characters touching, 6 takes, no Lightning), then 4 (4 takes), then 1 and 2 (3 takes each).
 5. **Final voice and sound:** narrator lines, effects from ElevenLabs sound effects, LTX's ambience under shot 4.
 6. **Finish:** Wan's 16 fps clips interpolated ×2, one delivery rate, an upscale, captions above the bottom band.
@@ -191,8 +191,8 @@ Gaps: none. The narrator is never on screen, so no lip sync.
 /media-prompt Qwen-Image 2512, text to image, then a Krea 2 Turbo refine, the master: 9:16, a high-angle wide view of a narrow wheat valley at dawn with one small stone farmhouse, forest on the right slope; on the left the rust giant, a giant of riveted iron plates flaking orange rust, a dented bucket-shaped head with two dark eye slits, faces right; on the right the bloom giant, a giant woven from mossy oak branches, white and yellow wildflowers along its shoulders, a bark face with two knot-hole eyes, crouches at the forest edge facing left; low dawn sun from screen left through haze, hard and warm; 35mm film still, Kodak Portra 400, natural grain
 /media-prompt Shot 1, Qwen-Image-Edit 2511 edit of the master, then Wan 2.2 I2V-A14B: re-angle to a low view from inside the wheat, close on the rust giant's iron foot lifted above the stalks; then the foot slams into the wheat at 1 s and the stalks brown to rust in a ring; static camera, 24mm, low dawn sun from screen left through haze, hard and warm; 3 takes
 /media-prompt Shot 2, Qwen-Image-Edit 2511 edit of the master, then Wan 2.2 I2V-A14B: crop in to a full shot of the bloom giant crouched at the forest edge, the farmhouse small in front, as if from far back on an 85mm lens; then the bloom giant stands up as birds lift off its shoulders; slow tilt up; low dawn sun from screen left through haze, hard and warm, rim light on the moss; 3 takes
-/media-prompt Shot 3 layer A, risky, Krea 2 Turbo text to image: 9:16, the rust giant, a giant of riveted iron plates flaking orange rust, a dented bucket-shaped head with two dark eye slits, alone and side on, facing right, its right fist thrown forward, on bare ground; low dawn sun from screen left through haze, hard and warm; 35mm film still, Kodak Portra 400, natural grain
-/media-prompt Shot 3 layer B, risky, Krea 2 Turbo text to image: 9:16, the bloom giant, a giant woven from mossy oak branches, white and yellow wildflowers along its shoulders, a bark face with two knot-hole eyes, alone and side on, facing left, both hands raised in front of it, on bare ground; low dawn sun from screen left through haze, hard and warm; 35mm film still, Kodak Portra 400, natural grain
+/media-prompt Shot 3 layer A, risky, Qwen-Image-Edit 2511 edit of the master: keep only the rust giant, turned side on facing right with its right fist thrown forward, on bare ground; keep its look unchanged
+/media-prompt Shot 3 layer B, risky, Qwen-Image-Edit 2511 edit of the master: keep only the bloom giant, turned side on facing left with both hands raised, on bare ground; keep its look unchanged
 /media-prompt Shot 3, risky, Qwen-Image-Edit 2511 multi-image edit from layer A, layer B and the master, then Wan 2.2 I2V-A14B on the full 20-step path: a medium two-shot side on in the valley, the rust giant on the left, the bloom giant on the right holding the rust giant's iron fist in both hands; then green vines climb slowly up the iron arm; static camera, 50mm, low dawn sun from screen left through haze, hard and warm; 6 takes
 /media-prompt Shot 4, Qwen-Image-Edit 2511 edits of the master, then LTX-2.5 image to video, 7 s: a closer high-angle crop of the master, the bloom giant standing beside the rust giant, green vines on the rust giant's right arm; the rust giant slowly kneels, then white and yellow flowers open across its back until it is a green hill; the camera pulls back slowly to the master's framing; low dawn sun from screen left through haze, hard and warm; only wind settling and birdsong; 4 takes
 ```
@@ -213,7 +213,7 @@ Decline these whatever the framing.
 - [ ] The hook is the first shot and lands in its first 1 to 2 s
 - [ ] Every Wan shot is 5 s or less with one move and one change; every LTX shot is up to about 10 s with 2 to 4 beats
 - [ ] The shot seconds add up to the length
-- [ ] Every still after the master is an edit of it, except layers and stills wider than the master; the master is the widest shot
+- [ ] Every still after the master is an edit of it, layers included; the only fresh still after it is one wider than the master; the master is the widest shot
 - [ ] Fresh stills carry the look bible's full words; edits and video use the same short names and only the change; stated light is the Light words unchanged
 - [ ] One light source and side, the same in every shot unless a shot changes it on purpose
 - [ ] Each voice line says who speaks and how, and whether a mouth is on screen

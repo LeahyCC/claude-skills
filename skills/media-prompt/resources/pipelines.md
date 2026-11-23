@@ -41,6 +41,7 @@ LTX-2.5 can also cut between shots inside one clip and hold the characters acros
 A still that must hold two characters, an interaction between them, a setting and a look tends to lose some of it. Split it:
 
 1. Make each part as its own simple still: each character alone, the background alone.
+   When a master still exists, make each part as an edit of it (keep only that character), not a new prompt, so the characters still match the other shots.
 2. Combine them with a multi-image edit: Qwen-Image-Edit 2509 or 2511 takes up to three pictures, named `picture 1` to `picture 3`; Qwen-Image 2.1 takes up to ten, named `<image1>` and on ([qwen-image-edit.md](./qwen-image-edit.md#several-images)).
 3. Then fix one thing per edit pass. Qwen's own edit rewriter asks for one instruction per change.
 
