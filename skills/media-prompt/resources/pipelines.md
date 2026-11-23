@@ -24,6 +24,7 @@ Most finished pieces take several passes: a still, edits to it, a video from it,
 | A close-up to turn into a wide or full-body shot | [fixes.md](./fixes.md#edits), big reframes |
 | A clip that broke: an object split, the motion stopped early | [fixes.md](./fixes.md) |
 | A reel of several shots with one look | Stills first, each from the master still; then one video per still; then one finish for all ([finishing.md](./finishing.md)) |
+| Stills that should share a chosen look ("like Midjourney", a reference picture, a house style) | [look.md](./look.md): the look in the prompt, a style reference or a style LoRA, then one grade for the set |
 
 ## Shots from one master still
 

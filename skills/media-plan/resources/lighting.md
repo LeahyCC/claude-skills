@@ -67,6 +67,8 @@ One block the plan draws on. Write each line once, in words a model can draw, an
 | Palette | Two to four colours, named ("rust orange, moss green, wheat gold") |
 | Light | The key's source, side and quality. Its colour |
 | Medium | Film stock or medium: "35mm film still, Kodak Portra 400, natural grain". Naming a real medium made stills read as photos in real runs |
+| Reference | Optional. A picture whose look the piece borrows. It goes on the master only, as a style reference: every later still is an edit of the master and inherits the look (media-prompt's look.md) |
+| Grade | One finish for every shot, in plain words: which way the shadows and highlights lean, how far the blacks lift, glow or none, grain or none. Applied once, to the finished clips, never per shot |
 | Effect | The one impossible thing, if any, and which shots it is in |
 | Screen direction | Who is on which side, facing where, and which side the camera stays on |
 | Props to simplify | Hinged or small props, and how they appear: closed, held in one hand |

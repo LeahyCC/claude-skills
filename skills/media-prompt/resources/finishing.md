@@ -1,4 +1,4 @@
-# Finishing: more frames, more pixels
+# Finishing: more frames, more pixels, a grade
 
 No prompt. Settings only, in the output block's Settings line.
 
@@ -7,6 +7,7 @@ No prompt. Settings only, in the output block's Settings line.
 - [More frames: interpolation](#more-frames-interpolation)
 - [More pixels: upscaling](#more-pixels-upscaling)
 - [SeedVR2: restore and upscale](#seedvr2-restore-and-upscale)
+- [Grade: colour, glow and grain](#grade-colour-glow-and-grain)
 - [A reel from mixed clips](#a-reel-from-mixed-clips)
 - [Output](#output)
 
@@ -55,6 +56,31 @@ ByteDance's SeedVR2 restores and upscales in one diffusion step, and ComfyUI run
 - Both use `seedvr2_ema_vae_fp16` with tiled encode and decode. The sampler is one step, cfg 1, euler, simple, denoise 1 ("full restore").
 - For a long clip, the template note says to turn on `trim_video` and upscale in segments, to avoid running out of memory.
 - An optional colour correction matches the result to the original; it starts off.
+- ComfyUI's docs call SeedVR2 a conservative upscaler: it keeps what is there and invents little. For new detail, use the second pass above.
+
+## Grade: colour, glow and grain
+
+A straight render has pure blacks, even colour and no grain, which is much of what reads as "AI". ComfyUI ships the tools as blueprints: ready-made subgraph boxes, each one GLSLShader node running on the GPU. Find them by name in the node search, or all together in the template `basic_image_color_adjustment`. No custom nodes.
+
+Chain them in this order, after the last upscale:
+
+| Step | Blueprint | Controls | A gentle start | Too much looks like |
+| --- | --- | --- | --- | --- |
+| 1. Split the tones | Color Balance | Red, green and blue for shadows, midtones and highlights, each −100 to 100. Preserve Luminosity | Shadows: red −5, blue +6. Highlights: red +5, green +2, blue −5 | A colour cast on skin |
+| 2. Lift the blacks | Image Levels | Input black and white, gamma, output black and white (0 to 255) | Output black 8, output white 250 | Grey, washed-out shadows |
+| 3. Calm the colour | Color Adjustment | Temperature, tint, vibrance, saturation, each −100 to 100 | Saturation −8, vibrance +8 | Flat, or orange |
+| 4. Glow | Glow | Intensity, radius, threshold, a blend mode, a tint colour | Intensity 5, radius 45, threshold 30, blend screen, a warm orange tint | A hazy, smeared picture |
+| 5. Grain | Film Grain | Grain amount (0 to 1), grain size (0.3 to 3, lower is finer), colour amount, luminance bias (1 is shadows only), Smooth or Grainy | Amount 0.3, size 1.2, colour 0.25, luminance bias 0.35 | Noise |
+| 6. Lens fringing | Chromatic Aberration | Amount 0 to 100; Linear, Radial, Barrel, Swirl or Diagonal | Off. To try it: Radial, 10 | A 3D-glasses look |
+
+- **The starting values are a judgement,** picked from each shader's range to be barely visible. No source gives numbers for these. Change one box at a time and compare with the box bypassed.
+- **What each number does,** from the shaders: Color Balance at 10 moves a tone range by about 0.07 of full scale. Glow's threshold counts down from white, so at 30 only parts brighter than about 70% of white glow, and at intensity 0 the box does nothing (its default). Glow's radius is in pixels, so it needs raising on a bigger picture. Film Grain's amount of 1 adds noise of about 0.15 of full scale.
+- **Glow with a warm tint stands in for halation,** the red-orange halo film gives bright edges. There is no core node or blueprint for halation, a vignette or a LUT file. Color Curves (an RGB master curve and one per channel) covers a contrast curve.
+- **Match another picture's colours** with Transfer Color (ColorTransfer): the picture as `image_target`, the reference as `image_ref`, method `reinhard_lab`, `mkl_lab` or `histogram`, strength 1.0. This is how a set of stills, or clips from two video models, gets one palette.
+- **Add Noise to Image** (ImageAddNoise) is the plain alternative for grain: per-channel Gaussian noise, with a default strength of 0.5 that is far too high for grain.
+- **One grade for the whole set.** Save the chain once and run every still through it unchanged.
+- **On video, skip the Film Grain box.** The boxes take a batch of frames, but the grain shader has no frame input, so it draws the same grain on every frame and the grain sits still like dirt on the lens. The colour steps and the glow are safe on clips. Add moving grain in the editor.
+- **A painting gets no grain.** Grain and fringing are what a camera adds. For a painted look keep the colour steps and the glow.
 
 ## A reel from mixed clips
 
@@ -64,4 +90,8 @@ Wan 2.2 A14B saves at 16 fps and LTX-2.5 at 24. Pick one delivery rate before ed
 
 ```text
 Settings: FrameInterpolate, rife_v4.25, multiplier 2, 81 frames in, 161 frames out. Save at 32 fps (the source's 16 × 2).
+```
+
+```text
+Settings: after the upscale, Color Balance (shadows red −5, blue +6; highlights red +5, green +2, blue −5), Image Levels (output black 8, output white 250), Film Grain (amount 0.3, size 1.2). The same chain for every still in the set.
 ```

@@ -42,6 +42,9 @@ The glossy, evenly lit, oversaturated "AI" look has a few common causes.
 | Characters posed facing the camera | Give them an action and a direction to look: at each other, at the task |
 | Too many effects at once | One realism cue, one or two effects ([camera.md](./camera.md#stills-camera-lens-and-film)) |
 | The model's own default | On Qwen-Image 2512, keep its card's negative, which names the AI look ([qwen-image.md](./qwen-image.md#negative-prompt)). Or [refine with a second model](./pipelines.md#refine-with-a-second-model) |
+| Plastic or wet skin on Krea 2 Turbo, or every seed giving the same picture | The community fixes in [krea2.md](./krea2.md#community-settings): the beta schedule, or Raw with the turbo LoRA at 0.6 |
+| A clean, even, ungraded surface: pure blacks, no grain | [Grade it](./finishing.md#grade-colour-glow-and-grain) after the last upscale |
+| The picture is fine but has no look of its own | Pick one: a look written into the prompt, a style reference, or a style LoRA ([look.md](./look.md)) |
 
 ## Checking what went wrong
 

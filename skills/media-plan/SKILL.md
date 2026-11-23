@@ -69,7 +69,7 @@ Read all five for a full plan. For one part ("just the shot list"), read that fi
 3. **Beats** sized to the length: a hook in the first 1 to 2 s, a turn, a payoff. 15 to 30 s is 3 to 6 shots.
 4. **Script:** action lines, then each voice line in quotes with who speaks and how. Mark V.O. or O.S. when no mouth is on screen.
 5. **Shot list:** one row per shot, every column filled, every shot within its model's length.
-6. **Look bible:** what must stay the same. Each character gets full words and one short name; then the place, palette, light and medium ([lighting.md](./resources/lighting.md#the-look-bible)).
+6. **Look bible:** what must stay the same. Each character gets full words and one short name; then the place, palette, light, medium and grade ([lighting.md](./resources/lighting.md#the-look-bible)). If the user wants the look of a picture they have, or "like Midjourney", add a Reference line: the master takes it as a style reference, and media-prompt's look file picks the route.
 7. **Production order:** voice draft, master still, edited stills, video per shot (risky first), final voice and lip sync, sound, finish. Mark risky shots with their takes. List the gaps.
 8. **Hand-off:** one `/media-prompt` line for the master, then one per shot. Offer one next change ("a faster cut", "a darker ending"), not a menu.
 
@@ -171,6 +171,7 @@ The fresh still (here only the master) carries the full words. Edits and video u
 | Palette | | rust orange, moss green, wheat gold, pale grey sky |
 | Light | | low dawn sun from screen left through haze, hard and warm |
 | Medium | | 35mm film still, Kodak Portra 400, natural grain |
+| Grade | | cool green shadows, warm highlights, blacks lifted a little, fine grain added in the editor |
 | Effect | | flowers and vines grow over iron at time-lapse speed, shots 3 and 4 only |
 | Screen direction | | the rust giant on the left facing right, the bloom giant on the right facing left, camera on the farmhouse side |
 
@@ -181,7 +182,7 @@ The fresh still (here only the master) carries the full words. Edits and video u
 3. **Stills:** 1, 2 and 4 are edits of the master, each closer than it; shot 4 starts on a closer crop so its pull back ends at the master's framing. 3 is built in layers: each giant isolated from the master in its own edit, then the two combined with the fist caught. **Risky, 6 takes.**
 4. **Video:** shot 3 first (two characters touching, 6 takes, no Lightning), then 4 (4 takes), then 1 and 2 (3 takes each).
 5. **Final voice and sound:** narrator lines, effects from ElevenLabs sound effects, LTX's ambience under shot 4.
-6. **Finish:** Wan's 16 fps clips interpolated ×2, one delivery rate, an upscale, captions above the bottom band.
+6. **Finish:** Wan's 16 fps clips interpolated ×2, one delivery rate, an upscale, the look bible's grade on all four clips, captions above the bottom band.
 
 Gaps: none. The narrator is never on screen, so no lip sync.
 

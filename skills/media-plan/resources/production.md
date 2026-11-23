@@ -58,7 +58,7 @@ Each shot in the shot list names its route: the still and the video model.
  5. video          one clip per shot, risky shots first
  6. voice, sync    final lines, then lip sync if a mouth is on screen
  7. sound          effects, ambience, music under the voice
- 8. finish         cut, frame rate, upscale, captions
+ 8. finish         cut, frame rate, upscale, one grade, captions
 ```
 
 Creators and vendors who publish their method agree on the shape: script, then references, then a shot list, then stills, then image to video with several takes each, then the edit and sound last (Curious Refuge's course, PJ Ace's breakdowns, Google Flow's tips). This order adds the voice draft at the front, because on this setup a voice file drives lip sync and each line's length sets its shot.
@@ -70,7 +70,7 @@ Creators and vendors who publish their method agree on the shape: script, then r
 5. **Video, one clip per shot,** from its start frame. Make the risky shots first: if one fails, the plan changes before the easy ones are spent.
 6. **Final voice and lip sync.** Regenerate any line whose timing changed. Lip sync only shots that show a speaking mouth.
 7. **Sound** in layers under the voice ([sound.md](./sound.md)).
-8. **Finish.** Cut, then interpolate Wan's 16 fps clips ×2 to 32 or let the editor convert to one delivery rate (24 or 30), upscale, add captions.
+8. **Finish.** Cut, then interpolate Wan's 16 fps clips ×2 to 32 or let the editor convert to one delivery rate (24 or 30), upscale, grade, add captions. The grade is the look bible's Grade line, the same on every clip: it is what makes a Wan shot and an LTX shot sit together. media-prompt's finishing file has the ComfyUI boxes for it; grain goes on in the editor, because ComfyUI's grain box draws the same grain on every frame.
 
 ## Make the master the widest shot
 

@@ -1,6 +1,6 @@
 # media-prompt skill tasks and acceptance criteria
 
-Written 2026-11-22, before any model run. M28 to M40 and S29 to S32 added 2026-11-23 with pipelines.md and fixes.md. Run each prompt against Claude with the skill and without it. Score each criterion 0 or 1. One run per task is exploratory, not a statistical estimate.
+Written 2026-11-22, before any model run. M28 to M40 and S29 to S32 added 2026-11-23 with pipelines.md and fixes.md. M41 to M46 and S33 to S35 added 2026-11-23 with look.md. Run each prompt against Claude with the skill and without it. Score each criterion 0 or 1. One run per task is exploratory, not a statistical estimate.
 
 Status: **not run.** Model runs need Colin's approval first. The automatic checks in `checks/check-skill.mjs` run in CI and do not need a model.
 
@@ -66,9 +66,20 @@ Status: **not run.** Model runs need Colin's approval first. The automatic check
 | M39 | "Krea 2 Turbo with the official watercolor LoRA: a fox in snow." | Uses `krea2_softwatercolor` with the trigger "art deco watercolor style" at 1.0. Prose, 8 steps, cfg 1, no negative. |
 | M40 | "Upscale my 480p Wan clip and clean it up." | Settings only. Offers SeedVR2 (the 3B video template, 2×, trim long clips) and names the upscale-model route. Notes the save fps if the clip was interpolated. |
 
+### A chosen look
+
+| ID | Prompt | Acceptance criteria |
+| --- | --- | --- |
+| M41 | "Krea 2: a lighthouse keeper on the gallery at dusk, make it look like Midjourney." | Reads look.md. Asks at most one question (a reference picture, or photo or painterly), or picks one and says so. The prompt has no "Midjourney", no Midjourney parameters (`--sref`, `--stylize`) and no praise words. It names a medium, one light with its source and side, and two to four palette colours. Negative "none", 8 steps, cfg 1. A Finish line. The minimal version leaves the look words out. |
+| M42 | "I have a picture whose style I love. How do I get that style on a different subject, locally?" | The style reference on Krea 2 Turbo: `krea2_style_reference` at 1.0 through the style reference template, one or two references, the prompt about the new content only. Says to step toward 0.5 if the reference's content leaks in, and labels that a community report. Does not ask the user to share the picture. Offers Transfer Color for the palette alone. |
+| M43 | "My Krea 2 Turbo portraits have plastic skin and every seed looks the same." | Reads krea2.md's community settings. Offers the beta schedule, and Raw with the turbo LoRA at 0.6, 12 steps, cfg 1, euler, beta. Says these are community reports, not Krea's. One change at a time with the seed fixed. Says plain Raw is not the fix. |
+| M44 | "My stills look too clean and digital. Give them a film finish in ComfyUI, no custom nodes." | Settings only. The blueprint chain in order (Color Balance, Image Levels, Color Adjustment, Glow, Film Grain) with starting values, after the last upscale. Says the values are a starting judgement, and that there is no core halation, vignette or LUT node. |
+| M45 | "I want to train a Krea 2 LoRA on 80 of my favourite images so everything I make has that look." | Train on Raw, run on Turbo. Rank 32, learning rate 1e-4, 1024. Captions describe each picture's content and start with the trigger; the style is left uncaptioned. Pick the checkpoint by eye. Names the trainers Krea lists and says Krea publishes no settings. Points to Krea's licence. |
+| M46 | "Grade my finished Wan clip so it matches my stills." | The colour steps and the glow, the same values as the stills, or Transfer Color with a still as the reference. Says to skip the Film Grain box on video because it draws the same grain on every frame. |
+
 ## Selection
 
-The skill should load for S1 to S10, S21 to S23, S26, S27, S29, S30 and S32, and not for S11 to S20, S24, S25, S28 and S31.
+The skill should load for S1 to S10, S21 to S23, S26, S27, S29, S30 and S32 to S34, and not for S11 to S20, S24, S25, S28, S31 and S35.
 
 | ID | Prompt | Should load |
 | --- | --- | --- |
@@ -104,3 +115,6 @@ The skill should load for S1 to S10, S21 to S23, S26, S27, S29, S30 and S32, and
 | S30 | Make my character lip-sync to this voice file in ComfyUI | yes |
 | S31 | Write a Midjourney prompt for my first frame | no (hosted tool) |
 | S32 | How do I keep the same character across several shots in ComfyUI? | yes |
+| S33 | Make my ComfyUI stills look more like Midjourney | yes |
+| S34 | How do I add film grain and a colour grade to an image in ComfyUI? | yes |
+| S35 | What does --sref do in Midjourney and which codes are popular? | no (a question about a hosted tool) |

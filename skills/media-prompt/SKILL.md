@@ -7,14 +7,14 @@ description: >
   Illustrious), Wan 2.2 and LTX-2.5, plus LoRA triggers, upscaling,
   interpolation and lip sync to a voice file. Writes the form each model was
   trained on, a negative only when CFG uses one, and steps, CFG, size and
-  frames. Directs the shot (camera, lens, light, colour, sound) and builds
-  trippy effects such as a dolly zoom or morph. Plans multi-pass jobs (one
-  master still, layers, a refine pass) and fixes broken results. A bundled
-  script reads a model file's base and triggers. Use when the user wants an image or video prompt for
-  ComfyUI, Forge or SwarmUI, wants it cinematic or trippy, asks what
-  settings or triggers a model needs, or says a result is not working. Not
-  for prompts for hosted tools such as Midjourney, DALL-E or Sora, or for
-  building ComfyUI workflows or custom nodes.
+  frames. Directs the shot (camera, lens, light, colour, sound), builds
+  trippy effects, and gives stills a chosen look (a style reference, a style
+  LoRA, a grade). Plans multi-pass jobs and fixes broken results. A script
+  reads a model file's base and triggers. Use when the user wants an image
+  or video prompt for ComfyUI, Forge or SwarmUI, wants it cinematic, trippy
+  or "like Midjourney", asks what settings or triggers a model needs, or
+  says a result is not working. Not for prompts written for hosted tools
+  such as Midjourney, DALL-E or Sora, or for building custom nodes.
 ---
 
 # Media prompt
@@ -43,6 +43,7 @@ Sources checked: [SOURCES.md](SOURCES.md)
 | Upscaling, frame interpolation | No prompt, settings only | | [finishing.md](./resources/finishing.md) |
 | Directing any of these: framing, camera move, lens, light, colour, a still's camera and film | The family's form, with shot words added | | [camera.md](./resources/camera.md) |
 | Trippy, surreal and impossible effects: dolly zoom, morph, dissolve, time tricks, recursion | One effect, written as what happens | | [effects.md](./resources/effects.md) |
+| A chosen look for stills: "like Midjourney", "more aesthetic", a reference picture's style, one look across a set | The family's form, with a medium, one light and a palette; or a style reference or style LoRA; then a grade | | [look.md](./resources/look.md) |
 | More than one pass: shots from one master still, building in layers, a refine pass on a second model, a detail pass, seeds and takes, a hosted still as the start frame | Each pass in its own family's form | Per pass | [pipelines.md](./resources/pipelines.md) |
 | A result came back wrong: an object split, motion stopped early, a reframe lost the character, the rendered look | The fix, cheapest first | | [fixes.md](./resources/fixes.md) |
 
@@ -58,7 +59,7 @@ Not covered: Pony V7 (AuraFlow), Chroma, Z-Image, HiDream, HunyuanVideo, SD 1.5,
 
    A checkpoint's name is not enough. One name is used for checkpoints on FLUX.1, Pony and Illustrious, and one checkpoint line moved from SDXL to Krea 2 at version 10.
 2. **Find the job:** text to image, edit an image, text to video, image to video, finishing, a chain of passes, or fixing a result. For an edit or image to video, ask for the image if it is not attached, look at it, and write only what changes. If the user can't share it (outputs are often private), ask what it shows and work from the description. Claude can't watch video; [fixes.md](./resources/fixes.md#checking-what-went-wrong) has a frame-strip command to use with the user's OK.
-3. **Read that one family file.** If the user wants a look, also read [camera.md](./resources/camera.md), and for anything impossible [effects.md](./resources/effects.md). For a job of several passes read [pipelines.md](./resources/pipelines.md), then each pass's family file as you reach it; for a broken result read [fixes.md](./resources/fixes.md). Do not load the others.
+3. **Read that one family file.** If the user wants a look, also read [camera.md](./resources/camera.md), and for anything impossible [effects.md](./resources/effects.md). If the look is a taste ("like Midjourney", "more aesthetic", "match this picture"), read [look.md](./resources/look.md) first: it picks the route. For a job of several passes read [pipelines.md](./resources/pipelines.md), then each pass's family file as you reach it; for a broken result read [fixes.md](./resources/fixes.md). Do not load the others.
 4. **Ask only what would change the prompt.** At most two questions, usually none. Take the rest from the file's defaults and say which defaults you used.
 5. **Write the prompt** by the rules below.
 6. **Hand back the output block**, then stop. Offer one next change ("more motion", "closer crop"), not a menu.
@@ -79,6 +80,8 @@ Not covered: Pony V7 (AuraFlow), Chroma, Z-Image, HiDream, HunyuanVideo, SD 1.5,
 ## Direct it
 
 Use this when the user asks for a look ("cinematic", "like a film photo", "trippy", "dreamy"), names a film technique, or pastes a prompt written for a hosted model such as FLUX 3 Video.
+
+"Like Midjourney" is a look request too, and a vague one: Midjourney's look is partly its default taste and partly the style reference, moodboard or profile its user chose. [look.md](./resources/look.md) turns it into a route on local models. The prompt never says "Midjourney style", unless a loaded LoRA's page gives those words as its trigger.
 
 1. **Keep their idea.** Every subject, action and place they named stays. The look and one effect are the additions they asked for. New people, props or story beats still come only from them, or from a treatment they picked.
 2. **Choose one of each:** a framing, one camera move (video), one lens or optic, one light, one colour or texture. Take the words from [camera.md](./resources/camera.md), in the model's own words where its guide has them.
@@ -102,6 +105,7 @@ Settings: <width>×<height>, <frames> frames at <fps> fps (video only), steps <n
 LoRAs: <file> at <strength>, trigger "<words>" | none
 Terms: <each film term in the prompt, and what it does on screen> (only when directing)
 Takes: <n> takes, seed on randomize; fix the seed before changing words (only for a risky shot)
+Finish: <the grade, or the style reference and its strength> (only when a look was asked for)
 
 Minimal version (the user's words in this model's form, nothing added):
 <prompt>
@@ -144,6 +148,7 @@ Decline these whatever the framing.
 - [ ] LoRA triggers came from the models file, the script or the user
 - [ ] The minimal version is there
 - [ ] When directing: one move, one lens, one light, at most one effect, each written as what happens on screen, and the length fits the model
+- [ ] For a chosen look: a named medium, one light and a palette in the prompt, no "Midjourney style" or praise words (a loaded LoRA's trigger excepted), and a Finish line
 - [ ] A risky shot says how many takes; a job of several passes has one block per pass, each naming its input
 - [ ] A fix changes one thing, with the seed fixed, and starts with the cheapest route
 - [ ] The limits hold
