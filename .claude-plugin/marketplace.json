@@ -404,52 +404,6 @@
         "resource_files": 11,
         "install": "npx skills add LeahyCC/claude-skills@tailwind-design-system"
       }
-    },
-    {
-      "name": "media-prompt",
-      "source": "./skills/media-prompt",
-      "displayName": "Media Prompt",
-      "description": "Prompts and ComfyUI settings for local image and video models: FLUX.2, FLUX.1 and FLUX 3 Image Klein, Krea 2, Qwen-Image and Qwen-Image-Edit, Pony, NoobAI and Illustrious tags, Wan 2.2 and LTX-2.5, plus LoRA trigger words, upscaling, frame interpolation and lip sync to your own audio. Directs the shot on request (camera move, lens, light, colour, sound) and builds trippy effects such as a dolly zoom or a morph. Plans multi-pass jobs (one master still, layers, a refine pass) and fixes broken results. Includes a Node script that reads a model file to tell what it is built on.",
-      "version": "0.2.0",
-      "author": {
-        "name": "LeahyCC"
-      },
-      "license": "MIT",
-      "keywords": [
-        "prompting",
-        "image-generation",
-        "video-generation",
-        "comfyui",
-        "stable-diffusion"
-      ],
-      "metadata": {
-        "verified_against": "Vendor guides and rewriter prompts (BFL, including the FLUX 3 Image Klein upsampler's system prompts, Krea, Qwen, Alibaba Model Studio, Lightricks), model cards (FLUX.2, FLUX.1 Krea, FLUX 3 Image Klein, Krea 2, Qwen-Image, NoobAI, Illustrious, Pony V6), BFL's Klein inference code, ComfyUI source and official workflow templates, and the safetensors, ModelSpec, kohya, musubi-tuner, ai-toolkit, SwarmUI, A1111 and LoRA Manager metadata formats. Scoped in skills/media-prompt/SOURCES.md (checked 2026-11-22).",
-        "resource_files": 14,
-        "install": "npx skills add LeahyCC/claude-skills@media-prompt"
-      }
-    },
-    {
-      "name": "media-plan",
-      "source": "./skills/media-plan",
-      "displayName": "Media Plan",
-      "description": "Plans a short AI video from a plain idea: loglines, story beats with a hook, turn and payoff, a script with dialogue and voiceover, a shot list (seconds, framing, one camera move, lens, light, change, sound, and the model for each shot), a look bible, the order to make everything in with risky shots and gaps marked, and one hand-off line per shot for media-prompt. Plans within what Wan 2.2, LTX-2.5, Krea 2 and Qwen can make.",
-      "version": "0.1.0",
-      "author": {
-        "name": "LeahyCC"
-      },
-      "license": "MIT",
-      "keywords": [
-        "video-production",
-        "storyboard",
-        "screenwriting",
-        "comfyui",
-        "ai-video"
-      ],
-      "metadata": {
-        "verified_against": "Platform creative guides (TikTok, Meta, YouTube), screenwriting sources (Final Draft, Save the Cat, Pixar story rules, StudioBinder), the ASC and No Film School on lenses and lighting continuity, sound sources (USC, iZotope, Walter Murch, Adobe), ElevenLabs docs, AI filmmaking methods (Curious Refuge, PJ Ace, Google Flow, Runway, BFL, Lightricks), and media-prompt for model limits. Scoped in skills/media-plan/SOURCES.md (checked 2026-11-23).",
-        "resource_files": 5,
-        "install": "npx skills add LeahyCC/claude-skills@media-plan"
-      }
     }
   ]
 }
