@@ -45,6 +45,8 @@ The glossy, evenly lit, oversaturated "AI" look has a few common causes.
 | Plastic or wet skin on Krea 2 Turbo, or every seed giving the same picture | The community fixes in [krea2.md](./krea2.md#community-settings): the beta schedule, or Raw with the turbo LoRA at 0.6 |
 | A clean, even, ungraded surface: pure blacks, no grain | [Grade it](./finishing.md#grade-colour-glow-and-grain) after the last upscale |
 | The picture is fine but has no look of its own | Pick one: a look written into the prompt, a style reference, or a style LoRA ([look.md](./look.md)) |
+| With a style reference, the new subject comes out as the reference's subject | Lower the style reference LoRA from 1.0 to 0.7. Rewrite the subject in words that don't fit the reference's: its own shape, its colours, one key feature ([look.md](./look.md#borrow-a-look-from-a-picture)) |
+| With a style reference, the look arrives but the colours or one small feature are missing | Name the palette and the feature in the prompt. The reference carries the finish more reliably than the colour ([look.md](./look.md#borrow-a-look-from-a-picture)) |
 
 ## Checking what went wrong
 

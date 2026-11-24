@@ -86,7 +86,7 @@ Turbo redraws an existing picture: the refine pass in [pipelines.md](./pipelines
 - The prompt is the new picture's subject. The card: "No trigger word is needed just image and prompt."
 - Trained for 1 to 2 reference images. The template's box has three image inputs; the third is beyond what the card describes. The card does not say how much of the reference's content carries over; its example prompt names a new subject, so describe yours in full.
 - TextEncodeQwenImageEditPlus resizes each reference itself: to about 384×384 pixels in total for the text encoder, and to about 1 MP for the reference latent. A huge reference adds nothing.
-- The card gives no strength. Community reports put a workable range at 0.5 to 1.0, and one article keeps unwanted content out by masking the reference so the model never sees it. Cropping the file to the part whose look is wanted does the same job.
+- The card gives no strength. In this skill's own runs 0.7 was a better start than the template's 1.0, which pulled the reference's subject into the new picture ([look.md](./look.md#borrow-a-look-from-a-picture)). Community reports put a workable range at 0.5 to 1.0, and one article keeps unwanted content out by masking the reference so the model never sees it. Cropping the file to the part whose look is wanted does the same job.
 
 This is the nearest local tool to a hosted style reference; how to use it for a look is in [look.md](./look.md#borrow-a-look-from-a-picture). A style LoRA trained on your own images holds a look more firmly ([below](#train-a-style-lora)).
 

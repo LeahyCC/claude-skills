@@ -78,12 +78,14 @@ The local stand-in for a style reference is ostris' style reference LoRA on Krea
 
 | Choice | What to do |
 | --- | --- |
-| The prompt | The new picture's content only: subject, place, action. Midjourney gives the same advice for `--sref`: keep the text about content and let the reference carry the style |
-| The reference | One whose subject differs from the new picture's, so what carries over is the look. Crop it to the part whose look is wanted |
+| The prompt | The new picture's content, said firmly: the subject's shape, its colours, and the one feature that must show. No mood or style words. Midjourney gives the same advice for `--sref`: keep the text about content and let the reference carry the style |
+| The reference | One whose subject differs from the new picture's, so what carries over is the look. Use the original file, not a remake of it. Crop it to the part whose look is wanted |
 | How many | One or two. The LoRA was trained for that many. Two blend |
-| Strength | 1.0 in ComfyUI's template. The card gives no number. If the reference's subject or layout leaks in, or the picture breaks up, step down toward 0.5 (a community report, not the author's) |
+| Strength | Start at 0.7. ComfyUI's template loads it at 1.0 and the card gives no number. In this skill's own runs 1.0 pulled the reference's subject into the new one, and 0.7 held the look across ten new subjects. If the subject or layout still leaks in, or the picture breaks up, step down toward 0.5 (a community report, not the author's) |
 | Size of the reference | Nothing to set. The nodes shrink it before the model sees it, so a small, clean reference works as well as a large one |
 
+- **What the reference carries, and what it doesn't.** In this skill's own runs on Krea 2 Turbo the finish came across with no style words in the prompt: sharpness, background blur, surface detail, fog, glow. Colour and a small key feature did not come across reliably. A prompt that named only the subject lost the reference's palette and its glowing eyes, and naming both brought them back. So name the palette even when the reference already has it.
+- **Say what makes the new subject different from the reference's.** The model fills any gap in a shape from the reference. An octopus described as floating, with long thin arms hanging straight down, came out as the reference's jellyfish. The same words with no reference still hung the arms straight down, so the prompt was the cause and the reference finished the job. The second case in [FAIL and PASS](#fail-and-pass) shows the rewrite.
 - **Colour only.** To match a picture's palette without its texture, make the still as usual, then run ComfyUI's Transfer Color node (ColorTransfer) with the reference as `image_ref`. Methods: `reinhard_lab`, `mkl_lab`, `histogram`. Its strength runs from 0 to 10, and 1.0 is a full match.
 - **No style code.** Midjourney's numeric sref codes point into its own library. There is no local equivalent to look one up: the nearest thing is a LoRA.
 - **Other families:** FLUX.2 [klein] and Qwen-Image 2.1 take reference images in an edit ([flux.md](./flux.md), [qwen-image-edit.md](./qwen-image-edit.md#several-images)). Neither vendor documents how well they copy a style while leaving the content.
@@ -141,4 +143,31 @@ Finish: grade after the upscale: cool shadows and warm highlights, glow on the l
 ```text
 Minimal version (the user's words in this model's form, nothing added):
 An old lighthouse keeper standing on the gallery of a lighthouse at dusk.
+```
+
+A second case. The user has loaded a foggy picture of a giant jellyfish over a moor as the style reference and wants an octopus in that look.
+
+FAIL:
+
+```text
+A colossal octopus floats low over a misty shoreline like an airship. Its long thin arms hang straight down and glow orange, fading into the fog. Moody, atmospheric, cinematic.
+```
+
+Floating, with thin glowing arms that hang straight down: those words fit the reference's jellyfish, so a jellyfish comes back. The mood words add nothing, because the reference already carries the mood.
+
+PASS:
+
+```text
+A colossal octopus rises out of thick fog over a misty grey shoreline and fills the upper two thirds of the picture. It has a smooth, sack shaped head with two large eyes, and eight thick arms lined with round suckers that curl outward, some resting on the wet sand. Its skin is mottled grey blue and glows warm orange between the arms. A tiny distant fisherman in a teal raincoat stands on the sand, seen from behind, looking up.
+```
+
+```text
+Negative: none: Turbo runs without CFG
+Settings: 1024×1024, steps 8, cfg 1, euler, simple
+Finish: style reference at 0.7, the jellyfish picture as the one reference
+```
+
+```text
+Minimal version (the user's words in this model's form, nothing added):
+A colossal octopus on a misty shoreline.
 ```
