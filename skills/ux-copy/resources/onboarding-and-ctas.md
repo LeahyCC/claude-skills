@@ -63,6 +63,78 @@ Microcopy below or near the CTA reduces perceived risk:
 | Will it spam me? | "We'll only email you about your account" |
 | Can I try first? | "No account needed to browse" |
 
+Risk-reducers go in the small print, not in the button. "Try it free for 14 days" as a label makes the person read terms before they know what the button does. "Download free" with "No account, no card" under it says the same thing faster.
+
+## Landing Page CTAs
+
+A marketing page has a goal, and every button serves it. Most product home pages have two, in order:
+
+1. **Get paid.** The visitor is ready, so let them buy.
+2. **Get the download (or sign-up).** They are not ready to pay, so get the product in their hands.
+
+Each button maps to one of those goals and says it in one plain word or two.
+
+### Plain verbs win
+
+| Weak | Strong | Why |
+|------|--------|-----|
+| Try it free for 14 days | Download free | Names the action. The trial length goes in the small print |
+| Subscribe $9.99/yr (in the header) | Download | The header button is for the visitor who is not ready to pay yet |
+| Purchase | Buy | Shorter and plainer. "Purchase" is formal |
+| Subscribe for $9.99/year (under a big $9.99) | Buy | The price is already on the card. Don't make them read it twice |
+| Get started | Download | Names what actually happens |
+
+### A button goes where the action happens
+
+Count the clicks from the button to the goal. A button that scrolls to another section only to show another button wastes a click and breaks the person's intent.
+
+```
+FAIL  hero "Try it free" -> #download section -> "Download free" -> /download -> "Download 1.0.0"   4 clicks
+PASS  hero "Download free" -> /download -> "Download"                                               2 clicks
+```
+
+- A **button** never links to an anchor that holds another button for the same goal. Link straight to the page or action.
+- Anchor links are fine for **browsing**: header nav (Features, Pricing, FAQ) and a secondary "See pricing" link when the visitor still has to pick a plan.
+- When there is only one way to pay, the buy button can go straight to checkout. When there are plans to choose from, send them to the plans.
+
+### Say it once per view
+
+Count how many times one word shows on a single screen. An eyebrow "DOWNLOAD", a heading "Download IOSpec", a button "Download IOSpec 1.0.0" and a page title all saying the same word is noise.
+
+```tsx
+// FAIL: "Download" four times on one screen
+<Eyebrow>Download</Eyebrow>
+<h1>Download IOSpec</h1>
+<p>Free for 14 days, no account and no card. Signed and notarized by Apple.</p>
+<a href={dmg}>Download IOSpec 1.0.0</a>
+
+// PASS: the button is the only "Download"
+<h1>IOSpec</h1>
+<a href={dmg}>Download</a>
+<p className="text-xs">Version 1.0.0 · macOS 26 or later</p>
+```
+
+The `<title>` tag can still say "Download IOSpec" for search. It's not on screen.
+
+### Single-purpose pages carry no persuasion
+
+A page the visitor reached by clicking "Download" has already made the sale. Cut the reassurance and the pitch. Keep the button, the version and the requirements, then the install steps.
+
+### Let pictures speak
+
+When a card shows a drawing, a chart or a working demo, don't caption it with a sentence that says what the picture already shows. Keep a short title (it names the card and gives screen readers a heading) and drop the paragraph. Labels that are part of the picture (axis labels, a legend, a threshold) stay.
+
+| Picture shows | Caption to cut |
+|---------------|----------------|
+| A heat scale with Calm, Warm, Hot and their thresholds | "Warm and hot start at the same points every time." |
+| A list of apps, each tagged "Keeping the Mac awake" | "Names the apps holding your Mac awake." |
+
+Inside the picture, don't repeat one phrase on every row. "Keeping the Mac awake" three times becomes a heading once, or short tags ("Mac", "Display").
+
+### Give a demo room
+
+When a section holds an interactive demo next to its controls, stack them (demo on top, controls under) unless the demo is small. Side by side halves the demo's width on every screen.
+
 ## Sign-Up and Login Copy
 
 ### Sign-Up Forms
