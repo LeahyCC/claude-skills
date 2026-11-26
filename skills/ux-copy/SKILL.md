@@ -49,6 +49,7 @@ Production-ready UX copy patterns for React and Next.js applications. Every patt
 | Write error messages and validation text            | [Errors and Validation](./resources/errors-and-validation.md)    |
 | Write empty states and loading indicators          | [Empty and Loading](./resources/empty-and-loading.md)            |
 | Write CTAs, sign-up flows, onboarding              | [Onboarding and CTAs](./resources/onboarding-and-ctas.md)        |
+| Write home page and landing page buttons           | [Onboarding and CTAs, Landing Page CTAs](./resources/onboarding-and-ctas.md#landing-page-ctas) |
 | Write destructive confirmation dialogs             | [Confirmation and Danger](./resources/confirmation-and-danger.md)|
 | Write toasts, banners, alerts, status messages     | [Notifications and Status](./resources/notifications-and-status.md) |
 | Audit and fix copy across a mature codebase        | [Auditing and Refactoring](./resources/auditing-and-refactoring.md) |
@@ -212,6 +213,10 @@ When reviewing UI code, watch for these copy problems:
 - [ ] **Jargon or internal terms** — "token expired" → "Your session ended. Log in again."
 - [ ] **Vague success messages** — "Success!" → "Payment sent" (name what succeeded)
 - [ ] **Long paragraphs in UI** — break into bullets, shorten sentences, let whitespace work
+- [ ] **Terms in button labels**: "Try it free for 14 days" → "Download free", with the terms in small print
+- [ ] **Click chains**: a button that jumps to a section holding another button for the same goal. Link straight to the page or action
+- [ ] **One word many times on one screen**: eyebrow, heading and button all saying "Download". Say it once, on the button
+- [ ] **Captions that restate the picture**: a drawing or demo with a sentence saying what it shows. Keep a short title, drop the sentence
 
 ## When Reviewing Code
 
